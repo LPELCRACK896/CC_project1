@@ -13,6 +13,7 @@ class CustomErrorListener(antlr4.error.ErrorListener.ErrorListener):
             r"missing (.+) at (.+)": r"falta \1 en \2",
             r"mismatched input (.+) expecting (.+)": r"entrada no coincidente \1, se esperaba \2",
             r"extraneous input '(.+)' expecting (.+)": r"entrada innecesaria '\1', se esperaba \2",
+            r"no viable alternative at input '(.+)'": r"alternativa no viable en la entrada '\1'",
             # Agrega más traducciones aquí si lo deseas
         }
 
