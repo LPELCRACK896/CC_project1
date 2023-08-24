@@ -1,0 +1,7 @@
+class Circle inherits Shape {
+    radius: Int <- 10;
+
+    getColor(): String {
+        return color;
+    }
+}

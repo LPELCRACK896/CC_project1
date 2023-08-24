@@ -1,0 +1,23 @@
+class Circle inherits Shape {
+    radius: Int <- 10;
+    color: String <- "Red";
+    
+    diameter: Int <- radius * 2;
+
+    getArea(): Int {
+        return 3.14 * radius * radius;
+    }
+
+    getColor(): STRING {
+        return color;
+    }
+}
+
+class Rectangle inherits Shape {
+    length: Int <- 5;
+    width: Int <- 10;
+    
+    getArea(): Int {
+        return length * width;
+    }
+}
