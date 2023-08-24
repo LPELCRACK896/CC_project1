@@ -8,6 +8,7 @@ from anytree.exporter import UniqueDotExporter
 from customErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
+from class_and_atrributes import Attribute, Method, ClassDefinition
 
 
 def build_anytree(node, antlr_node):
@@ -75,6 +76,8 @@ else:
 
     print(symbol_table)
 
+    # funciones de insertad, busqueda y elminacion
+    '''
     # Inserta símbolo en global scope
     symbol_table.insert(name="MySymbol", data_type="int",
                         semantic_type="var", value=5, scope=symbol_table.global_scope)
@@ -92,3 +95,6 @@ else:
     print(searched_symbol)
 
     print(symbol_table)
+    '''
+    # Proyecto # 1 Análisis Semántico
+    class_definitions = []
