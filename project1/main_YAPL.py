@@ -6,7 +6,6 @@ from YAPLParser import YAPLParser
 from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter
 from customErrorListener import CustomErrorListener
-import re
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
 
