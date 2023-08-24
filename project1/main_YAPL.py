@@ -5,10 +5,10 @@ from YAPLLexer import YAPLLexer
 from YAPLParser import YAPLParser
 from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter
-import antlr4
+from customErrorListener import CustomErrorListener
 import re
 from antlr4.tree.Tree import TerminalNode
-from ClassSymbolTable import SymbolTable, Scope  # Make sure to import the SymbolTable and Scope classes
+from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
 
 
 def build_anytree(node, antlr_node):
@@ -23,40 +23,7 @@ def build_anytree(node, antlr_node):
         for child in antlr_node.getChildren():
             build_anytree(child_node, child)
 
-# Define a custom error listener
-class CustomErrorListener(antlr4.error.ErrorListener.ErrorListener):
-    def __init__(self):
-        self.errors = []
 
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        # error en español
-        translations = {
-            r"missing (.+) at (.+)": r"falta \1 en \2",
-            r"mismatched input (.+) expecting (.+)": r"entrada no coincidente \1, se esperaba \2",
-            r"extraneous input '(.+)' expecting (.+)": r"entrada innecesaria '\1', se esperaba \2",
-            # Agrega más traducciones aquí si lo deseas
-        }
-
-        # Buscar coincidencias con las expresiones regulares y traducir el mensaje
-        for pattern, translation in translations.items():
-            msg = re.sub(pattern, translation, msg)
-
-        # Personalizar el mensaje de error aquí
-        custom_msg = f"Error en la línea {line}, columna {column}, mensaje: {msg}"
-        self.errors.append(custom_msg)
-
-    def reportAmbiguity(self, recognizer, dfa, startIndex, stopIndex, exact, ambigAlts, configs):
-        pass
-
-    def reportAttemptingFullContext(self, recognizer, dfa, startIndex, stopIndex, conflictingAlts, configs):
-        pass
-
-    def reportContextSensitivity(self, recognizer, dfa, startIndex, stopIndex, prediction, configs):
-        pass
-
-    def get_errors(self):
-        return self.errors
-    
 root = Tk()
 root.withdraw()
 input_file = filedialog.askopenfilename(initialdir=os.getcwd(
@@ -64,7 +31,10 @@ input_file = filedialog.askopenfilename(initialdir=os.getcwd(
 with open(input_file, 'r') as file:
     input_data = file.read()
 input_stream = InputStream(input_data)
+
+# error listener customizado en español
 error_listener = CustomErrorListener()
+
 lexer = YAPLLexer(input_stream)
 lexer.removeErrorListeners()
 lexer.addErrorListener(error_listener)
@@ -89,8 +59,6 @@ if errors:
 else:
     print(tree.toStringTree(recog=parser))
 
-
-
     root = Node(parser.ruleNames[tree.getRuleIndex()])
     build_anytree(root, tree)
 
@@ -109,8 +77,8 @@ else:
     print(symbol_table)
 
     # Inserta símbolo en global scope
-    symbol_table.insert(name="MySymbol", data_type="int", semantic_type="var", value=5, scope=symbol_table.global_scope)
-
+    symbol_table.insert(name="MySymbol", data_type="int",
+                        semantic_type="var", value=5, scope=symbol_table.global_scope)
 
     print(symbol_table)
 
@@ -121,8 +89,7 @@ else:
     symbol_table.delete_content("MySymbol")
 
     searched_symbol = symbol_table.search("MySymbol")
-    print("\Símbolo tras eliminacion:")
+    print("\nSímbolo tras eliminacion:")
     print(searched_symbol)
 
     print(symbol_table)
-
