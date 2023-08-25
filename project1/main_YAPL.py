@@ -99,22 +99,8 @@ else:
     # Proyecto # 1 Análisis Semántico
     print("\nInicio del Chequeo Semántico:\n")
 
-    chequeo_semantico = True
-
-    # Chequeo de herencia y sobrescritura conforme a la regla semantica 5
-    if not check_inheritance_and_overrides(symbol_table):
-        chequeo_semantico = False
-    else:
-        print("\nEl chequeo de herencia y sobrescritura fue exitoso")
-
-    print()
-
-    # chequear si hay main conforme a la regla semantica 2 y 3
-    if check_main_class_and_method(tree) > 0:
-        chequeo_semantico = False
-    else:
-        print("\nEl chequeo de main fue exitoso")
-
-    if chequeo_semantico:  # si se logro llegar con true al final de todo se crea el gui
+    if check_semantic_rules(tree, root, symbol_table):
+        print("\nChequeo semántico exitoso!\n")
         # imprimir la GUI
-        pass
+    else:
+        print("\nSe procede a terminar el programa por errores semánticos.")
