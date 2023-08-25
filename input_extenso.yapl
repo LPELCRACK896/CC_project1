@@ -1,0 +1,63 @@
+class Shape {
+}
+
+class Circle inherits Shape {
+    radius: Int <- 10;
+    color: String <- "Red";
+    
+    diameter: Int <- radius * 2;
+
+    method getArea(): Int {
+        if true then 
+            radius <- 8
+        else 
+            radius <- 4
+        fi;
+        return 3 * radius * radius;
+    }
+
+    method getColor(): String {
+        return color;
+    }
+}
+
+class Rectangle inherits Shape {
+    length: Int <- 5;
+    width: Int <- 10;
+    
+    method getArea(): Int {
+        while length < width loop {
+            length <- length + 1
+        } pool;
+        return length * width;
+    }
+}
+
+class Main {
+    method main() {
+        let circle: Shape
+        circle <- new Circle;
+        let rectangle: Shape
+        rectangle <- new Rectangle;
+
+        let areaCircle: Int
+        areaCircle <- circle.getArea();
+        (new IO).outString("Circle area: ");
+        (new IO).outInt(areaCircle);
+
+        let areaRectangle: Int
+        areaRectangle <- rectangle.getArea();
+        (new IO).outString("Rectangle area: ");
+        (new IO).outInt(areaRectangle);
+    }
+}
+
+class IO {
+    method outString(s: String) {
+        # Implementación de outString
+    }
+
+    method outInt(i: Int) {
+        # Implementación de outInt
+    }
+}

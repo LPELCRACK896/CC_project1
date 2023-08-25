@@ -1,6 +1,7 @@
 # Construcción de compilador YAPL - Fase de análisis semántico
 
 ## Autores
+
 - Luis Pedro González Aldana
 - José Mariano Reyes Hernández
 
@@ -13,7 +14,6 @@ Esta fase de la construcción del compilador para YAPL se enfocará en la fase d
 ### Tareas principales:
 
 - Agregar acciones semánticas al analizador sintáctico, de tal forma que se construya un árbol de análisis sintáctico. Durante la construcción de este árbol o en un recorrido posterior, se debe evaluar las reglas semánticas que considere necesarias.
-  
 - Construir la tabla de símbolos que interactuará con cada una de las fases del compilador. El diseño de dicha tabla deberá de contemplar el manejo de ámbitos, además de almacenar la información que usted considere necesaria. Dicha tabla deberá que ser utilizada en las fases restantes del compilador.
 
 ### Reglas semánticas para implementar:
@@ -23,5 +23,6 @@ Deberá implementar las reglas semánticas de YAPL que se explican en el documen
 ### Entregable
 
 - Interfaz de usuario que permita la escritura de programas en YAPL para pruebas de análisis léxico, sintáctico y semántico.
-  
 
+Para compilar la gramática:
+_`java -jar antlr-4.13.0-complete.jar -Dlanguage=Python3 YAPL.g4`_

@@ -29,10 +29,3 @@ class Rectangle inherits Shape {
         return length * width;
     }
 }
-
-class Main{
-    main(): Int {
-        variable: String <- "texto";
-        
-    }
-}

@@ -8,6 +8,7 @@ from anytree.exporter import UniqueDotExporter
 from customErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
+from chequeoSemantico import *
 
 
 def build_anytree(node, antlr_node):
@@ -21,34 +22,6 @@ def build_anytree(node, antlr_node):
         child_node = Node(rule_name, parent=node)
         for child in antlr_node.getChildren():
             build_anytree(child_node, child)
-
-
-def check_main_class_and_method(tree):
-    main_class_found = False
-    main_method_found = False
-
-    for child in tree.children:  # Iterate through top-level nodes
-        if child.getChildCount() >= 2:  # Check for class definition
-            class_name = child.children[1].getText()
-            if class_name == "Main":
-                main_class_found = True
-                for class_child in child.children:  # Iterate through class body
-                    if isinstance(class_child, YAPLParser.Method_declarationContext):
-                        method_name = class_child.ID().getText()
-                        if method_name == "main":
-                            method_params = class_child.parameter_list()
-                            if not method_params:
-                                main_method_found = True
-    errores = 0
-
-    if not main_class_found:
-        print("\nError: no hay clase Main.")
-        errores += 1
-    if not main_method_found:
-        print("\nError: no hay método Main o tiene parámetros")
-        errores += 1
-
-    return errores
 
 
 root = Tk()
@@ -127,7 +100,7 @@ else:
     print("\nInicio del Chequeo Semántico:")
 
     chequeo_semantico = True
-    # chequear si hay main conforme a la regla semantica 2
+    # chequear si hay main conforme a la regla semantica 2 y 3
     if check_main_class_and_method(tree) > 0:
         chequeo_semantico = False
     else:

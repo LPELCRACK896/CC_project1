@@ -1,5 +1,6 @@
-class Main {
-    method main() {
-        radius: Int <- 10;
+class Main{
+    main(): SELF_TYPE{
+        variable: String <- "texto";
+        
     }
 }
