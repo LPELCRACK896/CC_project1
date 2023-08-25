@@ -29,10 +29,43 @@ def check_main_class_and_method(tree):
     errores = 0
 
     if not main_class_found:
-        print("\nError: no hay clase Main.")
+        print("Error: no hay clase Main.")
         errores += 1
     if not main_method_found:
         print("Error: no hay método Main o tiene parámetros")
         errores += 1
 
     return errores
+
+
+def check_inheritance_and_overrides(symbol_table):
+    exito = True
+
+    for class_name, class_symbol in symbol_table.content[symbol_table.global_scope.scope_id].items():
+        if class_symbol.semantic_type == "class":
+            parent_class_name = class_symbol.data_type
+
+            if parent_class_name != "Object":
+                parent_class_symbol = symbol_table.search(parent_class_name)
+
+                if parent_class_symbol is None:
+                    print(
+                        f"Error: La clase {class_name} hereda de una clase inexistente: {parent_class_name}.")
+                    exito = False
+                else:
+                    # Verificar la coherencia de los métodos sobrescritos
+                    for method_name, method_info in class_symbol.content.items():
+                        if method_info.semantic_type == "method":
+                            parent_method = parent_class_symbol.search_content(
+                                method_name)
+                            if parent_method:
+                                if parent_method.data_type != method_info.data_type:
+                                    print(f"Error: El método {method_name} en la clase {class_name} "
+                                          f"no sobrescribe correctamente el método de la clase padre {parent_class_name}.")
+                                    exito = False
+                            else:
+                                print(f"Error: El método {method_name} en la clase {class_name} "
+                                      f"no tiene un método padre correspondiente en la clase {parent_class_name}.")
+                                exito = False
+
+    return exito
