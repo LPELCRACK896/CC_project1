@@ -4,6 +4,7 @@ from antlr4 import *
 from YAPLLexer import YAPLLexer
 from YAPLParser import YAPLParser
 from anytree import Node, RenderTree
+import anytree
 from anytree.exporter import UniqueDotExporter
 from customErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
@@ -73,29 +74,33 @@ def check_inheritance_and_overrides(symbol_table):
 
 def check_implicit_casting(root, symbol_table):
     exito = True
+
+    # algo que funcione aca
+
     return exito
 
 
 def check_semantic_rules(tree, root, symbol_table):
 
+    # Chequear si hay main conforme a la regla semantica 2 y 3
+    if check_main_class_and_method(tree) > 0:
+        chequeo_semantico = False
+        print("El chequeo si hay main falló!\n")
+    else:
+        print("\nEl chequeo de main fue exitoso!")
+
     # Chequeo de herencia y sobrescritura conforme a la regla semantica 5
     if not check_inheritance_and_overrides(symbol_table):
         chequeo_semantico = False
+        print("El chequeo de herencia y sobrescritura falló!\n")
     else:
-        print("\nEl chequeo de herencia y sobrescritura fue exitoso")
-
-    print()
-
-    # chequear si hay main conforme a la regla semantica 2 y 3
-    if check_main_class_and_method(tree) > 0:
-        chequeo_semantico = False
-    else:
-        print("\nEl chequeo de main fue exitoso")
+        print("\nEl chequeo de herencia y sobrescritura fue exitoso!")
 
     # Verificar casteo implícito entre Bool e Int
     if not check_implicit_casting(root, symbol_table):
         chequeo_semantico = False
+        print("El casteo implícito falló!\n")
     else:
-        print("\nEl chequeo de casteo implícito fue exitoso")
+        print("\nEl chequeo de casteo implícito fue exitoso!")
 
     return chequeo_semantico

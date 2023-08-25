@@ -2,7 +2,7 @@ class Circle inherits Shape {
     radius: Int <- 10;
     color: String <- "Red";
     
-    diameter: Int <- radius * 2;
+    diameter: Int <- radius + radius;
 
     getArea(diameter:Int): Int {
         if true then 
