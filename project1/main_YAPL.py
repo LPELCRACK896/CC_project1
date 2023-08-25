@@ -39,11 +39,16 @@ def check_main_class_and_method(tree):
                             method_params = class_child.parameter_list()
                             if not method_params:
                                 main_method_found = True
+    errores = 0
 
     if not main_class_found:
-        print("Error: Main class is missing.")
+        print("\nError: no hay clase Main.")
+        errores += 1
     if not main_method_found:
-        print("Error: Main method is missing or has parameters.")
+        print("\nError: no hay método Main o tiene parámetros")
+        errores += 1
+
+    return errores
 
 
 root = Tk()
@@ -119,6 +124,15 @@ else:
     print(symbol_table)
     '''
     # Proyecto # 1 Análisis Semántico
+    print("\nInicio del Chequeo Semántico:")
 
+    chequeo_semantico = True
     # chequear si hay main conforme a la regla semantica 2
-    check_main_class_and_method(tree)
+    if check_main_class_and_method(tree) > 0:
+        chequeo_semantico = False
+    else:
+        print("El chequeo de main fue exitoso")
+
+    if chequeo_semantico:  # si se logro llegar con true al final de todo se crea el gui
+        # imprimir la GUI
+        pass
