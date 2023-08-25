@@ -76,7 +76,7 @@ else:
 
     print(symbol_table)
 
-    # funciones de insertad, busqueda y elminacion
+    # funciones de insertar, busqueda y elminacion de symboltable
     '''
     # Inserta símbolo en global scope
     symbol_table.insert(name="MySymbol", data_type="int",
