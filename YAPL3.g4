@@ -1,28 +1,13 @@
 grammar YAPL3;
 
-program: ((mainClassDef classDef*)| (classDef*|mainClassDef )) mainCall? EOF;
+program: ((mainClassDef? classDef*)| (classDef* mainClassDef? )) mainCall? EOF;
 
-// Palabras reservadas
-rw_inherits: ('I'|'i')('N'|'n')('H'|'h')('E'|'e')('R'|'r')('I'|'i')('T'|'t')('S'|'s'); //inherits
-rw_isvoid: ('I'|'i')('S'|'s')('V'|'v')('O'|'o')('I'|'i')('D'|'d'); //isvoid
-rw_while: ('W'|'w')('H'|'h')('I'|'i')('L'|'l')('E'|'e'); //while
-rw_class: ('C'|'c')('L'|'l')('A'|'a')('S'|'s')('S'|'s');  //Class
-rw_loop: ('L'|'l')('O'|'o')('O'|'o')('P'|'p'); //loop
-rw_else: ('E'|'e')('L'|'l')('S'|'s')('E'|'e');  //else
-rw_pool: ('P'|'p')('O'|'o')('O'|'o')('L'|'l'); //pool
-rw_then:('T'|'t')('H'|'h')('E'|'e')('N'|'n'); //then
-rw_new: ('N'|'n')('E'|'e')('W'|'w'); //new
-rw_not: ('N'|'n')('O'|'o')('T'|'t'); //not
-rw_fi: ('F'|'f')('I'|'i');  //fi 
-rw_if: ('I'|'i')('F'|'f');  //if
-rw_in: ('I'|'i')('N'|'n');  //in
-rw_true: 'true';
-rw_false: 'false';  
 
-mainClassDef: rw_class 'Main' '{' mainMethod '}';
+
+mainClassDef: RW_CLASS 'Main' '{' mainMethod '}';
 mainMethod: 'main' '(' ')' '{'(expr ';')* '}';
 
-classDef: rw_class CLASS_ID ('inherits' CLASS_ID)? '{' feature* '}';
+classDef: RW_CLASS CLASS_ID ('inherits' CLASS_ID)? '{' feature* '}';
 feature: attr | method;
 attr: ID ':' type ('<-' expr)? ';';
 method: ID '(' formals ')' ':' type '{' (expr ';')* func_return '}';
@@ -33,8 +18,8 @@ expr:
      ID '<-' expr
     | expr '@' type '.' ID '(' expr (',' expr)* ')'
     | ID '(' expr (',' expr)* ')'
-    | 'if' expr  'then' expr 'else' expr 'fi'
-    | 'while' expr 'loop' expr 'pool'
+    | 'if' bool_value  'then' expr 'else' expr 'fi'
+    | 'while' bool_value'loop' expr 'pool'
     | '{' expr (';' expr)* '}'
     | 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
     | expr '.' ID '(' expr (',' expr)* ')'
@@ -45,8 +30,8 @@ expr:
     | ID
     | INT
     | STRING
-    | rw_false
-    | rw_true
+    | RW_FALSE
+    | RW_TRUE
     ;
 
 mainCall: '(' 'new' 'Main' ')' '.' 'main' '(' ')';
@@ -62,8 +47,8 @@ comparation_operators:
     | '!='
     ;
 bool_value: 
-    | rw_true
-    | rw_false
+    | RW_FALSE
+    | RW_TRUE
     | comparation
     ;
 
@@ -74,8 +59,27 @@ comparation:
 
 // Lexer rules
 
+// Palabras reservadas - Case Insensitive
+RW_INHERITS: ('I'|'i')('N'|'n')('H'|'h')('E'|'e')('R'|'r')('I'|'i')('T'|'t')('S'|'s');
+RW_ISVOID: ('I'|'i')('S'|'s')('V'|'v')('O'|'o')('I'|'i')('D'|'d');
+RW_WHILE: ('W'|'w')('H'|'h')('I'|'i')('L'|'l')('E'|'e');
+RW_CLASS: ('C'|'c')('L'|'l')('A'|'a')('S'|'s')('S'|'s');
+RW_LOOP: ('L'|'l')('O'|'o')('O'|'o')('P'|'p');
+RW_ELSE: ('E'|'e')('L'|'l')('S'|'s')('E'|'e');
+RW_POOL: ('P'|'p')('O'|'o')('O'|'o')('L'|'l');
+RW_THEN: ('T'|'t')('H'|'h')('E'|'e')('N'|'n');
+RW_NEW: ('N'|'n')('E'|'e')('W'|'w');
+RW_NOT: ('N'|'n')('O'|'o')('T'|'t');
+RW_FI: ('F'|'f')('I'|'i');
+RW_IF: ('I'|'i')('F'|'f');
+RW_IN: ('I'|'i')('N'|'n');
+RW_TRUE: 'true';
+RW_FALSE: 'false';
 
 //Otros
+
+
+
 ID: [a-z][a-zA-Z0-9]*;
 INT: [0-9]+;
 STRING: '"' (~["\r\n\\] | '\\' ["\\/bfnrt])* '"';
