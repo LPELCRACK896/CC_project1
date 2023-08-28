@@ -75,6 +75,9 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
 
                         # chequear si es agrupacion de variables
                         if isinstance(value, str):
+                            # radius + radius
+                            node = content_symbol.value
+                            print(node)
                             feedback.append(SemanticError(name="InvalidAttributeValue",
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' tiene asignacion de 2 o más variables.",
                                                           symbol=content_symbol,
