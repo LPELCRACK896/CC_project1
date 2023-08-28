@@ -101,37 +101,42 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
 
-    main_class_exists = False
     main_method_exists = False
 
     # Recorremos todas las clases en la tabla de símbolos
     for class_name in symbol_table.scopes:
         class_scope = symbol_table.scopes[class_name]
 
-        if class_name == "global":
-            continue  # Pasar a la siguiente clase si es 'global'
-
-        # Verificar si existe la clase 'Main'
+        # Verificar si la clase 'Main' tiene un método 'main'
         if class_name == "Main":
-            main_class_exists = True
-
-            # Verificar si la clase 'Main' tiene un método 'main'
             main_method = class_scope.search_content("main")
             if main_method and main_method.semantic_type == "method":
                 main_method_exists = True
-            else:
-                feedback.append(SemanticError(name="MainMethodNotFoundError",
-                                              details="La clase 'Main' debe contener un método llamado 'main'.",
-                                              symbol=None,
-                                              scope=class_scope))
-                all_passed = False
+                break
 
-    # Verificar si la clase 'Main' existe
-    if not main_class_exists:
-        feedback.append(SemanticError(name="MainClassNotFoundError",
-                                      details="El programa debe contener una clase llamada 'Main'.",
+    # Verificar si el método 'main' existe
+    if not main_method_exists:
+        feedback.append(SemanticError(name="MainMethodNotFoundError",
+                                      details="La clase 'Main' debe contener un método llamado 'main'.",
                                       symbol=None,
                                       scope=None))
         all_passed = False
 
+    return all_passed, feedback
+
+
+def execution_start_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    # Verificar si existe la línea (new Main).main()
+    '''
+    main_call = symbol_table.search("main_call")
+    if not main_call:
+        feedback.append(SemanticError(name="MainCallNotFoundError",
+                                      details="El programa debe contener la línea (new Main).main() para iniciar la ejecución.",
+                                      symbol=None,
+                                      scope=None))
+        all_passed = False
+    '''
     return all_passed, feedback

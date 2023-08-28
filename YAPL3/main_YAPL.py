@@ -185,16 +185,17 @@ def main_program(input_data, gui_window=None):
                 "\nYa que hay 1 o más errores semánticos no se compilará el archivo input.\n")
             print(
                 "----------------------------------------------------------------------------------")
-            # Clear any previous error messages
-            clear_error_labels(gui_window)
+            if gui_window:
+                # Clear any previous error messages
+                clear_error_labels(gui_window)
 
-            # Show syntax and semantic errors above the button
-            error_label = tk.Label(
-                gui_window, text="¡Se encontraron errores en el código!", fg="red")
-            error_label.pack()
+                # Show syntax and semantic errors above the button
+                error_label = tk.Label(
+                    gui_window, text="¡Se encontraron errores en el código!", fg="red")
+                error_label.pack()
 
-            # If there are errors, show the GUI window again
-            gui_window.deiconify()
+                # Show the GUI window again with errors
+                gui_window.deiconify()
 
 
 # Pide al usuario que seleccione un archivo
