@@ -17,24 +17,6 @@ class YAPL3Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPL3Parser#mainClassDef.
-    def enterMainClassDef(self, ctx:YAPL3Parser.MainClassDefContext):
-        pass
-
-    # Exit a parse tree produced by YAPL3Parser#mainClassDef.
-    def exitMainClassDef(self, ctx:YAPL3Parser.MainClassDefContext):
-        pass
-
-
-    # Enter a parse tree produced by YAPL3Parser#mainMethod.
-    def enterMainMethod(self, ctx:YAPL3Parser.MainMethodContext):
-        pass
-
-    # Exit a parse tree produced by YAPL3Parser#mainMethod.
-    def exitMainMethod(self, ctx:YAPL3Parser.MainMethodContext):
-        pass
-
-
     # Enter a parse tree produced by YAPL3Parser#classDef.
     def enterClassDef(self, ctx:YAPL3Parser.ClassDefContext):
         pass
@@ -104,15 +86,6 @@ class YAPL3Listener(ParseTreeListener):
 
     # Exit a parse tree produced by YAPL3Parser#expr.
     def exitExpr(self, ctx:YAPL3Parser.ExprContext):
-        pass
-
-
-    # Enter a parse tree produced by YAPL3Parser#mainCall.
-    def enterMainCall(self, ctx:YAPL3Parser.MainCallContext):
-        pass
-
-    # Exit a parse tree produced by YAPL3Parser#mainCall.
-    def exitMainCall(self, ctx:YAPL3Parser.MainCallContext):
         pass
 
 

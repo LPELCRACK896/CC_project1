@@ -1,13 +1,10 @@
 grammar YAPL3;
 
-program: ((mainClassDef? classDef*)| (classDef* mainClassDef? )) mainCall? EOF;
+program: classDef* (expr';')* EOF;
 
 
 
-mainClassDef: RW_CLASS 'Main' '{' mainMethod '}';
-mainMethod: 'main' '(' ')' '{'(expr ';')* '}';
-
-classDef: RW_CLASS CLASS_ID ('inherits' CLASS_ID)? '{' feature* '}';
+classDef: RW_CLASS CLASS_ID (RW_INHERITS CLASS_ID)? '{' feature* '}';
 feature: attr | method;
 attr: ID ':' type ('<-' expr)? ';';
 method: ID '(' formals ')' ':' type '{' (expr ';')* func_return '}';
@@ -22,8 +19,8 @@ expr:
     | 'while' bool_value'loop' expr 'pool'
     | '{' expr (';' expr)* '}'
     | 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
-    | expr '.' ID '(' expr (',' expr)* ')'
-    | 'new' classDef
+    | expr '.' ID '(' (expr (',' expr)*)? ')'
+    | 'new' CLASS_ID
     | 'isvoid' expr
     | expr op=OP expr
     | '(' expr ')'
@@ -34,7 +31,6 @@ expr:
     | RW_TRUE
     ;
 
-mainCall: '(' 'new' 'Main' ')' '.' 'main' '(' ')';
 func_return:
     'return' expr ';'
     ;

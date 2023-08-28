@@ -8,7 +8,7 @@ from YAPL3Parser import YAPL3Parser
 from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter
 # import del escuchador de errores personalizado
-from CustomErrorListener import CustomErrorListener
+from customErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
 from SemanticProccess import check_semantic
