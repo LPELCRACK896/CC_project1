@@ -4,14 +4,16 @@ from SemanticRules import *
 
 
 active_rules: ActiveRulesType = {
-    "1_class_definition": class_definition,  # lista
+    "1_class_definition": class_definition,  # EZ: lista
     "1_attributes_definition": attributes_definition,  # nose nocreo
-    "2_has_class_main_containing_main_method": main_check,  # ia
-    "3_main_call":  execution_start_check,  # tambien ia
-    "4_local_and_global_scope": not_implemented_true,  # EZ
-    "4_visibility_per_scope": not_implemented_true,  # Intermedio
-    "5_inheritance_relations": not_implemented_true,  # Facil a priori
-    "5_inheritance_override_logic": not_implemented_true,  # No se
+    "2_has_class_main_containing_main_method": main_check,  # EZ: ia
+    "3_main_call":  execution_start_check,  # EZ: tambien ia
+    "4_local_and_global_scope": scope_check,  # EZ: ia
+    "4_visibility_per_scope": visibility_check,  # Intermedio: ia
+    # Facil a priori: creo que ya
+    "5_inheritance_relations": check_inheritance_relations,
+    # No se: creo que ia x2
+    "5_inheritance_override_logic": check_inheritance_override_logic,
     "6_default_values": not_implemented_true,  # EZ
     "7_casting_int_bool_string": not_implemented_true,  # EZ
     "8_assignation_expresions_type_on_each_side": not_implemented_true,  # Intermedio

@@ -1,3 +1,8 @@
+class Shape {
+    radius: Int;
+    color: String;
+}
+
 class Circle inherits Shape {
     radius: Int <- 10;
     color: String <- "Red";

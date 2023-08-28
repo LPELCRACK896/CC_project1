@@ -16,29 +16,27 @@ def class_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     all_passed = True
 
     # Recorremos todas las clases en la tabla de símbolos
-    for class_name in symbol_table.scopes:
-        if class_name == "global" or class_name == "main":
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" == scope_id:
             continue  # Pasar a la siguiente clase si es 'global'
 
-        class_scope = symbol_table.scopes[class_name]
+        if class_scope.scope_id.endswith("(class)"):
+            class_name = class_scope.scope_id.split("_")[1].split(
+                "(")[0]  # Extraer el nombre de la clase del scope_id
 
-        # Verificamos si hay atributos y métodos en la clase
-        has_attributes = False
-        has_methods = False
-        for content_name in class_scope.content:
-            content_symbol = class_scope.content[content_name]
-            if content_symbol.semantic_type == "attr":
-                has_attributes = True
-            elif content_symbol.semantic_type == "method":
-                has_methods = True
+            # Verificamos si hay atributos y métodos en la clase
+            has_attributes = any(content_symbol.semantic_type ==
+                                 "attr" for content_symbol in class_scope.content.values())
+            has_methods = any(content_symbol.semantic_type ==
+                              "method" for content_symbol in class_scope.content.values())
 
-        if not has_attributes and not has_methods:
-            class_symbol = symbol_table.search(class_name)
-            feedback.append(SemanticError(name="EmptyClass",
-                                          details=f"La clase '{class_name}' no tiene atributos ni métodos.",
-                                          symbol=class_symbol,
-                                          scope=class_scope))
-            all_passed = False
+            if not has_attributes and not has_methods:
+                class_symbol = symbol_table.search(class_name)
+                feedback.append(SemanticError(name="EmptyClass",
+                                              details=f"La clase '{class_name}' no tiene atributos ni métodos.",
+                                              symbol=class_symbol,
+                                              scope=class_scope))
+                all_passed = False
 
     return all_passed, feedback
 
@@ -48,51 +46,43 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
     all_passed = True
 
     # Recorremos todas las clases en la tabla de símbolos
-    for class_name in symbol_table.scopes:
-        if class_name == "global":
-            continue  # Pasar a la siguiente clase si es 'global'
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" == scope_id:
+            continue  # Pasar a la siguiente clase si es 'global' o 'main'
 
-        class_scope = symbol_table.scopes[class_name]
+        if class_scope.scope_id.endswith("(class)"):
+            class_name = class_scope.scope_id.split("_")[1].split(
+                "(")[0]  # Extraer el nombre de la clase del scope_id
 
-        # Verificamos los atributos en la clase
-        for content_name in class_scope.content:
-            content_symbol = class_scope.content[content_name]
+            # Verificar atributos en la clase
+            for content_name, content_symbol in class_scope.content.items():
+                if content_symbol.semantic_type == "attr":
+                    if content_symbol.value == "type":
+                        content_symbol.value = content_symbol.default_value
 
-            if content_symbol.semantic_type == "attr":
-                # Verificación del data type
-                if content_symbol.data_type not in ["Int", "String", "Bool"]:
-                    feedback.append(SemanticError(name="InvalidDataTypeError",
-                                                  details=f"El atributo '{content_name}' en la clase '{class_name}' tiene un tipo de dato inválido: {content_symbol.data_type}. Debe ser 'Int', 'String' o 'Bool'.",
-                                                  symbol=content_symbol,
-                                                  scope=class_scope))
-                    all_passed = False
-                # Verificación del value
-                value = content_symbol.value
+                    # HAY QUE CAMBIAR EL NODO POR EL VALOR
 
-                if value == "type":
-                    value = content_symbol.default_value
-
-                if content_symbol.data_type == "String":
-                    if value is None or not (isinstance(value, str) and value.startswith('"') and value.endswith('"')):
-                        feedback.append(SemanticError(name="InvalidValueError",
-                                                      details=f"El atributo '{content_name}' en la clase '{class_name}' debe tener un valor de tipo String entre comillas dobles.",
-                                                      symbol=content_symbol,
-                                                      scope=class_scope))
-                        all_passed = False
-                elif content_symbol.data_type == "Int":
-                    if value is None or not (isinstance(value, int) or (isinstance(value, str) and value.isnumeric())):
-                        feedback.append(SemanticError(name="InvalidValueError",
-                                                      details=f"El atributo '{content_name}' en la clase '{class_name}' debe tener un valor de tipo Int (número entero).",
-                                                      symbol=content_symbol,
-                                                      scope=class_scope))
-                        all_passed = False
-                elif content_symbol.data_type == "Bool":
-                    if value is None or not (isinstance(value, bool) or (isinstance(value, str) and value.lower() in ["true", "false"])):
-                        feedback.append(SemanticError(name="InvalidValueError",
-                                                      details=f"El atributo '{content_name}' en la clase '{class_name}' debe tener un valor de tipo Bool (True o False).",
-                                                      symbol=content_symbol,
-                                                      scope=class_scope))
-                        all_passed = False
+                    if content_symbol.data_type == "Int":
+                        if content_symbol.value is not None and not isinstance(content_symbol.value, int):
+                            feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Int.",
+                                                          symbol=content_symbol,
+                                                          scope=class_scope))
+                            all_passed = False
+                    elif content_symbol.data_type == "String":
+                        if content_symbol.value is not None and not (isinstance(content_symbol.value, str) and content_symbol.value.startswith('"') and content_symbol.value.endswith('"')):
+                            feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo String y estar entre comillas dobles.",
+                                                          symbol=content_symbol,
+                                                          scope=class_scope))
+                            all_passed = False
+                    elif content_symbol.data_type == "Bool":
+                        if content_symbol.value is not None and content_symbol.value not in ["true", "false"]:
+                            feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true' o 'false').",
+                                                          symbol=content_symbol,
+                                                          scope=class_scope))
+                            all_passed = False
 
     return all_passed, feedback
 
@@ -108,7 +98,7 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
         class_scope = symbol_table.scopes[class_name]
 
         # Verificar si la clase 'Main' tiene un método 'main'
-        if class_name == "Main":
+        if class_name == "global_Main(class)":
             main_method = class_scope.search_content("main")
             if main_method and main_method.semantic_type == "method":
                 main_method_exists = True
@@ -139,4 +129,141 @@ def execution_start_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                       scope=None))
         all_passed = False
     '''
+    return all_passed, feedback
+
+
+def scope_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    # Función auxiliar para verificar la visibilidad de un símbolo en el ámbito actual
+    def check_visibility(symbol, current_scope):
+        if symbol.is_local_scope and symbol.scope != current_scope.scope_id:
+            feedback.append(SemanticError(name="ScopeVisibilityError",
+                                          details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
+                                          symbol=symbol,
+                                          scope=current_scope))
+            return False
+        return True
+
+    # Recorrer todos los ámbitos en la tabla de símbolos
+    for scope_id in symbol_table.scopes:
+        scope = symbol_table.scopes[scope_id]
+
+        # Recorrer los símbolos en el ámbito actual
+        for symbol_name in scope.content:
+            symbol = scope.content[symbol_name]
+
+            # Verificar la visibilidad de los símbolos locales
+            if symbol.is_local_scope:
+                check_visibility(symbol, scope)
+
+            # Verificar la visibilidad de los símbolos globales en métodos locales
+            elif scope_id != "global":
+                global_symbol = symbol_table.search(
+                    symbol_name, symbol_table.global_scope)
+                if global_symbol:
+                    check_visibility(global_symbol, scope)
+
+    return all_passed, feedback
+
+
+def visibility_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    # Función auxiliar para verificar la visibilidad de un símbolo en un ámbito
+    def check_visibility(symbol, current_scope):
+        if symbol.is_local_scope and symbol.scope != current_scope.scope_id:
+            return False
+        return True
+
+    # Recorrer todos los ámbitos en la tabla de símbolos
+    for scope_id in symbol_table.scopes:
+        scope = symbol_table.scopes[scope_id]
+
+        # Recorrer los símbolos en el ámbito actual
+        for symbol_name in scope.content:
+            symbol = scope.content[symbol_name]
+
+            # Verificar visibilidad en ámbito local
+            if symbol.is_local_scope:
+                if symbol.scope != scope.scope_id:
+                    feedback.append(SemanticError(name="LocalScopeVisibilityError",
+                                                  details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
+                                                  symbol=symbol,
+                                                  scope=scope))
+                    all_passed = False
+
+            # Verificar visibilidad en ámbito global
+            else:
+                if scope_id != "global":
+                    global_symbol = symbol_table.search(
+                        symbol_name, symbol_table.global_scope)
+                    if global_symbol:
+                        if not check_visibility(global_symbol, scope):
+                            feedback.append(SemanticError(name="GlobalScopeVisibilityError",
+                                                          details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
+                                                          symbol=global_symbol,
+                                                          scope=scope))
+                            all_passed = False
+
+    return all_passed, feedback
+
+
+def check_inheritance_relations(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    # Recorremos todas las clases en la tabla de símbolos
+    for class_name in symbol_table.scopes:
+        class_symbol = symbol_table.search(
+            class_name, symbol_table.global_scope)
+        if class_symbol and class_symbol.semantic_type == "class":
+            parent_class_name = class_symbol.data_type
+            if parent_class_name != "Object":
+                parent_class = symbol_table.search(
+                    parent_class_name, symbol_table.global_scope)
+                if not parent_class:
+                    feedback.append(SemanticError(name="InheritanceError",
+                                                  details=f"La clase '{class_name}' hereda de '{parent_class_name}', pero la clase padre no está definida.",
+                                                  symbol=class_symbol,
+                                                  scope=class_symbol.scope))
+                    all_passed = False
+
+    return all_passed, feedback
+
+
+def check_inheritance_override_logic(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    # Función auxiliar para verificar si un método está sobrescrito correctamente
+    def check_override(method_symbol, parent_method_symbol):
+        if method_symbol.semantic_type == "method" and parent_method_symbol.semantic_type == "method":
+            if method_symbol.parameters != parent_method_symbol.parameters:
+                return False
+        return True
+
+    # Recorremos todas las clases en la tabla de símbolos
+    for class_name in symbol_table.scopes:
+        class_scope = symbol_table.scopes[class_name]
+        class_symbol = class_scope.search_content(class_name)
+        if class_symbol and class_symbol.semantic_type == "class":
+            parent_class_name = class_symbol.data_type
+            if parent_class_name != "Object":
+                parent_class = symbol_table.search(
+                    parent_class_name, symbol_table.global_scope)
+                if parent_class:
+                    for method_name in class_scope.content:
+                        method_symbol = class_scope.search_content(method_name)
+                        parent_method_symbol = parent_class.search_content(
+                            method_name)
+                        if parent_method_symbol and not check_override(method_symbol, parent_method_symbol):
+                            feedback.append(SemanticError(name="OverrideLogicError",
+                                                          details=f"El método '{method_name}' en la clase '{class_name}' no está sobrescrito correctamente.",
+                                                          symbol=method_symbol,
+                                                          scope=class_symbol))
+                            all_passed = False
+
     return all_passed, feedback
