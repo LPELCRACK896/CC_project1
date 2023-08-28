@@ -267,3 +267,70 @@ def check_inheritance_override_logic(symbol_table: SymbolTable) -> (bool, Semant
                             all_passed = False
 
     return all_passed, feedback
+
+
+def check_casting(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    # Recorremos todas las clases en la tabla de símbolos
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" in scope_id or "Main(class)" in scope_id:
+            continue  # Pasar a la siguiente clase si es 'global' o 'main'
+
+        if class_scope.scope_id.endswith("(class)"):
+            class_name = class_scope.scope_id.split("_")[1].split(
+                "(")[0]  # Extraer el nombre de la clase del scope_id
+
+            # Verificar atributos en la clase
+            for content_name, content_symbol in class_scope.content.items():
+                if content_symbol.semantic_type == "attr" and content_symbol.data_type in ["Bool", "Int"]:
+                    if content_symbol.value is not None:
+                        # Realizar el casteo implícito entre Bool e Int
+                        if content_symbol.data_type == "Bool":
+                            if content_symbol.value == "true":
+                                content_symbol.value = 1
+                            elif content_symbol.value == "false":
+                                content_symbol.value = 0
+                        elif content_symbol.data_type == "Int":
+                            try:
+                                content_symbol.value = int(
+                                    content_symbol.value)
+                            except ValueError:
+                                feedback.append(SemanticError(name="InvalidCasting",
+                                                              details=f"El atributo '{content_name}' de la clase '{class_name}' no puede ser casteador a Int.",
+                                                              symbol=content_symbol,
+                                                              scope=class_scope))
+                                all_passed = False
+
+                    # Verificar si hay operaciones aritméticas con este atributo
+                    used_in_arithmetic_operation = False
+                    for _, symbols in symbol_table.content.items():
+                        for symbol_name, symbol in symbols.items():
+                            if symbol.semantic_type == "expression" and content_name in str(symbol.node):
+                                used_in_arithmetic_operation = True
+                                break
+
+                    if used_in_arithmetic_operation:
+                        # Realizar el casteo implícito entre Bool e Int
+                        if content_symbol.data_type == "Bool" and content_symbol.value is not None:
+                            if content_symbol.value == "true":
+                                content_symbol.value = 1
+                            elif content_symbol.value == "false":
+                                content_symbol.value = 0
+                        elif content_symbol.data_type == "Int" and content_symbol.value is not None:
+                            if isinstance(content_symbol.value, int):
+                                if content_symbol.value == 0:
+                                    content_symbol.value = "false"
+                                else:
+                                    content_symbol.value = "true"
+                            elif isinstance(content_symbol.value, str) and content_symbol.value.lower() in ["true", "false"]:
+                                content_symbol.value = content_symbol.value.lower()
+                            else:
+                                feedback.append(SemanticError(name="InvalidCasting",
+                                                              details=f"El atributo '{content_name}' de la clase '{class_name}' no puede ser casteador a Bool o Int.",
+                                                              symbol=content_symbol,
+                                                              scope=class_scope))
+                                all_passed = False
+
+    return all_passed, feedback

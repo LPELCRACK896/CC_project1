@@ -14,8 +14,8 @@ active_rules: ActiveRulesType = {
     "5_inheritance_relations": check_inheritance_relations,
     # No se: creo que ia x2
     "5_inheritance_override_logic": check_inheritance_override_logic,
-    "6_default_values": not_implemented_true,  # EZ
-    "7_casting_int_bool_string": not_implemented_true,  # EZ
+    "6_default_values": not_implemented_true,  # EZ: ia estaba desde la symbol table
+    "7_casting_int_bool": check_casting,  # EZ: quizas ia
     "8_assignation_expresions_type_on_each_side": not_implemented_true,  # Intermedio
     "8_assignation_expresions_compatible_and_rule": not_implemented_true,  # Compleja
     "9_method_calls_and_return_values": not_implemented_true,  # Complejo
