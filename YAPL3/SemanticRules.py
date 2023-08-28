@@ -274,63 +274,133 @@ def check_casting(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     all_passed = True
 
     # Recorremos todas las clases en la tabla de símbolos
+
+    return all_passed, feedback
+
+
+def check_assignment_types(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    # Recorremos todas las clases en la tabla de símbolos
     for scope_id, class_scope in symbol_table.scopes.items():
-        if "global" in scope_id or "Main(class)" in scope_id:
+        if "global" == scope_id:
             continue  # Pasar a la siguiente clase si es 'global' o 'main'
 
         if class_scope.scope_id.endswith("(class)"):
             class_name = class_scope.scope_id.split("_")[1].split(
                 "(")[0]  # Extraer el nombre de la clase del scope_id
 
-            # Verificar atributos en la clase
+            # Recorremos los símbolos en el scope de la clase
             for content_name, content_symbol in class_scope.content.items():
-                if content_symbol.semantic_type == "attr" and content_symbol.data_type in ["Bool", "Int"]:
-                    if content_symbol.value is not None:
-                        # Realizar el casteo implícito entre Bool e Int
-                        if content_symbol.data_type == "Bool":
-                            if content_symbol.value == "true":
-                                content_symbol.value = 1
-                            elif content_symbol.value == "false":
-                                content_symbol.value = 0
-                        elif content_symbol.data_type == "Int":
-                            try:
-                                content_symbol.value = int(
-                                    content_symbol.value)
-                            except ValueError:
-                                feedback.append(SemanticError(name="InvalidCasting",
-                                                              details=f"El atributo '{content_name}' de la clase '{class_name}' no puede ser casteador a Int.",
-                                                              symbol=content_symbol,
-                                                              scope=class_scope))
-                                all_passed = False
+                if content_symbol.semantic_type == "attr":
+                    attr_name = content_name
+                    attr_type = content_symbol.data_type
+                    attr_value = content_symbol.value
 
-                    # Verificar si hay operaciones aritméticas con este atributo
-                    used_in_arithmetic_operation = False
+                    # Buscamos si hay una asignación al atributo en el código
                     for _, symbols in symbol_table.content.items():
                         for symbol_name, symbol in symbols.items():
-                            if symbol.semantic_type == "expression" and content_name in str(symbol.node):
-                                used_in_arithmetic_operation = True
-                                break
+                            if symbol.semantic_type == "expression" and attr_name in str(symbol.node):
+                                expression_node = symbol.node
+                                expression_children = expression_node.children
+                                if len(expression_children) > 1 and expression_children[1].name == "<-":
+                                    right_expr = expression_children[2]
 
-                    if used_in_arithmetic_operation:
-                        # Realizar el casteo implícito entre Bool e Int
-                        if content_symbol.data_type == "Bool" and content_symbol.value is not None:
-                            if content_symbol.value == "true":
-                                content_symbol.value = 1
-                            elif content_symbol.value == "false":
-                                content_symbol.value = 0
-                        elif content_symbol.data_type == "Int" and content_symbol.value is not None:
-                            if isinstance(content_symbol.value, int):
-                                if content_symbol.value == 0:
-                                    content_symbol.value = "false"
-                                else:
-                                    content_symbol.value = "true"
-                            elif isinstance(content_symbol.value, str) and content_symbol.value.lower() in ["true", "false"]:
-                                content_symbol.value = content_symbol.value.lower()
-                            else:
-                                feedback.append(SemanticError(name="InvalidCasting",
-                                                              details=f"El atributo '{content_name}' de la clase '{class_name}' no puede ser casteador a Bool o Int.",
-                                                              symbol=content_symbol,
-                                                              scope=class_scope))
-                                all_passed = False
+                                    # Verificar tipo del lado derecho
+                                    if right_expr.name == "bool_value":
+                                        right_type = "Bool"
+                                    elif right_expr.name == "integer":
+                                        right_type = "Int"
+                                    elif right_expr.name == "string":
+                                        right_type = "String"
+                                    elif right_expr.name == "new":
+                                        right_type = right_expr.children[1].name
+                                    else:
+                                        right_type = symbol_table.search(
+                                            right_expr.name, class_scope).data_type
+
+                                    # Comparar tipos
+                                    if attr_type != right_type:
+                                        feedback.append(SemanticError(name="TypeMismatch",
+                                                                      details=f"El tipo de la expresión de asignación para el atributo '{attr_name}' de la clase '{class_name}' no coincide con el tipo del atributo.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope))
+                                        all_passed = False
+
+    return all_passed, feedback
+
+
+def check_type_compatibility(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    def son_tipos_compatibles(tipo1, tipo2, valor_int=None):
+        if valor_int is not None:
+            # Verificar si tipo1 es Int y tipo2 es Bool
+            if tipo1 == "Int" and tipo2 == "Bool" and valor_int in [0, 1]:
+                return True
+
+        # Resto de las reglas de compatibilidad
+        reglas_compatibilidad = {
+            "String": ["String"],
+            "Bool": ["Bool"]
+            # Agrega más reglas aquí según las necesidades de tu lenguaje
+        }
+
+        if tipo1 in reglas_compatibilidad and tipo2 in reglas_compatibilidad[tipo1]:
+            return True
+        else:
+            return False
+
+    # Recorremos todas las clases en la tabla de símbolos
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" == scope_id:
+            continue  # Pasar a la siguiente clase si es 'global' o 'main'
+
+        if class_scope.scope_id.endswith("(class)"):
+            class_name = class_scope.scope_id.split("_")[1].split(
+                "(")[0]  # Extraer el nombre de la clase del scope_id
+
+            # Recorremos los símbolos en el scope de la clase
+            for content_name, content_symbol in class_scope.content.items():
+                if content_symbol.semantic_type == "attr":
+                    attr_name = content_name
+                    attr_type = content_symbol.data_type
+                    attr_value = content_symbol.value
+
+                    # Buscamos si hay una asignación al atributo en el código
+                    for _, symbols in symbol_table.content.items():
+                        for symbol_name, symbol in symbols.items():
+                            if symbol.semantic_type == "expression" and attr_name in str(symbol.node):
+                                expression_node = symbol.node
+                                expression_children = expression_node.children
+                                if len(expression_children) > 1 and expression_children[1].name == "<-":
+                                    right_expr = expression_children[2]
+
+                                    # Verificar tipo del lado derecho
+                                    if right_expr.name == "bool_value":
+                                        right_type = "Bool"
+                                    elif right_expr.name == "integer":
+                                        right_type = "Int"
+                                        right_value = right_expr.value  # Obtener el valor de Int
+                                    elif right_expr.name == "string":
+                                        right_type = "String"
+                                    elif right_expr.name == "new":
+                                        right_type = right_expr.children[1].name
+                                    else:
+                                        right_type = symbol_table.search(
+                                            right_expr.name, class_scope).data_type
+
+                                    # Comparar tipos con función de compatibilidad
+                                    if son_tipos_compatibles(attr_type, right_type, right_value):
+                                        # Tipos son compatibles, no hay error
+                                        pass
+                                    else:
+                                        feedback.append(SemanticError(name="TypeCompatibilityError",
+                                                                      details=f"La expresión de asignación para el atributo '{attr_name}' de la clase '{class_name}' tiene tipos incompatibles.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope))
+                                        all_passed = False
 
     return all_passed, feedback
