@@ -11,6 +11,8 @@ class Symbol:
     name: str
     data_type: str
     semantic_type:str
+    default_value: any = None
+    is_local_scope: bool = False 
     start_line: str = None
     finish_line: str = None
     value: any = None
@@ -100,86 +102,25 @@ class SymbolTable:
             str: Tabla estetica. 
         """
         table = PrettyTable()
-        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Data type", "Parameters"]
+        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Data type", "Parameters", "Start line", "Finish Line"]
         for scope_id,  symbols in self.content.items():
             for symbol_name, symbol in symbols.items():
-                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.__get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.data_type, symbol.parameters])
+                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.__get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.data_type, symbol.parameters, symbol.start_line, symbol.finish_line])
         return str(table)
 
-    def __check_or_get_default_scope(self, scope: Scope):
-        """Revisa la validez de un scope y en caso no lo sea, devuelve el global para ser utilizado. 
+    def build_symbol_table(self, node, current_scope = None, current_line = 0) -> int:
+        """Construye la tabla de simbolos. Al encontrar metodos o clases inicializa Scopes y llama recursivamente sobre los hijos de ese nodo.
 
         Args:
-            scope (Scope): Scope que se desea comprobar validez/utilizar. 
-
-        Returns:
-            Scope: Un Scope valido, ya sea el original (de ser válido), o el global por default. 
-        """
-        if scope == None:
-            return self.global_scope
-        
-        if scope.scope_id not in self.scopes:
-            return self.global_scope
-        return scope
-    
-    def __get_expresion_to_str(self, expr_node: anytree.Node)-> str:
-        """Convierte Nodos de anytree con nombre expr en su valor to string deconstruyendo el valor de sus hijos. 
-
-        Args:
-            expr_node (anytree.Node): Nodo base que referencia a demas nodos parte de la expresion. 
-
-        Returns:
-            str: Version to string del nodo. 
-        """
-        if isinstance(expr_node, anytree.Node):
-            children = expr_node.children
-            if expr_node.name == "expr":
-                content = []
-                for child in children:
-                    content.append(self.__get_expresion_to_str(child))
-                return "".join(content)     
-            
-            return expr_node.name
-        else:
-            return expr_node
-
-    def __get_parameters_from_method(self, method_node: anytree.Node) -> List[tuple]:
-        """Partiendo del nodo metodo, obtiene sus parametros. 
-
-        Args:
-            method_node (anytree.Node): Nodo metodo. 
-
-        Returns:
-            List[set]: [(id_parametro: Tipo)]; Listado de tuplas con el id del parametro y su tipo
-        """
-        formals_node = method_node.children[2]
-        parameters = []
-        for child in formals_node.children:                
-            if child.name == "formal":
-                parameter_parts = []
-                for part in child.children:
-                    if part.name != ":":
-                        if part.name == "type":
-                            parameter_type = part.children[0].name
-                            parameter_parts.append(parameter_type)
-                        else:
-                            parameter_parts.append(part.name)
-                    parameters.append(tuple(parameter_parts))
-            return parameters
-
-    def build_symbol_table(self, node, current_scope = None, current_line = 0):
-        """Construye la tabla de simbolos. Al encontrar metodos o clases inicializa Scopes y llama recursivamente sobre los hijos de ese nodo. 
-
-        Args:
-            node (anytree.Node): Nodo el cual se deasea ubicar en tabla de simbolos. 
+            node (anytree.Node): Nodo el cual se deasea ubicar en tabla de simbolos.
             current_scope (scope_actual, optional): En el cual se desea estableceer el nodo. Defaults to None.
         """
         if node.name == "program":
             for child in node.children:
-                current_line += 1
-                self.build_symbol_table(child, current_scope, current_line)
+                current_line = self.build_symbol_table(child, current_scope, current_line+1)
+            return current_line + 1
 
-        elif node.name == "classDef":
+        if node.name == "classDef":
             parent_class = "Object"
             children = node.children
             if len(children)>4:
@@ -190,16 +131,16 @@ class SymbolTable:
             class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", value=None, start_line = current_line, scope = current_scope)
 
             current_scope = self.start_scope(parent_scope=current_scope, scope_id=class_name)
-            
+
 
             for child in node.children:
-                current_line += 1
-                self.build_symbol_table(child, current_scope, current_line=current_line)
+                current_line = self.build_symbol_table(child, current_scope, current_line=current_line + 1)
 
             class_symbol.finish_line = current_line
             current_scope = current_scope.get_parent()
+            return current_line + 1
 
-        elif node.name == "method":
+        if node.name == "method":
             method_name = node.children[0].name
             method_return_type = node.children[5].children[0].name
             param_types = [param.children[0].name for param in node.children[2].children]
@@ -212,69 +153,74 @@ class SymbolTable:
             method_symbol = self.insert(name = method_name, semantic_type="method", data_type = full_signature, value=None, start_line=current_line, scope = method_scope, parameters=parameters, is_function=True )
 
             for child in node.children:
-                current_line += 1
-                self.build_symbol_table(child, method_scope, current_line=current_line)
+                current_line = self.build_symbol_table(child, method_scope, current_line=current_line+1)
             method_symbol.finish_line = current_line
             current_scope = method_scope.get_parent()
 
-        elif node.name == "attr":
+            return current_line + 1
+
+        if node.name == "attr":
             children = node.children
             attr_name = children[0].name
             attr_type = children[2].children[0].name
             attr_value =  children[-2] if len(children)>3 else None
 
-            self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,value=attr_value, start_line=current_line, scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None,  )
-       
-        elif node.name == "mainMethod":
+            self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,value=attr_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
+            return current_line + 1
+
+        if node.name == "mainMethod":
             mainMethod_symbol = self.insert("main", None, "method", None, current_line, None, current_scope, True, [], None)
             current_scope = self.start_scope(parent_scope=current_scope, scope_id="main")
-            
+
             for child in node.children:
-                current_line += 1
-                self.build_symbol_table(child, current_scope, current_line=current_line)
-            
+                current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
+
             mainMethod_symbol.finish_line = current_line
             current_scope = current_scope.get_parent()
-        elif node.name == "mainClassDef":
+
+
+        if node.name == "mainClassDef":
             class_symbol = self.insert("Main", None, "class", "void", current_line, None, current_scope, False, [], None)
             current_scope = self.start_scope(parent_scope=current_scope, scope_id="Main")
-            
+
             for child in node.children:
-                current_line += 1
-                self.build_symbol_table(child, current_scope, current_line=current_line)
+                current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
 
             class_symbol.finish_line = current_line
             current_scope = current_scope.get_parent()
+            return current_line + 1
 
-
-            print("a")
-            print(1)
-        elif node.name == "mainCall":
+        if node.name == "mainCall":
             self.insert("main_call", None, "call", None, current_line, current_line, current_scope, False, [], None)
-        else:
-            for child in node.children:
-                current_line += 1
-                self.build_symbol_table(child, current_scope, current_line=current_line)
+            return current_line +1
 
-    def delete_content(self, name: str, scope: Scope=None)-> bool: 
-        """Utilizando el nombre del simbolo eliminar toda referencia del simbolo en el objeto. 
+
+        for child in node.children:
+            current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
+        return current_line + 1
+
+    def class_build_symbol(self, node, current_scope , current_line):
+        pass
+
+    def delete_content(self, name: str, scope: Scope=None)-> bool:
+        """Utilizando el nombre del simbolo eliminar toda referencia del simbolo en el objeto.
 
         Args:
-            name (str): Nombre del símbolo. 
+            name (str): Nombre del símbolo.
             scope (Scope, optional): Objeto scope en el que se espera encontrar el simbolo. Defaults to None.
 
         Returns:
-            bool: Indica si la operación se realizó con éxito. True si se elimino, False si no lo encontro en el scope. 
+            bool: Indica si la operación se realizó con éxito. True si se elimino, False si no lo encontro en el scope.
         """
         scope: Scope = self.__check_or_get_default_scope(scope)
         if name in self.content[scope.scope_id]:
             del self.content[scope.scope_id][name]
-            scope.delete_content(name)  
-            return True  
-        return False  
-    
+            scope.delete_content(name)
+            return True
+        return False
+
     def insert(self, name, data_type, semantic_type, value, start_line = None, finish_line = None, scope = None, is_function = False, parameters = [], parameter_passing_method = None):
-        """Inerta un simbolo a la tabla. 
+        """Inerta un simbolo a la tabla.
 
         Args:
             name (str): Nombre de simbolo
@@ -292,16 +238,16 @@ class SymbolTable:
         scope.add_content(symbol)
         self.content[scope.scope_id][symbol.name] = symbol
         return symbol
- 
+
     def search(self, name, scope = None):
-        """Busca por nombre el símbolo en la tabla partiendo de un scope. En caso de encontrarlo en el actual expande la busqueda al padre. 
+        """Busca por nombre el símbolo en la tabla partiendo de un scope. En caso de encontrarlo en el actual expande la busqueda al padre.
 
         Args:
             name (str): _description_
             scope (Scope, optional): Scope sobre el que se espera encontrar . Defaults to None.
 
         Returns:
-            Symbol: El simbolo buscado con todos su atributos. 
+            Symbol: El simbolo buscado con todos su atributos.
         """
         scope: Scope = self.__check_or_get_default_scope(scope)
         item: Symbol = None
@@ -312,19 +258,80 @@ class SymbolTable:
                 scope = scope.get_parent()
             else:
                 found_item = True
-        
+
         return item
 
     def start_scope(self, parent_scope = None, scope_id = None):
-        """Incializa un scope en el objeto. 
+        """Incializa un scope en el objeto.
 
         Args:
             parent_scope (Scope, optional): Scope padre. Defaults to None-> Global.
             scope_id (str, optional): Identificador de este nuevo scope. Defaults to None.
 
         Returns:
-            Scope: El nuevo scope creado 
+            Scope: El nuevo scope creado
         """
         new_scope = Scope(parent=parent_scope, scope_id=scope_id)
         self.scopes[scope_id] = new_scope
         return new_scope
+    
+    def __check_or_get_default_scope(self, scope: Scope):
+        """Revisa la validez de un scope y en caso no lo sea, devuelve el global para ser utilizado.
+
+        Args:
+            scope (Scope): Scope que se desea comprobar validez/utilizar.
+
+        Returns:
+            Scope: Un Scope valido, ya sea el original (de ser válido), o el global por default.
+        """
+        if scope == None:
+            return self.global_scope
+
+        if scope.scope_id not in self.scopes:
+            return self.global_scope
+        return scope
+
+    def __get_expresion_to_str(self, expr_node: anytree.Node)-> str:
+        """Convierte Nodos de anytree con nombre expr en su valor to string deconstruyendo el valor de sus hijos.
+
+        Args:
+            expr_node (anytree.Node): Nodo base que referencia a demas nodos parte de la expresion.
+
+        Returns:
+            str: Version to string del nodo.
+        """
+        if isinstance(expr_node, anytree.Node):
+            children = expr_node.children
+            if expr_node.name == "expr":
+                content = []
+                for child in children:
+                    content.append(self.__get_expresion_to_str(child))
+                return "".join(content)
+
+            return expr_node.name
+        else:
+            return expr_node
+
+    def __get_parameters_from_method(self, method_node: anytree.Node) -> List[tuple]:
+        """Partiendo del nodo metodo, obtiene sus parametros.
+
+        Args:
+            method_node (anytree.Node): Nodo metodo.
+
+        Returns:
+            List[set]: [(id_parametro: Tipo)]; Listado de tuplas con el id del parametro y su tipo
+        """
+        formals_node = method_node.children[2]
+        parameters = []
+        for child in formals_node.children:
+            if child.name == "formal":
+                parameter_parts = []
+                for part in child.children:
+                    if part.name != ":":
+                        if part.name == "type":
+                            parameter_type = part.children[0].name
+                            parameter_parts.append(parameter_type)
+                        else:
+                            parameter_parts.append(part.name)
+                    parameters.append(tuple(parameter_parts))
+            return parameters
