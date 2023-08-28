@@ -1,4 +1,5 @@
 import os
+import sys
 from tkinter import filedialog, Tk
 import tkinter as tk
 from antlr4 import *
@@ -10,7 +11,7 @@ from anytree.exporter import UniqueDotExporter
 from CustomErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
-import sys
+from SemanticProccess import check_semantic
 
 
 def run_program(text_widget, gui_window):
@@ -63,11 +64,6 @@ def create_gui(input_data):
     # Añade espacio en la parte superior e inferior
     text_widget.pack(pady=10)
 
-    # Add an error label at the top of the new GUI window if there are no errors
-    no_error_label = tk.Label(
-        gui_window, text="No se encontraron errores.", fg="green")
-    no_error_label.pack()
-
     # Agregar un botón personalizado para volver a ejecutar el programa
     button_style = {"padx": 20, "pady": 10,
                     "background": "#4CAF50", "foreground": "white"}
@@ -75,6 +71,11 @@ def create_gui(input_data):
     run_button = tk.Button(gui_window, text="Compilar de nuevo",
                            command=lambda: run_program(text_widget, gui_window), **button_style)
     run_button.pack()
+
+    # Add an error label at the top of the new GUI window if there are no errors
+    no_error_label = tk.Label(
+        gui_window, text="No se encontraron errores.", fg="green")
+    no_error_label.pack()
 
     # Run the main GUI loop
     gui_window.mainloop()
@@ -163,8 +164,9 @@ def main_program(input_data, gui_window=None):
         # Proyecto # 1 Análisis Semántico
         print("\nInicio del Chequeo Semántico:\n")
 
-        # if check_semantic_rules(tree, root, symbol_table):
-        if True:
+        semantic_verification, feedback = check_semantic(symbol_table)
+
+        if semantic_verification:
             print("\nChequeo semántico exitoso!\n")
 
             if gui_window:
@@ -174,7 +176,15 @@ def main_program(input_data, gui_window=None):
             create_gui(input_data)
 
         else:
-            print("\nSe procede a terminar el programa por errores semánticos.")
+            print("\n")
+            for error in feedback:
+                print(error.name, ": ", error.details)
+            print(
+                "----------------------------------------------------------------------------------")
+            print(
+                "\nYa que hay 1 o más errores semánticos no se compilará el archivo input.\n")
+            print(
+                "----------------------------------------------------------------------------------")
 
 
 # Pide al usuario que seleccione un archivo
