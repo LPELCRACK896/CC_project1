@@ -139,78 +139,65 @@ class SymbolTable:
         if node.name == "program":
             for child in node.children:
                 current_line = self.build_symbol_table(child, current_scope, current_line+1)
-            return current_line + 1
+            return current_line
 
         if node.name == "classDef":
-            current_line = self.class_build_symbol(node=node, current_scope=current_scope, current_line=current_line)
-            return current_line + 1
+            current_line = self.class_build_symbol(node=node, current_scope=current_scope, current_line=current_line+1)
+            return current_line
 
         if node.name == "method":
-            current_line = self.method_build_symbol(node, current_scope, current_line)
-            return current_line + 1
+            current_line = self.method_build_symbol(node, current_scope, current_line+1)
+            return current_line
 
         if node.name == "attr": 
-            current_line = self.attribute_build_symbol(node, current_scope, current_line)
-            return current_line + 1
-
-        if node.name == "mainMethod":
-            current_line = self.mainMethod_build_symbol(node, current_scope, current_line)
-            return current_line + 1
-
-        if node.name == "mainClassDef":
-            current_line = self.mainClass_build_symbol(node, current_scope, current_line)
-            return current_line + 1
-
-        if node.name == "mainCall":
-            current_line = self.mainCall_build_symbol(node, current_scope, current_line)
-            return current_line +1
+            current_line = self.attribute_build_symbol(node, current_scope, current_line+1)
+            return current_line
         
         if node.name == "func_return":
-            return 1
+            return current_line + 1
         
         if node.name == "formals":
-            return 1
+            return current_line +1 
         if node.name == "expr":
-            print(node.name)
-            print(node)
-
             # If statment >>> 'if' bool_value  'then' expr 'else' expr 'fi'
             if node.children:
                 if node.children[0].name == "if":
-                    current_line = self.if_build_expr_symbol(node=node, current_scope=current_scope, current_line=current_line)
-                    return current_line + 1 
+                    current_line = self.if_build_expr_symbol(node=node, current_scope=current_scope, current_line=current_line+1)
+                    return current_line 
             # Attribute assignation >>> ID '<-' expr
             if node.children:
                 if len(node.children)>1:
                     if node.children[1].name=="<-":
-                        return current_line +1
+                        current_line = self.attribute_asignation_build_expr_symbol(node = node, current_scope=current_scope, current_line=current_line+1)
+                        return current_line
             # Parent Class method >>> expr '@' type '.' ID '(' expr (',' expr)* ')'
             if node.children:
                 if len(node.children)>1:
                     if node.children[1].name=="@":
-                        return current_line +1
+                        current_line = self.parent_method_call_expr_symbol(node = node, current_scope=current_line, current_line=current_line+1)
+                        return current_line
             # Local method call  >>> ID '(' expr (',' expr)* ')'
             if node.children:
                 if len(node.children)>1:
                     if node.children[1].name=="(":
-                        return current_line +1
+                        return current_line 
             # While bucle >>>'while' bool_value'loop' expr 'pool'
             if node.children:
                 if node.children[0].name == "while":
-                    return current_line +1
+                    return current_line
             # Key embeded  expr >>> '{' expr (';' expr)* '}'
             if node.children:
                 if node.children[0].name == "{":
-                    return current_line +1
+                    return current_line 
             # Let statment >>> 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
             if node.children:
                 if node.children[0].name == "let":
-                    return current_line +1
+                    return current_line 
             # External method call >>> expr '.' ID '(' expr (',' expr)* ')'
             if node.children:
                 if len(node.children)>1:
                     if node.children[1].name==".":
-                        return current_line +1           
+                        return current_line
             # NEW Object >>> 'new' classDef
             if node.children:
                 if node.children[0].name == "new":
@@ -227,7 +214,7 @@ class SymbolTable:
             '''
                 Implementar
             '''
-            return 1
+            return current_line 
 
         for child in node.children:
             current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
@@ -278,7 +265,7 @@ class SymbolTable:
         children = node.children
         attr_name = children[0].name
         attr_type = children[2].children[0].name
-        attr_value =  children[-2] if len(children)>3 else None
+        attr_value =  children[-2] if len(children)>4 else None
         default_value = None
 
         if attr_type == "Bool":
@@ -287,14 +274,10 @@ class SymbolTable:
             default_value = ""
         elif attr_type == "Int":
             default_value = 0
-        
-
-
 
         self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,node =node, value=attr_value, default_value = default_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
 
         return current_line
-
 
     def if_build_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
         
@@ -314,11 +297,31 @@ class SymbolTable:
 
         for child in node.children:
             current_line = self.build_symbol_table(child, if_scope, current_line=current_line+1)
-        if_symbol.finish_line = current_line     
-        return current_line+1
+        if_symbol.finish_line = current_line  
 
-    def expression_build_symbol(self, node, current_scope, current_line)-> int:
-        pass
+        return current_line
+
+    def attribute_asignation_build_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
+        expression_string = self.__get_expresion_to_str(node)
+        self.insert(
+            name = expression_string,
+            data_type=None,
+            semantic_type="attribute_assignation",
+            value=None,
+            default_value=None,
+            start_line=current_line,
+            finish_line=current_line,
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node
+            )
+        return current_line 
+
+    def parent_method_call_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
+        print(1)
+        return current_line
 
     def delete_content(self, name: str, scope: Scope=None)-> bool:
         """Utilizando el nombre del simbolo eliminar toda referencia del simbolo en el objeto.
