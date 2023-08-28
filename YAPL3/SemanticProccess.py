@@ -16,9 +16,10 @@ active_rules: ActiveRulesType = {
     "5_inheritance_override_logic": check_inheritance_override_logic,
     "6_default_values": not_implemented_true,  # EZ: ia estaba desde la symbol table
     "7_casting_int_bool": check_casting,  # EZ:
-    "8_assignation_expresions_type_on_each_side": check_assignment_types,  # Intermedio
-    "8_assignation_expresions_compatible_and_rule": check_type_compatibility,  # Compleja
-    "9_method_calls_and_return_values": not_implemented_true,  # Complejo
+    "8_assignation_expresions_type_on_each_side": check_assignment_types,  # Intermedio: si?
+    # Compleja: talvez?
+    "8_assignation_expresions_compatible_and_rule": check_type_compatibility,
+    "9_method_calls_and_return_values": check_method_calls_and_return_values,  # Complejo
     "10_control_structures": not_implemented_true,  # Facil a priori
     # Un poco más dificil, implica implementar guardar expresiones en tabla de simbolos o algo por el estilo.
     "11_operators_and_expressions": not_implemented_true,

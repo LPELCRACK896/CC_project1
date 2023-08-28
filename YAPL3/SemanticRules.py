@@ -60,7 +60,7 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                     if content_symbol.value == "type":
                         content_symbol.value = content_symbol.default_value
 
-                    # HAY QUE CAMBIAR EL NODO POR EL VALOR
+                    print(content_symbol.get_value())
 
                     if content_symbol.data_type == "Int":
                         if content_symbol.value is not None and not isinstance(content_symbol.value, int):
@@ -399,6 +399,69 @@ def check_type_compatibility(symbol_table: SymbolTable) -> (bool, SemanticFeedBa
                                     else:
                                         feedback.append(SemanticError(name="TypeCompatibilityError",
                                                                       details=f"La expresión de asignación para el atributo '{attr_name}' de la clase '{class_name}' tiene tipos incompatibles.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope))
+                                        all_passed = False
+
+    return all_passed, feedback
+
+
+def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    # Recorremos todas las clases en la tabla de símbolos
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" == scope_id:
+            continue  # Pasar a la siguiente clase si es 'global'
+
+        if class_scope.scope_id.endswith("(class)"):
+            class_name = class_scope.scope_id.split("_")[1].split(
+                "(")[0]  # Extraer el nombre de la clase del scope_id
+
+            # Recorremos los símbolos en el scope de la clase
+            for content_name, content_symbol in class_scope.content.items():
+                if content_symbol.semantic_type == "method":
+                    method_name = content_name
+                    method_parameters = content_symbol.parameters
+                    method_return_type = content_symbol.data_type
+
+                    # Buscar si hay llamadas al método en el código
+                    for _, symbols in symbol_table.content.items():
+                        for symbol_name, symbol in symbols.items():
+                            if symbol.semantic_type == "expression" and method_name in str(symbol.node):
+                                expression_node = symbol.node
+                                expression_children = expression_node.children
+
+                                # Verificar si es una llamada a método
+                                if len(expression_children) > 1 and expression_children[1].name == "call":
+                                    argument_nodes = expression_children[2].children
+
+                                    # Verificar argumentos
+                                    if len(argument_nodes) != len(method_parameters):
+                                        feedback.append(SemanticError(name="MethodCallArgumentError",
+                                                                      details=f"La llamada al método '{method_name}' en la clase '{class_name}' no tiene el número correcto de argumentos.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope))
+                                        all_passed = False
+                                    else:
+                                        for arg_node, param_type in zip(argument_nodes, method_parameters):
+                                            # Verificar tipos de argumentos
+                                            arg_type = arg_node.name
+                                            if not (arg_type == param_type or (arg_type.startswith(("int", "bool")) and param_type == "int")):
+                                                feedback.append(SemanticError(name="MethodCallArgumentTypeError",
+                                                                              details=f"El tipo del argumento en la llamada al método '{method_name}' en la clase '{class_name}' no coincide con el tipo esperado.",
+                                                                              symbol=content_symbol,
+                                                                              scope=class_scope))
+                                                all_passed = False
+
+                                # Verificar valores de retorno
+                                if expression_node.name == "return":
+                                    return_value_node = expression_children[1]
+                                    return_value_type = return_value_node.name
+                                    if not (return_value_type == method_return_type or (return_value_type.startswith(("int", "bool")) and method_return_type == "int")):
+                                        feedback.append(SemanticError(name="MethodReturnValueError",
+                                                                      details=f"El tipo de valor de retorno en el método '{method_name}' en la clase '{class_name}' no coincide con el tipo de retorno declarado.",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope))
                                         all_passed = False
