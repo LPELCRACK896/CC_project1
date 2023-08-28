@@ -66,7 +66,7 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                         if not isinstance(value, int) and isinstance(value, str):
                             if value.isnumeric():
                                 value = int(value)
-                        if value is not None and not isinstance(value, int):
+                        if value is not None and not isinstance(value, int) and not isinstance(value, str):
                             feedback.append(SemanticError(name="InvalidAttributeValue",
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Int.",
                                                           symbol=content_symbol,
@@ -74,6 +74,12 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                             all_passed = False
 
                         # chequear si es agrupacion de variables
+                        if isinstance(value, str):
+                            feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' tiene asignacion de 2 o más variables.",
+                                                          symbol=content_symbol,
+                                                          scope=class_scope))
+                            all_passed = False
 
                     elif content_symbol.data_type == "String":
                         if value is not None and not (isinstance(value, str)):
