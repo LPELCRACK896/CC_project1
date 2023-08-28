@@ -57,27 +57,33 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
             # Verificar atributos en la clase
             for content_name, content_symbol in class_scope.content.items():
                 if content_symbol.semantic_type == "attr":
-                    if content_symbol.value == "type":
+                    if content_symbol.value == None:
                         content_symbol.value = content_symbol.default_value
 
-                    print(content_symbol.get_value())
+                    value = content_symbol.get_value()
 
                     if content_symbol.data_type == "Int":
-                        if content_symbol.value is not None and not isinstance(content_symbol.value, int):
+                        if not isinstance(value, int) and isinstance(value, str):
+                            if value.isnumeric():
+                                value = int(value)
+                        if value is not None and not isinstance(value, int):
                             feedback.append(SemanticError(name="InvalidAttributeValue",
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Int.",
                                                           symbol=content_symbol,
                                                           scope=class_scope))
                             all_passed = False
+
+                        # chequear si es agrupacion de variables
+
                     elif content_symbol.data_type == "String":
-                        if content_symbol.value is not None and not (isinstance(content_symbol.value, str) and content_symbol.value.startswith('"') and content_symbol.value.endswith('"')):
+                        if value is not None and not (isinstance(value, str)):
                             feedback.append(SemanticError(name="InvalidAttributeValue",
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo String y estar entre comillas dobles.",
                                                           symbol=content_symbol,
                                                           scope=class_scope))
                             all_passed = False
                     elif content_symbol.data_type == "Bool":
-                        if content_symbol.value is not None and content_symbol.value not in ["true", "false"]:
+                        if value is not None and value not in ["true", "false"]:
                             feedback.append(SemanticError(name="InvalidAttributeValue",
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true' o 'false').",
                                                           symbol=content_symbol,
