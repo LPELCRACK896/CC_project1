@@ -1,6 +1,7 @@
 class Circle inherits Shape {
     radius: Int <- 10;
     color: String <- "Red";
+    hasCorners: Bool;
     
     diameter: Int <- radius + radius;
 
@@ -31,9 +32,8 @@ class Rectangle inherits Shape {
 }
 
 class Main {
-    main (){
-
+    main():Int{
+        return 1;
     }
 }
-
-(new Main).main()
+(new Main).main();
