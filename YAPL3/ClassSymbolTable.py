@@ -11,6 +11,7 @@ class Symbol:
     name: str
     data_type: str
     semantic_type:str
+    node: anytree.Node = None
     default_value: any = None
     is_local_scope: bool = False 
     start_line: str = None
@@ -90,6 +91,18 @@ class Scope:
             del self.content[name]
             return True 
         return False      
+    
+    def get_scope_chain(self):
+        """Get a string that contains the scope_ids from the current scope
+        up to the root scope, separated by underscores."""
+        scope_chain = []
+        current_scope = self  
+        
+        while current_scope is not None:
+            scope_chain.append(current_scope.scope_id)
+            current_scope = current_scope.get_parent()  
+        
+        return "_".join(reversed(scope_chain))  
 
 class SymbolTable:
     def __init__(self, root):
@@ -110,10 +123,10 @@ class SymbolTable:
             str: Tabla estetica. 
         """
         table = PrettyTable()
-        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type", "Parameters", "Start line", "Finish Line"]
+        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type",  "S. line", "F. Line"]
         for scope_id,  symbols in self.content.items():
             for symbol_name, symbol in symbols.items():
-                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.__get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.parameters, symbol.start_line, symbol.finish_line])
+                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.__get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.start_line, symbol.finish_line])
         return str(table)
 
     def build_symbol_table(self, node, current_scope = None, current_line = 0) -> int:
@@ -151,13 +164,77 @@ class SymbolTable:
         if node.name == "mainCall":
             current_line = self.mainCall_build_symbol(node, current_scope, current_line)
             return current_line +1
+        
+        if node.name == "func_return":
+            return 1
+        
+        if node.name == "formals":
+            return 1
+        if node.name == "expr":
+            print(node.name)
+            print(node)
+
+            # If statment >>> 'if' bool_value  'then' expr 'else' expr 'fi'
+            if node.children:
+                if node.children[0].name == "if":
+                    current_line = self.if_build_expr_symbol(node=node, current_scope=current_scope, current_line=current_line)
+                    return current_line + 1 
+            # Attribute assignation >>> ID '<-' expr
+            if node.children:
+                if len(node.children)>1:
+                    if node.children[1].name=="<-":
+                        return current_line +1
+            # Parent Class method >>> expr '@' type '.' ID '(' expr (',' expr)* ')'
+            if node.children:
+                if len(node.children)>1:
+                    if node.children[1].name=="@":
+                        return current_line +1
+            # Local method call  >>> ID '(' expr (',' expr)* ')'
+            if node.children:
+                if len(node.children)>1:
+                    if node.children[1].name=="(":
+                        return current_line +1
+            # While bucle >>>'while' bool_value'loop' expr 'pool'
+            if node.children:
+                if node.children[0].name == "while":
+                    return current_line +1
+            # Key embeded  expr >>> '{' expr (';' expr)* '}'
+            if node.children:
+                if node.children[0].name == "{":
+                    return current_line +1
+            # Let statment >>> 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
+            if node.children:
+                if node.children[0].name == "let":
+                    return current_line +1
+            # External method call >>> expr '.' ID '(' expr (',' expr)* ')'
+            if node.children:
+                if len(node.children)>1:
+                    if node.children[1].name==".":
+                        return current_line +1           
+            # NEW Object >>> 'new' classDef
+            if node.children:
+                if node.children[0].name == "new":
+                    return current_line +1 
+            # Isvoid statment 'isvoid' expr
+            if node.children:
+                if node.children[0].name == "isvoid":
+                    return current_line +1
+            # '(' expr ')'
+            if node.children:
+                if node.children[0].name == "(":
+                    return current_line +1
+            # Comparation expression expr op=OP expr
+            '''
+                Implementar
+            '''
+            return 1
 
         for child in node.children:
             current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
         
         return current_line + 1
 
-    def class_build_symbol(self, node, current_scope , current_line)-> int:
+    def class_build_symbol(self, node: anytree.Node, current_scope: Scope , current_line: int)-> int:
         parent_class = "Object"
         children = node.children
         if len(children)>4:
@@ -165,9 +242,9 @@ class SymbolTable:
                 parent_class = children[3].name
 
         class_name = node.children[1].name
-        class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", value=None, default_value=None,start_line = current_line, scope = current_scope)
+        class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", node=node,value=None, default_value=None,start_line = current_line, scope = current_scope)
 
-        current_scope = self.start_scope(parent_scope=current_scope, scope_id=class_name)
+        current_scope = self.start_scope(parent_scope=current_scope, scope_id=f'{current_scope.scope_id}_{class_name}(class)')
 
 
         for child in node.children:
@@ -178,17 +255,17 @@ class SymbolTable:
 
         return current_line
 
-    def method_build_symbol(self, node, current_scope, current_line)-> int:
+    def method_build_symbol(self, node: anytree.Node, current_scope: Scope, current_line: int)-> int:
         method_name = node.children[0].name
         method_return_type = node.children[5].children[0].name
         param_types = [param.children[0].name for param in node.children[2].children]
         full_signature = f"method -> ({', '.join(param_types)}) -> {method_return_type}"
-        method_scope_id = f"{current_scope.scope_id}"
+        method_scope_id = f"{current_scope.scope_id}_{method_name}(method)"
 
         method_scope = self.start_scope(parent_scope=current_scope, scope_id=method_scope_id)
         parameters = self.__get_parameters_from_method(node)
 
-        method_symbol = self.insert(name = method_name, semantic_type="method", data_type = full_signature, default_value=None,value=None, start_line=current_line, scope = method_scope, parameters=parameters, is_function=True )
+        method_symbol = self.insert(name = method_name, semantic_type="method", data_type = full_signature, node=node,default_value=None,value=None, start_line=current_line, scope = current_scope, parameters=parameters, is_function=True )
 
         for child in node.children:
             current_line = self.build_symbol_table(child, method_scope, current_line=current_line+1)
@@ -214,37 +291,31 @@ class SymbolTable:
 
 
 
-        self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,value=attr_value, default_value = default_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
+        self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,node =node, value=attr_value, default_value = default_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
 
         return current_line
 
-    def mainClass_build_symbol(self, node, current_scope, current_line)-> int:
-        class_symbol = self.insert("Main", None, "class", "void", None, current_line, None, current_scope, False, [], None)
-        current_scope = self.start_scope(parent_scope=current_scope, scope_id="Main")
+
+    def if_build_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
+        
+        if_symbol = self.insert(
+            name = f"{current_line}_if", 
+            semantic_type = "expression", 
+            data_type = "void", 
+            node = node, 
+            default_value = None,
+            value = None,
+            start_line = current_line,
+            scope = current_scope,
+            parameters=[],
+            is_function=True)
+        
+        if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}_IF({current_line}if)")
 
         for child in node.children:
-            current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
-
-        class_symbol.finish_line = current_line
-        current_scope = current_scope.get_parent()
-
-        return current_line
-    
-    def mainMethod_build_symbol(self, node, current_scope, current_line)-> int:
-        mainMethod_symbol = self.insert("main", None, "method", None, None,current_line, None, current_scope, True, [], None)
-        current_scope = self.start_scope(parent_scope=current_scope, scope_id="main")
-
-        for child in node.children:
-            current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
-
-        mainMethod_symbol.finish_line = current_line
-        current_scope = current_scope.get_parent()
-
-        return current_line
-
-    def mainCall_build_symbol(self, node, current_scope, current_line)-> int:
-        self.insert("main_call", None, "call", None, None, current_line, current_line, current_scope, False, [], None)
-        return current_line
+            current_line = self.build_symbol_table(child, if_scope, current_line=current_line+1)
+        if_symbol.finish_line = current_line     
+        return current_line+1
 
     def expression_build_symbol(self, node, current_scope, current_line)-> int:
         pass
@@ -266,7 +337,7 @@ class SymbolTable:
             return True
         return False
 
-    def insert(self, name, data_type, semantic_type, value, default_value, start_line = None, finish_line = None, scope = None, is_function = False, parameters = [], parameter_passing_method = None):
+    def insert(self, name, data_type, semantic_type, value, default_value, start_line = None, finish_line = None, scope = None, is_function = False, parameters = [], parameter_passing_method = None, node = None):
         """Inerta un simbolo a la tabla.
 
         Args:
@@ -281,7 +352,7 @@ class SymbolTable:
             parameter_passing_method (_type_, optional): Metodo por el cual se pasan los parametros (referencia o valor). Defaults to None.
         """
         scope = self.__check_or_get_default_scope(scope)
-        symbol = Symbol(name = name, value = value, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_line=start_line, finish_line=finish_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method)
+        symbol = Symbol(name = name, value = value, node=node, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_line=start_line, finish_line=finish_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method)
         scope.add_content(symbol)
         self.content[scope.scope_id][symbol.name] = symbol
         return symbol
