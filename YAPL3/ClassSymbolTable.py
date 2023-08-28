@@ -110,10 +110,10 @@ class SymbolTable:
             str: Tabla estetica. 
         """
         table = PrettyTable()
-        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Data type", "Parameters", "Start line", "Finish Line"]
+        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type", "Parameters", "Start line", "Finish Line"]
         for scope_id,  symbols in self.content.items():
             for symbol_name, symbol in symbols.items():
-                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.__get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.data_type, symbol.parameters, symbol.start_line, symbol.finish_line])
+                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.__get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.parameters, symbol.start_line, symbol.finish_line])
         return str(table)
 
     def build_symbol_table(self, node, current_scope = None, current_line = 0) -> int:
@@ -165,7 +165,7 @@ class SymbolTable:
                 parent_class = children[3].name
 
         class_name = node.children[1].name
-        class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", value=None, start_line = current_line, scope = current_scope)
+        class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", value=None, default_value=None,start_line = current_line, scope = current_scope)
 
         current_scope = self.start_scope(parent_scope=current_scope, scope_id=class_name)
 
@@ -188,7 +188,7 @@ class SymbolTable:
         method_scope = self.start_scope(parent_scope=current_scope, scope_id=method_scope_id)
         parameters = self.__get_parameters_from_method(node)
 
-        method_symbol = self.insert(name = method_name, semantic_type="method", data_type = full_signature, value=None, start_line=current_line, scope = method_scope, parameters=parameters, is_function=True )
+        method_symbol = self.insert(name = method_name, semantic_type="method", data_type = full_signature, default_value=None,value=None, start_line=current_line, scope = method_scope, parameters=parameters, is_function=True )
 
         for child in node.children:
             current_line = self.build_symbol_table(child, method_scope, current_line=current_line+1)
@@ -202,13 +202,24 @@ class SymbolTable:
         attr_name = children[0].name
         attr_type = children[2].children[0].name
         attr_value =  children[-2] if len(children)>3 else None
+        default_value = None
 
-        self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,value=attr_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
+        if attr_type == "Bool":
+            default_value = "false"
+        elif attr_type == "String":
+            default_value = ""
+        elif attr_type == "Int":
+            default_value = 0
+        
+
+
+
+        self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,value=attr_value, default_value = default_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
 
         return current_line
 
     def mainClass_build_symbol(self, node, current_scope, current_line)-> int:
-        class_symbol = self.insert("Main", None, "class", "void", current_line, None, current_scope, False, [], None)
+        class_symbol = self.insert("Main", None, "class", "void", None, current_line, None, current_scope, False, [], None)
         current_scope = self.start_scope(parent_scope=current_scope, scope_id="Main")
 
         for child in node.children:
@@ -220,7 +231,7 @@ class SymbolTable:
         return current_line
     
     def mainMethod_build_symbol(self, node, current_scope, current_line)-> int:
-        mainMethod_symbol = self.insert("main", None, "method", None, current_line, None, current_scope, True, [], None)
+        mainMethod_symbol = self.insert("main", None, "method", None, None,current_line, None, current_scope, True, [], None)
         current_scope = self.start_scope(parent_scope=current_scope, scope_id="main")
 
         for child in node.children:
@@ -232,7 +243,7 @@ class SymbolTable:
         return current_line
 
     def mainCall_build_symbol(self, node, current_scope, current_line)-> int:
-        self.insert("main_call", None, "call", None, current_line, current_line, current_scope, False, [], None)
+        self.insert("main_call", None, "call", None, None, current_line, current_line, current_scope, False, [], None)
         return current_line
 
     def expression_build_symbol(self, node, current_scope, current_line)-> int:
@@ -255,7 +266,7 @@ class SymbolTable:
             return True
         return False
 
-    def insert(self, name, data_type, semantic_type, value, start_line = None, finish_line = None, scope = None, is_function = False, parameters = [], parameter_passing_method = None):
+    def insert(self, name, data_type, semantic_type, value, default_value, start_line = None, finish_line = None, scope = None, is_function = False, parameters = [], parameter_passing_method = None):
         """Inerta un simbolo a la tabla.
 
         Args:
@@ -270,7 +281,7 @@ class SymbolTable:
             parameter_passing_method (_type_, optional): Metodo por el cual se pasan los parametros (referencia o valor). Defaults to None.
         """
         scope = self.__check_or_get_default_scope(scope)
-        symbol = Symbol(name = name, value = value, data_type = data_type,semantic_type=semantic_type, start_line=start_line, finish_line=finish_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method)
+        symbol = Symbol(name = name, value = value, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_line=start_line, finish_line=finish_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method)
         scope.add_content(symbol)
         self.content[scope.scope_id][symbol.name] = symbol
         return symbol
