@@ -30,7 +30,7 @@ class Symbol:
                 return None
             if self.data_type == "Int" or self.data_type == "String" or self.data_type == "Bool" :   
                 return self.default_value
-        return self.value
+        return SymbolTable.get_expresion_to_str(self.value)
 class Scope:
     """Representa un espacio en una tabla de simbolos y son el objeto que tiene una referencia directa a simbolos. Estos a su vez pueden tener scopes padres. 
     """
@@ -126,7 +126,7 @@ class SymbolTable:
         table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type",  "S. line", "F. Line"]
         for scope_id,  symbols in self.content.items():
             for symbol_name, symbol in symbols.items():
-                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.__get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.start_line, symbol.finish_line])
+                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.start_line, symbol.finish_line])
         return str(table)
 
     def build_symbol_table(self, node, current_scope = None, current_line = 0) -> int:
@@ -302,7 +302,7 @@ class SymbolTable:
         return current_line
 
     def attribute_asignation_build_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
-        expression_string = self.__get_expresion_to_str(node)
+        expression_string = self.get_expresion_to_str(node)
         self.insert(
             name = expression_string,
             data_type=None,
@@ -411,8 +411,9 @@ class SymbolTable:
         if scope.scope_id not in self.scopes:
             return self.global_scope
         return scope
-
-    def __get_expresion_to_str(self, expr_node: anytree.Node)-> str:
+    
+    @staticmethod
+    def get_expresion_to_str(expr_node: anytree.Node)-> str:
         """Convierte Nodos de anytree con nombre expr en su valor to string deconstruyendo el valor de sus hijos.
 
         Args:
@@ -426,7 +427,7 @@ class SymbolTable:
             if expr_node.name == "expr":
                 content = []
                 for child in children:
-                    content.append(self.__get_expresion_to_str(child))
+                    content.append(SymbolTable.get_expresion_to_str(child))
                 return "".join(content)
 
             return expr_node.name
