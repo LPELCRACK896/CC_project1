@@ -6,7 +6,7 @@ from SemanticRules import *
 active_rules: ActiveRulesType = {
     "1_class_definition": class_definition,  # lista
     "1_attributes_definition": attributes_definition,  # nose nocreo
-    "2_has_class_main_containing_main_method": not_implemented_true,  # EZ
+    "2_has_class_main_containing_main_method": main_check,  # EZ
     "3_main_call":  not_implemented_true,  # EZ
     "4_local_and_global_scope": not_implemented_true,  # EZ
     "4_visibility_per_scope": not_implemented_true,  # Intermedio

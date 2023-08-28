@@ -49,85 +49,89 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
 
     # Recorremos todas las clases en la tabla de símbolos
     for class_name in symbol_table.scopes:
+        if class_name == "global":
+            continue  # Pasar a la siguiente clase si es 'global'
+
         class_scope = symbol_table.scopes[class_name]
 
-        # Validamos los atributos de la clase
-        for attr_name in class_scope.content:
-            attr_symbol = class_scope.content[attr_name]
-            if attr_symbol.semantic_type == "attr":
-                if attr_symbol.data_type == "":
-                    feedback.append(SemanticError(name="MissingDataType",
-                                                  details=f"Atributo '{attr_name}' en la clase '{class_name}' no tiene un tipo de dato definido.",
-                                                  symbol=attr_symbol,
+        # Verificamos los atributos en la clase
+        for content_name in class_scope.content:
+            content_symbol = class_scope.content[content_name]
+
+            if content_symbol.semantic_type == "attr":
+                # Verificación del data type
+                if content_symbol.data_type not in ["Int", "String", "Bool"]:
+                    feedback.append(SemanticError(name="InvalidDataTypeError",
+                                                  details=f"El atributo '{content_name}' en la clase '{class_name}' tiene un tipo de dato inválido: {content_symbol.data_type}. Debe ser 'Int', 'String' o 'Bool'.",
+                                                  symbol=content_symbol,
                                                   scope=class_scope))
                     all_passed = False
-                else:
-                    valid_types = ["Int", "String", "Bool"]
-                    if attr_symbol.data_type not in valid_types:
-                        feedback.append(SemanticError(name="InvalidDataType",
-                                                      details=f"Atributo '{attr_name}' en la clase '{class_name}' tiene un tipo de dato inválido.",
-                                                      symbol=attr_symbol,
+                # Verificación del value
+                value = content_symbol.value
+
+                if value == "type":
+                    value = content_symbol.default_value
+
+                if content_symbol.data_type == "String":
+                    if value is None or not (isinstance(value, str) and value.startswith('"') and value.endswith('"')):
+                        feedback.append(SemanticError(name="InvalidValueError",
+                                                      details=f"El atributo '{content_name}' en la clase '{class_name}' debe tener un valor de tipo String entre comillas dobles.",
+                                                      symbol=content_symbol,
+                                                      scope=class_scope))
+                        all_passed = False
+                elif content_symbol.data_type == "Int":
+                    if value is None or not (isinstance(value, int) or (isinstance(value, str) and value.isnumeric())):
+                        feedback.append(SemanticError(name="InvalidValueError",
+                                                      details=f"El atributo '{content_name}' en la clase '{class_name}' debe tener un valor de tipo Int (número entero).",
+                                                      symbol=content_symbol,
+                                                      scope=class_scope))
+                        all_passed = False
+                elif content_symbol.data_type == "Bool":
+                    if value is None or not (isinstance(value, bool) or (isinstance(value, str) and value.lower() in ["true", "false"])):
+                        feedback.append(SemanticError(name="InvalidValueError",
+                                                      details=f"El atributo '{content_name}' en la clase '{class_name}' debe tener un valor de tipo Bool (True o False).",
+                                                      symbol=content_symbol,
                                                       scope=class_scope))
                         all_passed = False
 
-                    if attr_symbol.value is not None:
-                        # Verificar que el valor asignado sea compatible con el tipo de dato
-                        if attr_symbol.data_type == "Int":
-                            if not isinstance(attr_symbol.value, int):
-                                try:
-                                    int_value = int(attr_symbol.value)
-                                except ValueError:
-                                    feedback.append(SemanticError(name="IncorrectValueType",
-                                                                  details=f"Atributo '{attr_name}' en la clase '{class_name}' tiene un valor asignado incompatible con el tipo de dato 'Int'.",
-                                                                  symbol=attr_symbol,
-                                                                  scope=class_scope))
-                                    all_passed = False
-                        elif attr_symbol.data_type == "String":
-                            if not isinstance(attr_symbol.value, str):
-                                feedback.append(SemanticError(name="IncorrectValueType",
-                                                              details=f"Atributo '{attr_name}' en la clase '{class_name}' tiene un valor asignado incompatible con el tipo de dato 'String'.",
-                                                              symbol=attr_symbol,
-                                                              scope=class_scope))
-                                all_passed = False
-                        elif attr_symbol.data_type == "Bool":
-                            if not isinstance(attr_symbol.value, bool):
-                                if attr_symbol.value.lower() == "true" or attr_symbol.value.lower() == "false":
-                                    attr_symbol.value = True if attr_symbol.value.lower() == "true" else False
-                                else:
-                                    feedback.append(SemanticError(name="IncorrectValueType",
-                                                                  details=f"Atributo '{attr_name}' en la clase '{class_name}' tiene un valor asignado incompatible con el tipo de dato 'Bool'.",
-                                                                  symbol=attr_symbol,
-                                                                  scope=class_scope))
-                                    all_passed = False
+    return all_passed, feedback
 
-                    if attr_symbol.default_value is not None:
-                        # Verificar que el valor default sea compatible con el tipo de dato
-                        if attr_symbol.data_type == "Int":
-                            if not isinstance(attr_symbol.default_value, int):
-                                try:
-                                    int_value = int(attr_symbol.default_value)
-                                except ValueError:
-                                    feedback.append(SemanticError(name="IncorrectDefaultValueType",
-                                                                  details=f"Atributo '{attr_name}' en la clase '{class_name}' tiene un valor default incompatible con el tipo de dato 'Int'.",
-                                                                  symbol=attr_symbol,
-                                                                  scope=class_scope))
-                                    all_passed = False
-                        elif attr_symbol.data_type == "String":
-                            if not isinstance(attr_symbol.default_value, str):
-                                feedback.append(SemanticError(name="IncorrectDefaultValueType",
-                                                              details=f"Atributo '{attr_name}' en la clase '{class_name}' tiene un valor default incompatible con el tipo de dato 'String'.",
-                                                              symbol=attr_symbol,
-                                                              scope=class_scope))
-                                all_passed = False
-                        elif attr_symbol.data_type == "Bool":
-                            if not isinstance(attr_symbol.default_value, bool):
-                                if attr_symbol.default_value.lower() == "true" or attr_symbol.default_value.lower() == "false":
-                                    attr_symbol.default_value = True if attr_symbol.default_value.lower() == "true" else False
-                                else:
-                                    feedback.append(SemanticError(name="IncorrectDefaultValueType",
-                                                                  details=f"Atributo '{attr_name}' en la clase '{class_name}' tiene un valor default incompatible con el tipo de dato 'Bool'.",
-                                                                  symbol=attr_symbol,
-                                                                  scope=class_scope))
-                                    all_passed = False
+
+def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    main_class_exists = False
+    main_method_exists = False
+
+    # Recorremos todas las clases en la tabla de símbolos
+    for class_name in symbol_table.scopes:
+        class_scope = symbol_table.scopes[class_name]
+
+        if class_name == "global":
+            continue  # Pasar a la siguiente clase si es 'global'
+
+        # Verificar si existe la clase 'Main'
+        if class_name == "Main":
+            main_class_exists = True
+
+            # Verificar si la clase 'Main' tiene un método 'main'
+            main_method = class_scope.search_content("main")
+            if main_method and main_method.semantic_type == "method":
+                main_method_exists = True
+            else:
+                feedback.append(SemanticError(name="MainMethodNotFoundError",
+                                              details="La clase 'Main' debe contener un método llamado 'main'.",
+                                              symbol=None,
+                                              scope=class_scope))
+                all_passed = False
+
+    # Verificar si la clase 'Main' existe
+    if not main_class_exists:
+        feedback.append(SemanticError(name="MainClassNotFoundError",
+                                      details="El programa debe contener una clase llamada 'Main'.",
+                                      symbol=None,
+                                      scope=None))
+        all_passed = False
 
     return all_passed, feedback

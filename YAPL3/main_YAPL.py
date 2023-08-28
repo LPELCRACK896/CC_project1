@@ -8,7 +8,7 @@ from YAPL3Parser import YAPL3Parser
 from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter
 # import del escuchador de errores personalizado
-from customErrorListener import CustomErrorListener
+from CustomErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
 from SemanticProccess import check_semantic
@@ -185,6 +185,16 @@ def main_program(input_data, gui_window=None):
                 "\nYa que hay 1 o más errores semánticos no se compilará el archivo input.\n")
             print(
                 "----------------------------------------------------------------------------------")
+            # Clear any previous error messages
+            clear_error_labels(gui_window)
+
+            # Show syntax and semantic errors above the button
+            error_label = tk.Label(
+                gui_window, text="¡Se encontraron errores en el código!", fg="red")
+            error_label.pack()
+
+            # If there are errors, show the GUI window again
+            gui_window.deiconify()
 
 
 # Pide al usuario que seleccione un archivo
