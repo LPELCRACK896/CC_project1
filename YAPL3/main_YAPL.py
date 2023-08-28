@@ -6,10 +6,11 @@ from YAPL3Lexer import YAPL3Lexer
 from YAPL3Parser import YAPL3Parser
 from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter
+# import del escuchador de errores personalizado
 from customErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
-from chequeoSemantico import *
+from chequeoSemantico import *  # import del chequeo semantico
 import sys
 
 
