@@ -22,6 +22,14 @@ class Symbol:
     parameters: List[str] = field(default_factory=list)  
     parameter_passing_method: str = None  
 
+
+    def get_value(self):
+        if self.value == None:
+            if not self.data_type:
+                return None
+            if self.data_type == "Int" or self.data_type == "String" or self.data_type == "Bool" :   
+                return self.default_value
+        return self.value
 class Scope:
     """Representa un espacio en una tabla de simbolos y son el objeto que tiene una referencia directa a simbolos. Estos a su vez pueden tener scopes padres. 
     """
@@ -121,85 +129,113 @@ class SymbolTable:
             return current_line + 1
 
         if node.name == "classDef":
-            parent_class = "Object"
-            children = node.children
-            if len(children)>4:
-                if children[2].name == 'inherits':
-                    parent_class = children[3].name
-
-            class_name = node.children[1].name
-            class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", value=None, start_line = current_line, scope = current_scope)
-
-            current_scope = self.start_scope(parent_scope=current_scope, scope_id=class_name)
-
-
-            for child in node.children:
-                current_line = self.build_symbol_table(child, current_scope, current_line=current_line + 1)
-
-            class_symbol.finish_line = current_line
-            current_scope = current_scope.get_parent()
+            current_line = self.class_build_symbol(node=node, current_scope=current_scope, current_line=current_line)
             return current_line + 1
 
         if node.name == "method":
-            method_name = node.children[0].name
-            method_return_type = node.children[5].children[0].name
-            param_types = [param.children[0].name for param in node.children[2].children]
-            full_signature = f"method -> ({', '.join(param_types)}) -> {method_return_type}"
-            method_scope_id = f"{current_scope.scope_id}"
-
-            method_scope = self.start_scope(parent_scope=current_scope, scope_id=method_scope_id)
-            parameters = self.__get_parameters_from_method(node)
-
-            method_symbol = self.insert(name = method_name, semantic_type="method", data_type = full_signature, value=None, start_line=current_line, scope = method_scope, parameters=parameters, is_function=True )
-
-            for child in node.children:
-                current_line = self.build_symbol_table(child, method_scope, current_line=current_line+1)
-            method_symbol.finish_line = current_line
-            current_scope = method_scope.get_parent()
-
+            current_line = self.method_build_symbol(node, current_scope, current_line)
             return current_line + 1
 
-        if node.name == "attr":
-            children = node.children
-            attr_name = children[0].name
-            attr_type = children[2].children[0].name
-            attr_value =  children[-2] if len(children)>3 else None
-
-            self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,value=attr_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
+        if node.name == "attr": 
+            current_line = self.attribute_build_symbol(node, current_scope, current_line)
             return current_line + 1
 
         if node.name == "mainMethod":
-            mainMethod_symbol = self.insert("main", None, "method", None, current_line, None, current_scope, True, [], None)
-            current_scope = self.start_scope(parent_scope=current_scope, scope_id="main")
-
-            for child in node.children:
-                current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
-
-            mainMethod_symbol.finish_line = current_line
-            current_scope = current_scope.get_parent()
-
+            current_line = self.mainMethod_build_symbol(node, current_scope, current_line)
+            return current_line + 1
 
         if node.name == "mainClassDef":
-            class_symbol = self.insert("Main", None, "class", "void", current_line, None, current_scope, False, [], None)
-            current_scope = self.start_scope(parent_scope=current_scope, scope_id="Main")
-
-            for child in node.children:
-                current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
-
-            class_symbol.finish_line = current_line
-            current_scope = current_scope.get_parent()
+            current_line = self.mainClass_build_symbol(node, current_scope, current_line)
             return current_line + 1
 
         if node.name == "mainCall":
-            self.insert("main_call", None, "call", None, current_line, current_line, current_scope, False, [], None)
+            current_line = self.mainCall_build_symbol(node, current_scope, current_line)
             return current_line +1
-
 
         for child in node.children:
             current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
+        
         return current_line + 1
 
-    def class_build_symbol(self, node, current_scope , current_line):
+    def class_build_symbol(self, node, current_scope , current_line)-> int:
+        parent_class = "Object"
+        children = node.children
+        if len(children)>4:
+            if children[2].name == 'inherits':
+                parent_class = children[3].name
+
+        class_name = node.children[1].name
+        class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", value=None, start_line = current_line, scope = current_scope)
+
+        current_scope = self.start_scope(parent_scope=current_scope, scope_id=class_name)
+
+
+        for child in node.children:
+            current_line = self.build_symbol_table(child, current_scope, current_line=current_line + 1)
+
+        class_symbol.finish_line = current_line
+        current_scope = current_scope.get_parent()
+
+        return current_line
+
+    def method_build_symbol(self, node, current_scope, current_line)-> int:
+        method_name = node.children[0].name
+        method_return_type = node.children[5].children[0].name
+        param_types = [param.children[0].name for param in node.children[2].children]
+        full_signature = f"method -> ({', '.join(param_types)}) -> {method_return_type}"
+        method_scope_id = f"{current_scope.scope_id}"
+
+        method_scope = self.start_scope(parent_scope=current_scope, scope_id=method_scope_id)
+        parameters = self.__get_parameters_from_method(node)
+
+        method_symbol = self.insert(name = method_name, semantic_type="method", data_type = full_signature, value=None, start_line=current_line, scope = method_scope, parameters=parameters, is_function=True )
+
+        for child in node.children:
+            current_line = self.build_symbol_table(child, method_scope, current_line=current_line+1)
+        method_symbol.finish_line = current_line
+        current_scope = method_scope.get_parent()
+
+        return current_line
+
+    def attribute_build_symbol(self, node, current_scope, current_line)-> int:
+        children = node.children
+        attr_name = children[0].name
+        attr_type = children[2].children[0].name
+        attr_value =  children[-2] if len(children)>3 else None
+
+        self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,value=attr_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
+
+        return current_line
+
+    def mainClass_build_symbol(self, node, current_scope, current_line)-> int:
+        class_symbol = self.insert("Main", None, "class", "void", current_line, None, current_scope, False, [], None)
+        current_scope = self.start_scope(parent_scope=current_scope, scope_id="Main")
+
+        for child in node.children:
+            current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
+
+        class_symbol.finish_line = current_line
+        current_scope = current_scope.get_parent()
+
+        return current_line
+    
+    def mainMethod_build_symbol(self, node, current_scope, current_line)-> int:
+        mainMethod_symbol = self.insert("main", None, "method", None, current_line, None, current_scope, True, [], None)
+        current_scope = self.start_scope(parent_scope=current_scope, scope_id="main")
+
+        for child in node.children:
+            current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
+
+        mainMethod_symbol.finish_line = current_line
+        current_scope = current_scope.get_parent()
+
+        return current_line
+
+    def mainCall_build_symbol(self, node, current_scope, current_line)-> int:
+        self.insert("main_call", None, "call", None, current_line, current_line, current_scope, False, [], None)
+        return current_line
+
+    def expression_build_symbol(self, node, current_scope, current_line)-> int:
         pass
 
     def delete_content(self, name: str, scope: Scope=None)-> bool:
