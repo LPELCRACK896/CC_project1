@@ -200,7 +200,7 @@ class SymbolTable:
         
         if_symbol = self.insert(
             name = f"{current_line}if", 
-            semantic_type = "if", 
+            semantic_type = "expression", 
             data_type = "block", 
             node = node, 
             default_value = None,
@@ -226,7 +226,7 @@ class SymbolTable:
     def while_exp_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         while_symbol = self.insert(
             name = f"{current_line}while", 
-            semantic_type = "while", 
+            semantic_type = "expression", 
             data_type = "Object", 
             node = node, 
             default_value = None,
