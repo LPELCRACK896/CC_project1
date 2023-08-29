@@ -540,51 +540,38 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
     return all_passed, feedback
 
 
-def check_attribute_declaration_order(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+def check_boolean_expression_type(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
 
-    class_attributes = {}  # Dictionary to store attribute declaration order for each class
+    def check_expr_type(node):
+        if node.name == "expr":
+            children = node.children
+            if len(children) > 1 and children[1].name == "<=":
+                return "Bool"
 
-    # Collect attribute declaration order for each class
+        return None
+
     for scope_id, class_scope in symbol_table.scopes.items():
         if "global" == scope_id:
-            continue  # Skip the global scope
+            continue
 
         if class_scope.scope_id.endswith("(class)"):
             class_name = class_scope.scope_id.split("_")[1].split("(")[0]
+            print(class_scope.content.values)
+            # Iterate through symbols in class scope
+            for content_symbol in class_scope.content.values():
+                if content_symbol.semantic_type == "expression":
+                    expression_node = content_symbol.node
+                    if expression_node.name in ["if", "while"]:
+                        expr_type = check_expr_type(expression_node)
 
-            class_attributes[class_name] = []
-            for content_name, content_symbol in class_scope.content.items():
-                if content_symbol.semantic_type == "attr":
-                    class_attributes[class_name].append(content_name)
-
-    # Check attribute usage order within each class
-    for scope_id, class_scope in symbol_table.scopes.items():
-        if "global" == scope_id:
-            continue  # Skip the global scope
-
-        if class_scope.scope_id.endswith("(class)"):
-            class_name = class_scope.scope_id.split("_")[1].split("(")[0]
-
-            for content_name, content_symbol in class_scope.content.items():
-                if content_symbol.semantic_type != "attr":
-                    continue  # Skip non-attribute symbols
-
-                attr_index = class_attributes[class_name].index(content_name)
-                used_attributes = class_attributes[class_name][:attr_index]
-
-                # Check if any previously declared attributes are used after the current attribute
-                for used_attr in used_attributes:
-                    if used_attr in class_scope.content:
-                        used_attr_symbol = class_scope.content[used_attr]
-                        usage_line = used_attr_symbol.start_line
-                        feedback.append(SemanticError(
-                            name="AttributeUsageBeforeDeclaration",
-                            details=f"El atributo '{used_attr}' de la clase '{class_name}' es usado antes de ser declarado en la línea {usage_line}.",
-                            symbol=content_symbol,
-                            scope=class_scope,
-                            line=""))
-                        all_passed = False
+                        if expr_type != "Bool":
+                            feedback.append(SemanticError(name="InvalidBooleanExpression",
+                                                          details=f"La expresión en la estructura de control '{expression_node.name}' en la clase '{class_name}' debe tener un tipo de dato estático de tipo Bool.",
+                                                          symbol=content_symbol,
+                                                          scope=class_scope,
+                                                          line=""))
+                            all_passed = False
 
     return all_passed, feedback

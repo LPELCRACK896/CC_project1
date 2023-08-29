@@ -20,11 +20,12 @@ active_rules: ActiveRulesType = {
     # Compleja: talvez?
     "8_assignation_expresions_compatible_and_rule": check_type_compatibility,
     "9_method_calls_and_return_values": check_method_calls_and_return_values,  # Complejo
-    "10_control_structures": not_implemented_true,  # Facil a priori
+    "10_control_structures": check_boolean_expression_type,  # Facil a priori
     # Un poco más dificil, implica implementar guardar expresiones en tabla de simbolos o algo por el estilo.
     "11_operators_and_expressions": not_implemented_true,
     "12_special_io_class": not_implemented_true,  # Dios nos salve
-    "extra_ambit_rules": check_attribute_declaration_order,  # Dios nos salve
+    "extra_ambit_rules": not_implemented_true,  # Dios nos salve
+    "extra_methods_and_return_values": not_implemented_true,  # Dios nos salve
 }
 
 
