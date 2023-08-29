@@ -538,3 +538,53 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
                                         all_passed = False
 
     return all_passed, feedback
+
+
+def check_attribute_declaration_order(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    class_attributes = {}  # Dictionary to store attribute declaration order for each class
+
+    # Collect attribute declaration order for each class
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" == scope_id:
+            continue  # Skip the global scope
+
+        if class_scope.scope_id.endswith("(class)"):
+            class_name = class_scope.scope_id.split("_")[1].split("(")[0]
+
+            class_attributes[class_name] = []
+            for content_name, content_symbol in class_scope.content.items():
+                if content_symbol.semantic_type == "attr":
+                    class_attributes[class_name].append(content_name)
+
+    # Check attribute usage order within each class
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" == scope_id:
+            continue  # Skip the global scope
+
+        if class_scope.scope_id.endswith("(class)"):
+            class_name = class_scope.scope_id.split("_")[1].split("(")[0]
+
+            for content_name, content_symbol in class_scope.content.items():
+                if content_symbol.semantic_type != "attr":
+                    continue  # Skip non-attribute symbols
+
+                attr_index = class_attributes[class_name].index(content_name)
+                used_attributes = class_attributes[class_name][:attr_index]
+
+                # Check if any previously declared attributes are used after the current attribute
+                for used_attr in used_attributes:
+                    if used_attr in class_scope.content:
+                        used_attr_symbol = class_scope.content[used_attr]
+                        usage_line = used_attr_symbol.start_line
+                        feedback.append(SemanticError(
+                            name="AttributeUsageBeforeDeclaration",
+                            details=f"El atributo '{used_attr}' de la clase '{class_name}' es usado antes de ser declarado en la línea {usage_line}.",
+                            symbol=content_symbol,
+                            scope=class_scope,
+                            line=""))
+                        all_passed = False
+
+    return all_passed, feedback

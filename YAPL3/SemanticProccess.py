@@ -24,6 +24,7 @@ active_rules: ActiveRulesType = {
     # Un poco más dificil, implica implementar guardar expresiones en tabla de simbolos o algo por el estilo.
     "11_operators_and_expressions": not_implemented_true,
     "12_special_io_class": not_implemented_true,  # Dios nos salve
+    "extra_ambit_rules": check_attribute_declaration_order,  # Dios nos salve
 }
 
 
