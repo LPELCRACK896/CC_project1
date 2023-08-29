@@ -23,18 +23,6 @@ class Circle inherits Shape {
     }
 }
 
-class Rectangle inherits Shape {
-    length: Int <- 5;
-    width: Int <- 10;
-    
-    getArea(): Int {
-        while length < width loop {
-            length <- length + 1
-        } pool;
-        return length * width;
-    }
-}
-
 class Main {
     main():Int{
         return 1;

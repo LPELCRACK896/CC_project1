@@ -74,7 +74,7 @@ def create_gui(input_data):
 
     # Add a text widget for code display
     text_widget = tk.Text(gui_window, height=30,
-                          width=60, padx=20, pady=4, wrap="none",
+                          width=70, padx=20, pady=4, wrap="none",
                           yscrollcommand=scrollbar.set, spacing3=6)
     text_widget.insert("1.0", input_data)
 

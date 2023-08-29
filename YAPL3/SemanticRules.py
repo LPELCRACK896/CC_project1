@@ -5,11 +5,11 @@ import re
 
 
 def not_implemented_true(symbol_table: SymbolTable = None) -> (bool, SemanticFeedBack):
-    return True, [SemanticError(name="Sin Implementar", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None)]
+    return True, [SemanticError(name="Sin Implementar", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None, line="")]
 
 
 def not_implemented_false(symbol_table: SymbolTable = None) -> (bool, SemanticFeedBack):
-    return False, [SemanticError(name="Sin Implementar", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None)]
+    return False, [SemanticError(name="Sin Implementar", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None, line="")]
 
 
 def class_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
@@ -36,7 +36,9 @@ def class_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                 feedback.append(SemanticError(name="EmptyClass",
                                               details=f"La clase '{class_name}' no tiene atributos ni métodos.",
                                               symbol=class_symbol,
-                                              scope=class_scope))
+                                              scope=class_scope,
+                                              line=""
+                                              ))
                 all_passed = False
 
     return all_passed, feedback
@@ -82,7 +84,8 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                             feedback.append(SemanticError(name="InvalidAttributeValue",
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Int.",
                                                           symbol=content_symbol,
-                                                          scope=class_scope))
+                                                          scope=class_scope,
+                                                          line=""))
                             all_passed = False
 
                         # chequear si es agrupacion de variables
@@ -94,7 +97,8 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                 feedback.append(SemanticError(name="InvalidAttributeValue",
                                                               details=f"El atributo '{content_name}' de la clase '{class_name}' tiene asignacion de 2 o más variables de diferente tipo.",
                                                               symbol=content_symbol,
-                                                              scope=class_scope))
+                                                              scope=class_scope,
+                                                              line=""))
                                 all_passed = False
 
                     elif content_symbol.data_type == "String":
@@ -102,14 +106,16 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                             feedback.append(SemanticError(name="InvalidAttributeValue",
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo String y estar entre comillas dobles.",
                                                           symbol=content_symbol,
-                                                          scope=class_scope))
+                                                          scope=class_scope,
+                                                          line=""))
                             all_passed = False
                     elif content_symbol.data_type == "Bool":
                         if value is not None and value not in ["true", "false"]:
                             feedback.append(SemanticError(name="InvalidAttributeValue",
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true' o 'false').",
                                                           symbol=content_symbol,
-                                                          scope=class_scope))
+                                                          scope=class_scope,
+                                                          line=""))
                             all_passed = False
 
     return all_passed, feedback
@@ -143,7 +149,8 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
         feedback.append(SemanticError(name="MainMethodNotFoundError",
                                       details="La clase 'Main' debe contener un método llamado 'main'.",
                                       symbol=None,
-                                      scope=None))
+                                      scope=None,
+                                      line=""))
         all_passed = False
 
     # Verificar que el método 'main' no tenga parameters
@@ -151,14 +158,16 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
         feedback.append(SemanticError(name="MainMethodWithParameters",
                                       details="La clase 'Main' tiene parámetros cuando no debería heredar de nadie.",
                                       symbol=None,
-                                      scope=None))
+                                      scope=None,
+                                      line=""))
         all_passed = False
 
     if not inherits_null:
         feedback.append(SemanticError(name="MainMethodInherits",
                                       details="La clase 'Main' hereda de otra clase cuando no debería.",
                                       symbol=None,
-                                      scope=None))
+                                      scope=None,
+                                      line=""))
         all_passed = False
 
     return all_passed, feedback
@@ -191,7 +200,8 @@ def scope_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
             feedback.append(SemanticError(name="ScopeVisibilityError",
                                           details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
                                           symbol=symbol,
-                                          scope=current_scope))
+                                          scope=current_scope,
+                                          line=""))
             return False
         return True
 
@@ -241,7 +251,8 @@ def visibility_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                     feedback.append(SemanticError(name="LocalScopeVisibilityError",
                                                   details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
                                                   symbol=symbol,
-                                                  scope=scope))
+                                                  scope=scope,
+                                                  line=""))
                     all_passed = False
 
             # Verificar visibilidad en ámbito global
@@ -254,7 +265,8 @@ def visibility_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                             feedback.append(SemanticError(name="GlobalScopeVisibilityError",
                                                           details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
                                                           symbol=global_symbol,
-                                                          scope=scope))
+                                                          scope=scope,
+                                                          line=""))
                             all_passed = False
 
     return all_passed, feedback
@@ -276,7 +288,8 @@ def check_inheritance_relations(symbol_table: SymbolTable) -> (bool, SemanticFee
                     feedback.append(SemanticError(name="InheritanceError",
                                                   details=f"La clase '{class_content[clase].name}' hereda de '{class_content[clase].data_type}', pero la clase padre no está definida.",
                                                   symbol="",
-                                                  scope=""))
+                                                  scope="",
+                                                  line=""))
                     all_passed = False
 
     return all_passed, feedback
@@ -311,7 +324,8 @@ def check_inheritance_override_logic(symbol_table: SymbolTable) -> (bool, Semant
                             feedback.append(SemanticError(name="OverrideLogicError",
                                                           details=f"El método '{method_name}' en la clase '{class_name}' no está sobrescrito correctamente.",
                                                           symbol=method_symbol,
-                                                          scope=class_symbol))
+                                                          scope=class_symbol,
+                                                          line=""))
                             all_passed = False
 
     return all_passed, feedback
@@ -373,7 +387,8 @@ def check_assignment_types(symbol_table: SymbolTable) -> (bool, SemanticFeedBack
                                         feedback.append(SemanticError(name="TypeMismatch",
                                                                       details=f"El tipo de la expresión de asignación para el atributo '{attr_name}' de la clase '{class_name}' no coincide con el tipo del atributo.",
                                                                       symbol=content_symbol,
-                                                                      scope=class_scope))
+                                                                      scope=class_scope,
+                                                                      line=""))
                                         all_passed = False
 
     return all_passed, feedback
@@ -448,7 +463,8 @@ def check_type_compatibility(symbol_table: SymbolTable) -> (bool, SemanticFeedBa
                                         feedback.append(SemanticError(name="TypeCompatibilityError",
                                                                       details=f"La expresión de asignación para el atributo '{attr_name}' de la clase '{class_name}' tiene tipos incompatibles.",
                                                                       symbol=content_symbol,
-                                                                      scope=class_scope))
+                                                                      scope=class_scope,
+                                                                      line=""))
                                         all_passed = False
 
     return all_passed, feedback
@@ -490,7 +506,8 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
                                         feedback.append(SemanticError(name="MethodCallArgumentError",
                                                                       details=f"La llamada al método '{method_name}' en la clase '{class_name}' no tiene el número correcto de argumentos.",
                                                                       symbol=content_symbol,
-                                                                      scope=class_scope))
+                                                                      scope=class_scope,
+                                                                      line=""))
                                         all_passed = False
                                     else:
                                         for arg_node, param_type in zip(argument_nodes, method_parameters):
@@ -500,7 +517,8 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
                                                 feedback.append(SemanticError(name="MethodCallArgumentTypeError",
                                                                               details=f"El tipo del argumento en la llamada al método '{method_name}' en la clase '{class_name}' no coincide con el tipo esperado.",
                                                                               symbol=content_symbol,
-                                                                              scope=class_scope))
+                                                                              scope=class_scope,
+                                                                              line=""))
                                                 all_passed = False
 
                                 # Verificar valores de retorno
@@ -511,7 +529,8 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
                                         feedback.append(SemanticError(name="MethodReturnValueError",
                                                                       details=f"El tipo de valor de retorno en el método '{method_name}' en la clase '{class_name}' no coincide con el tipo de retorno declarado.",
                                                                       symbol=content_symbol,
-                                                                      scope=class_scope))
+                                                                      scope=class_scope,
+                                                                      line=""))
                                         all_passed = False
 
     return all_passed, feedback

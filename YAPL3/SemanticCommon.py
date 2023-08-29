@@ -9,8 +9,8 @@ class SemanticError:
     details: str
     symbol: Symbol
     scope: Scope
+    line: str
 
 
 ActiveRulesType = Dict[str, Callable]
 SemanticFeedBack = List[SemanticError]
-
