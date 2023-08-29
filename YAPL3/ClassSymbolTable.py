@@ -89,6 +89,7 @@ class SymbolTable:
             # While bucle >>>'while' bool_value'loop' expr 'pool'
             if node.children:
                 if node.children[0].name == "while":
+                    current_line = self.while_exp_build_symbol(node=node, current_scope=current_scope, current_line=current_line)
                     return current_line
             # Key embeded  expr >>> '{' expr (';' expr)* '}'
             if node.children:
@@ -198,9 +199,9 @@ class SymbolTable:
     def if_expr_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         
         if_symbol = self.insert(
-            name = f"{current_line}_if", 
-            semantic_type = "expression", 
-            data_type = "void", 
+            name = f"{current_line}if", 
+            semantic_type = "if", 
+            data_type = "block", 
             node = node, 
             default_value = None,
             value = node.children[1],
@@ -222,6 +223,31 @@ class SymbolTable:
 
         return current_line
 
+    def while_exp_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
+        while_symbol = self.insert(
+            name = f"{current_line}while", 
+            semantic_type = "while", 
+            data_type = "Object", 
+            node = node, 
+            default_value = None,
+            value = node.children[1],
+            start_line = current_line,
+            scope = current_scope,
+            parameters=[],
+            is_function=False) 
+        
+        while_line = current_line
+
+        bool_node = node.children[1]
+        exp_node = node.children[3]
+        # Pendiende registrar en algun punto estos valores en la tabla
+
+        current_line += 2
+
+        while_symbol.finish_line = current_line
+
+    
+        return current_line + 1
     def attribute_asignation_build_expr_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         expression_string = self.get_expresion_to_str(node)
         value_str = expression_string.split("<-")[1]
@@ -343,12 +369,15 @@ class SymbolTable:
         # out_string(x: String) : SELF_TYPE
         self.insert(name = "out_string", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "String")], parameter_passing_method="value")
         IO_out_string_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_string(method)")
-        
+
         self.insert(name = "x", data_type="String", semantic_type="formal", can_inherate=None, scope=IO_out_string_scope, value=None, default_value="", parameters=None)
 
 
         # out_int(x: Int): SELF_TYPE
         self.insert(name = "out_int", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "Int")], parameter_passing_method="value")
+        IO_out_int_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_int(method)")
+
+        self.insert(name="x", data_type="Int", semantic_type="formal", can_inherate=None, scope=IO_out_int_scope, value=None, default_value="0", parameters=None, parameter_passing_method=None)
 
         # in_string() : String
         self.insert(name = "in_string", data_type="String", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
