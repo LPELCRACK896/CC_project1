@@ -5,7 +5,7 @@ from SemanticRules import *
 
 active_rules: ActiveRulesType = {
     "1_class_definition": class_definition,  # EZ: lista
-    "1_attributes_definition": attributes_definition,  # nose nocreo
+    "1_attributes_definition": attributes_definition,  # nose nocreo al 90%
     "2_has_class_main_containing_main_method": main_check,  # EZ: ia
     "3_main_call":  execution_start_check,  # EZ: tambien ia
     "4_local_and_global_scope": scope_check,  # EZ: ia

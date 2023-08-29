@@ -4,8 +4,10 @@ class Shape {
 }
 
 class Circle inherits Shape {
-    radius: Int <- 10;
+    radius: Int <- while true loop 1 pool;
     color: String <- "Red";
+    
+    
     
     diameter: Int <- radius + radius;
 

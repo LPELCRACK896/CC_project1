@@ -1,6 +1,7 @@
 from ClassSymbolTable import SymbolTable, Symbol, Scope
 from SemanticCommon import SemanticError, SemanticFeedBack
 from SemanticRules import *
+import re
 
 
 def not_implemented_true(symbol_table: SymbolTable = None) -> (bool, SemanticFeedBack):
@@ -45,6 +46,15 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
     feedback = []
     all_passed = True
 
+    def check_elements(dictionary, elements_list):
+        for element in elements_list:
+            if element in dictionary and dictionary[element][0] != 'Int':
+                return False
+            elif element not in dictionary:
+                return False
+        return True
+
+    attr_dir = {}
     # Recorremos todas las clases en la tabla de símbolos
     for scope_id, class_scope in symbol_table.scopes.items():
         if "global" == scope_id:
@@ -62,6 +72,8 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
 
                     value = content_symbol.get_value()
 
+                    attr_dir[content_name] = [content_symbol.data_type, value]
+
                     if content_symbol.data_type == "Int":
                         if not isinstance(value, int) and isinstance(value, str):
                             if value.isnumeric():
@@ -75,14 +87,15 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
 
                         # chequear si es agrupacion de variables
                         if isinstance(value, str):
-                            # radius + radius
-                            node = content_symbol.value
-                            print(node)
-                            feedback.append(SemanticError(name="InvalidAttributeValue",
-                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' tiene asignacion de 2 o más variables.",
-                                                          symbol=content_symbol,
-                                                          scope=class_scope))
-                            all_passed = False
+                            value = re.split(r'\s*[-+*/]\s*', value)
+                            value = [val for val in value if val.strip() != '']
+
+                            if not check_elements(attr_dir, value):
+                                feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                              details=f"El atributo '{content_name}' de la clase '{class_name}' tiene asignacion de 2 o más variables de diferente tipo.",
+                                                              symbol=content_symbol,
+                                                              scope=class_scope))
+                                all_passed = False
 
                     elif content_symbol.data_type == "String":
                         if value is not None and not (isinstance(value, str)):
@@ -117,7 +130,6 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
             main_method = class_scope.search_content("main")
             if main_method and main_method.semantic_type == "method":
                 main_method_exists = True
-                break
 
     # Verificar si el método 'main' existe
     if not main_method_exists:
