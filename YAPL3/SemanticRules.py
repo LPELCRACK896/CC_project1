@@ -22,7 +22,7 @@ def class_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
             continue  # Pasar a la siguiente clase si es 'global'
 
         if class_scope.scope_id.endswith("(class)"):
-            class_name = class_scope.scope_id.split("_")[1].split(
+            class_name = class_scope.scope_id.split("-")[1].split(
                 "(")[0]  # Extraer el nombre de la clase del scope_id
 
             # Verificamos si hay atributos y métodos en la clase
@@ -67,7 +67,7 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
             continue  # Pasar a la siguiente clase si es 'global' o 'main'
 
         if class_scope.scope_id.endswith("(class)"):
-            class_name = class_scope.scope_id.split("_")[1].split(
+            class_name = class_scope.scope_id.split("-")[1].split(
                 "(")[0]  # Extraer el nombre de la clase del scope_id
 
             # Verificar atributos en la clase
@@ -354,7 +354,7 @@ def check_assignment_types(symbol_table: SymbolTable) -> (bool, SemanticFeedBack
             continue  # Pasar a la siguiente clase si es 'global' o 'main'
 
         if class_scope.scope_id.endswith("(class)"):
-            class_name = class_scope.scope_id.split("_")[1].split(
+            class_name = class_scope.scope_id.split("-")[1].split(
                 "(")[0]  # Extraer el nombre de la clase del scope_id
 
             # Recorremos los símbolos en el scope de la clase
@@ -426,7 +426,7 @@ def check_type_compatibility(symbol_table: SymbolTable) -> (bool, SemanticFeedBa
             continue  # Pasar a la siguiente clase si es 'global' o 'main'
 
         if class_scope.scope_id.endswith("(class)"):
-            class_name = class_scope.scope_id.split("_")[1].split(
+            class_name = class_scope.scope_id.split("-")[1].split(
                 "(")[0]  # Extraer el nombre de la clase del scope_id
 
             # Recorremos los símbolos en el scope de la clase
@@ -484,7 +484,7 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
             continue  # Pasar a la siguiente clase si es 'global'
 
         if class_scope.scope_id.endswith("(class)"):
-            class_name = class_scope.scope_id.split("_")[1].split(
+            class_name = class_scope.scope_id.split("-")[1].split(
                 "(")[0]  # Extraer el nombre de la clase del scope_id
 
             # Recorremos los símbolos en el scope de la clase
@@ -557,7 +557,7 @@ def check_boolean_expression_type(symbol_table: SymbolTable) -> (bool, SemanticF
             continue
 
         if class_scope.scope_id.endswith("(class)"):
-            class_name = class_scope.scope_id.split("_")[1].split("(")[0]
+            class_name = class_scope.scope_id.split("-")[1].split("(")[0]
             print(class_scope.content.values)
             # Iterate through symbols in class scope
             for content_symbol in class_scope.content.values():

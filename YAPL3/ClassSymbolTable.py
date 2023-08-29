@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 from prettytable import PrettyTable
 from typing import List, Dict
-import anytree
+from anytree import Node
 
 from Symbol import Symbol
 from Scope import Scope
@@ -126,7 +126,7 @@ class SymbolTable:
         
         return current_line + 1
 
-    def class_build_symbol(self, node: anytree.Node, current_scope: Scope , current_line: int)-> int:
+    def class_build_symbol(self, node: Node, current_scope: Scope , current_line: int)-> int:
         parent_class = "Object"
         children = node.children
         if len(children)>4:
@@ -136,7 +136,7 @@ class SymbolTable:
         class_name = node.children[1].name
         class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", node=node,value=None, default_value=None,start_line = current_line, scope = current_scope, can_inherate=True)
 
-        current_scope = self.start_scope(parent_scope=current_scope, scope_id=f'{current_scope.scope_id}_{class_name}(class)')
+        current_scope = self.start_scope(parent_scope=current_scope, scope_id=f'{current_scope.scope_id}-{class_name}(class)')
 
 
         for child in node.children:
@@ -147,17 +147,28 @@ class SymbolTable:
 
         return current_line
 
-    def method_build_symbol(self, node: anytree.Node, current_scope: Scope, current_line: int)-> int:
+    def method_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         method_name = node.children[0].name
         method_return_type = node.children[5].children[0].name
         param_types = [param.children[0].name for param in node.children[2].children]
         full_signature = method_return_type
-        method_scope_id = f"{current_scope.scope_id}_{method_name}(method)"
+        method_scope_id = f"{current_scope.scope_id}-{method_name}(method)"
 
         method_scope = self.start_scope(parent_scope=current_scope, scope_id=method_scope_id)
         parameters = self.__get_parameters_from_method(node)
 
-        method_symbol = self.insert(name = method_name, semantic_type="method", data_type = full_signature, node=node,default_value=None,value=None, start_line=current_line, scope = current_scope, parameters=parameters, is_function=True )
+        method_symbol = self.insert(
+            name = method_name,
+            semantic_type="method",
+            data_type = full_signature,
+            node=node,
+            default_value=None,
+            value=None, 
+            start_line=current_line, 
+            scope = current_scope, 
+            parameters=parameters, 
+            is_function=True,
+            parameter_passing_method="reference")
 
         for child in node.children:
             current_line = self.build_symbol_table(child, method_scope, current_line=current_line+1)
@@ -184,7 +195,7 @@ class SymbolTable:
 
         return current_line
 
-    def if_expr_build_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
+    def if_expr_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         
         if_symbol = self.insert(
             name = f"{current_line}_if", 
@@ -199,11 +210,11 @@ class SymbolTable:
             is_function=True)
 
         if_line = current_line
-        if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}_IF({if_line}if)")
+        if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}-IF({if_line}if)")
         if_content = node.children[3]
         # If content
         current_line = self.build_symbol_table(if_content, if_scope, current_line=current_line+1)
-        else_scope = self.start_scope(parent_scope=current_scope.parent, scope_id=f"{current_scope.scope_id}_ELSE({if_line}if)")
+        else_scope = self.start_scope(parent_scope=current_scope.parent, scope_id=f"{current_scope.scope_id}-ELSE({if_line}if)")
         else_content = node.children[5]
         current_line = self.build_symbol_table(else_content, else_scope, current_line=current_line+1)
 
@@ -211,7 +222,7 @@ class SymbolTable:
 
         return current_line
 
-    def attribute_asignation_build_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
+    def attribute_asignation_build_expr_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         expression_string = self.get_expresion_to_str(node)
         value_str = expression_string.split("<-")[1]
         self.insert(
@@ -230,7 +241,7 @@ class SymbolTable:
             )
         return current_line 
 
-    def parent_method_call_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
+    def parent_method_call_expr_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         print(1)
         return current_line
 
@@ -308,19 +319,51 @@ class SymbolTable:
         return new_scope
     
     # Pending implmentaion 
+
+    # Pendiente implementar el contenido dentro de los metodos 
     def __build_basic_classes(self)->Dict[str, Symbol]:
         # Object
-        self.insert(name = "Object", data_type=None, semantic_type="class", can_inherate=True, value=None, default_value=None)
+        self.insert(name = "Object", data_type=None, semantic_type="class", can_inherate=True, scope=self.global_scope, value=None, default_value=None)
+        object_scope = self.start_scope(self.global_scope, scope_id=f"{self.global_scope.scope_id}-Object(class)")
+        # abort()
+        self.insert(name = "abort", data_type="Object", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
+        
+        # type_name()
+        self.insert(name = "type_name", data_type="String", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
+        
+        # copy()
+        self.insert(name = "copy", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
 
 
+        # IO
         self.insert(name= "IO", data_type="Object", semantic_type="class", can_inherate=True, value=None, default_value=None)
+        IO_scope = self.start_scope(self.global_scope, scope_id=f"{self.global_scope.scope_id}-IO(class)")
+        
+
+        # out_string(x: String) : SELF_TYPE
+        self.insert(name = "out_string", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "String")], parameter_passing_method="value")
+        IO_out_string_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_string(method)")
+        
+        self.insert(name = "x", data_type="String", semantic_type="formal", can_inherate=None, scope=IO_out_string_scope, value=None, default_value="", parameters=None)
+
+
+        # out_int(x: Int): SELF_TYPE
+        self.insert(name = "out_int", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "Int")], parameter_passing_method="value")
+
+        # in_string() : String
+        self.insert(name = "in_string", data_type="String", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
+        
+        # in_int(): Int
+        self.insert(name = "in_int", data_type="Int", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
+
+
+        # Int
         self.insert(name= "Int", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=None)
+        
+        # String
         self.insert(name="String", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=None)
 
 
-    def __build_Object_methods(self):
-
-        pass
     def __check_or_get_default_scope(self, scope: Scope):
         """Revisa la validez de un scope y en caso no lo sea, devuelve el global para ser utilizado.
 
@@ -338,7 +381,7 @@ class SymbolTable:
         return scope
     
     @staticmethod
-    def get_expresion_to_str(expr_node: anytree.Node)-> str:
+    def get_expresion_to_str(expr_node: Node)-> str:
         """Convierte Nodos de anytree con nombre expr en su valor to string deconstruyendo el valor de sus hijos.
 
         Args:
@@ -347,7 +390,7 @@ class SymbolTable:
         Returns:
             str: Version to string del nodo.
         """
-        if isinstance(expr_node, anytree.Node):
+        if isinstance(expr_node, Node):
             children = expr_node.children
             if expr_node.name == "expr":
                 content = []
@@ -366,7 +409,7 @@ class SymbolTable:
         pass
     
     
-    def __get_parameters_from_method(self, method_node: anytree.Node) -> List[tuple]:
+    def __get_parameters_from_method(self, method_node: Node) -> List[tuple]:
         """Partiendo del nodo metodo, obtiene sus parametros.
 
         Args:
