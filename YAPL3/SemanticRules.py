@@ -49,10 +49,14 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
     all_passed = True
 
     def check_elements(dictionary, elements_list):
+
         for element in elements_list:
+            if element.isnumeric():
+                element = int(element)
             if element in dictionary and dictionary[element][0] != 'Int':
-                return False
-            elif element not in dictionary:
+                if not isinstance(element, int):
+                    return False
+            elif element not in dictionary and not isinstance(element, int):
                 return False
         return True
 

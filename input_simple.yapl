@@ -1,6 +1,6 @@
 class Rectangle{
     length: Int <- 5;
-    width: Int <- 10;
+    width: Int <- length + 10;
     
     getArea(): Int {
         while length < width loop {
