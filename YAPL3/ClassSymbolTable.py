@@ -151,7 +151,7 @@ class SymbolTable:
         method_name = node.children[0].name
         method_return_type = node.children[5].children[0].name
         param_types = [param.children[0].name for param in node.children[2].children]
-        full_signature = f"method -> ({', '.join(param_types)}) -> {method_return_type}"
+        full_signature = method_return_type
         method_scope_id = f"{current_scope.scope_id}_{method_name}(method)"
 
         method_scope = self.start_scope(parent_scope=current_scope, scope_id=method_scope_id)
@@ -309,10 +309,17 @@ class SymbolTable:
     
     # Pending implmentaion 
     def __build_basic_classes(self)->Dict[str, Symbol]:
-        return {
-            "Object": Symbol(name="Object", data_type=None, semantic_type="class", can_inherate=True),
-            "IO": Symbol(name= "IO", data_type=None, semantic_type="class", can_inherate="IO")
-        }
+        # Object
+        self.insert(name = "Object", data_type=None, semantic_type="class", can_inherate=True, value=None, default_value=None)
+
+
+        self.insert(name= "IO", data_type="Object", semantic_type="class", can_inherate=True, value=None, default_value=None)
+        self.insert(name= "Int", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=None)
+        self.insert(name="String", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=None)
+
+
+    def __build_Object_methods(self):
+
         pass
     def __check_or_get_default_scope(self, scope: Scope):
         """Revisa la validez de un scope y en caso no lo sea, devuelve el global para ser utilizado.
@@ -358,14 +365,6 @@ class SymbolTable:
 
         pass
     
-
-    
-    def get_ids_from_expression(expr_node: anytree.Node)-> list:
-        pass
-
-    
-    def get_bool_value_to_string(bool_value: anytree.Node)->str:
-        pass
     
     def __get_parameters_from_method(self, method_node: anytree.Node) -> List[tuple]:
         """Partiendo del nodo metodo, obtiene sus parametros.
@@ -388,5 +387,5 @@ class SymbolTable:
                             parameter_parts.append(parameter_type)
                         else:
                             parameter_parts.append(part.name)
-                    parameters.append(tuple(parameter_parts))
+                parameters.append(tuple(parameter_parts))
             return parameters
