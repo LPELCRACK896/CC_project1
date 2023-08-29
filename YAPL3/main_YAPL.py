@@ -47,7 +47,7 @@ def clear_error_labels(window):
 def create_gui(input_data):
     gui_window = tk.Tk()
     gui_window.title("Código Revisado")
-    gui_window.geometry("1000x800")
+    gui_window.geometry("1000x1000")
 
     def on_window_close():
         gui_window.destroy()  # Close the GUI window
@@ -101,11 +101,11 @@ def main_program(input_data, gui_window=None):
     tree = parser.program()
 
     # Print errors if any
-    errors = error_listener.get_errors()
-    for error in errors:
+    syntax_errors = error_listener.get_errors()
+    for error in syntax_errors:
         print(error)
 
-    if errors:
+    if syntax_errors:
         print("----------------------------------------------------------------------------------")
         print("\nYa que hay 1 o más errores no se armará el árbol sintáctico del archivo input.\n")
         print("----------------------------------------------------------------------------------")
@@ -114,9 +114,13 @@ def main_program(input_data, gui_window=None):
             # Clear any previous error messages
             clear_error_labels(gui_window)
 
-            # Show syntax and semantic errors above the button
+            error_message = "¡Se encontraron errores sintácticos en el código!\n"
+            for error in syntax_errors:
+                error_message += error + "\n"  # Appending each error message
+
+            # Create the error label widget with the constructed error message
             error_label = tk.Label(
-                gui_window, text="¡Se encontraron errores en el código!", fg="red")
+                gui_window, text=error_message, fg="red", wraplength=1000)  # Adjust wrap length as needed
             error_label.pack()
 
             # If there are errors, show the GUI window again
@@ -164,7 +168,7 @@ def main_program(input_data, gui_window=None):
         # Proyecto # 1 Análisis Semántico
         print("\nInicio del Chequeo Semántico:\n")
 
-        semantic_verification, feedback = check_semantic(symbol_table)
+        semantic_verification, semantic_errors = check_semantic(symbol_table)
 
         if semantic_verification:
             print("\nChequeo semántico exitoso!\n")
@@ -177,7 +181,7 @@ def main_program(input_data, gui_window=None):
 
         else:
             print("\n")
-            for error in feedback:
+            for error in semantic_errors:
                 print(error.name, ": ", error.details)
             print(
                 "----------------------------------------------------------------------------------")
@@ -189,9 +193,14 @@ def main_program(input_data, gui_window=None):
                 # Clear any previous error messages
                 clear_error_labels(gui_window)
 
-                # Show syntax and semantic errors above the button
+                error_message = "¡Se encontraron errores semánticos en el código!\n"
+                for error in semantic_errors:
+                    error = str(error.name) + ": " + str(error.details) + "\n"
+                    error_message += error  # Appending each error message
+
+                # Create the error label widget with the constructed error message
                 error_label = tk.Label(
-                    gui_window, text="¡Se encontraron errores en el código!", fg="red")
+                    gui_window, text=error_message, fg="red", wraplength=1000)  # Adjust wrap length as needed
                 error_label.pack()
 
                 # Show the GUI window again with errors
