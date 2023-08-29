@@ -15,6 +15,9 @@ class Circle inherits Shape {
         else 
             radius <- 4
         fi;
+
+        while true loop 1 pool;
+        
         return 3 * radius * radius;
     }
 
