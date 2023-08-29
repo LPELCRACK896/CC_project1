@@ -1,108 +1,12 @@
 from dataclasses import dataclass, field
 from collections import defaultdict
 from prettytable import PrettyTable
-from typing import List
+from typing import List, Dict
 import anytree
 
-@dataclass
-class Symbol:
-    """Representa un simbolo en un tabla de simbolos. 
-    """
-    name: str
-    data_type: str
-    semantic_type:str
-    node: anytree.Node = None
-    default_value: any = None
-    is_local_scope: bool = False 
-    start_line: str = None
-    finish_line: str = None
-    value: any = None
-    memory_position: int = None
-    scope: str = None
-    is_function: bool = False
-    parameters: List[str] = field(default_factory=list)  
-    parameter_passing_method: str = None  
+from Symbol import Symbol
+from Scope import Scope
 
-
-    def get_value(self):
-        if self.value == None:
-            if not self.data_type:
-                return None
-            if self.data_type == "Int" or self.data_type == "String" or self.data_type == "Bool" :   
-                return self.default_value
-        return SymbolTable.get_expresion_to_str(self.value)
-class Scope:
-    """Representa un espacio en una tabla de simbolos y son el objeto que tiene una referencia directa a simbolos. Estos a su vez pueden tener scopes padres. 
-    """
-    def __init__(self, parent = None, scope_id = "global") -> None:
-        """Metodo constructor
-
-        Args:
-            parent (Scope): Scope padre, poner none si este es un scope sin padre (como un scope global). Defaults to None.
-            scope_id (str): Nombre que identifica al scope en este contexto, puede ser el nombre de la clase o metodo que inicio el scope. Defaults to "global".
-        """
-        self.parent:Scope = parent
-        self.scope_id = scope_id  # identificador de alcance
-        self.content = {}
-
-    def get_parent(self):
-        """Devuelve el scope padre. None en caso no tenga. 
-
-        Returns:
-            Scope: Devuelve el scope padre. None en caso no tenga. 
-        """
-        return self.parent
-
-    def add_content(self, symbol: Symbol)-> Symbol:
-        """Añade un símbolo al scope. 
-
-        Args:
-            symbol (Symbol): Simbolo con el mayor número de atributos posibles. 
-
-        Returns:
-            Symbol: El símbolo añadido
-        """
-        self.content[symbol.name] = symbol
-        return symbol
-
-    def search_content(self, name: str)->Symbol:
-        """En base al nombre del símbolo, lo busca dentro del scope. 
-
-        Args:
-            name (str): Nombre del Symbol. 
-
-        Returns:
-            Symbol: Simbolo buscado o None en caso no es encuentre. 
-        """
-        if name in self.content:
-            return self.content[name]
-        return None
-    
-    def delete_content(self, name: str) -> bool:
-        """Utilizando el nombre como referencia, borra el simbolo del scope
-
-        Args:
-            name (str): Nombre del Symbol. 
-
-        Returns:
-            bool: Indica si la operación se realizo correctamente. False en caso no haya encontrado el item. 
-        """
-        if name in self.content:
-            del self.content[name]
-            return True 
-        return False      
-    
-    def get_scope_chain(self):
-        """Get a string that contains the scope_ids from the current scope
-        up to the root scope, separated by underscores."""
-        scope_chain = []
-        current_scope = self  
-        
-        while current_scope is not None:
-            scope_chain.append(current_scope.scope_id)
-            current_scope = current_scope.get_parent()  
-        
-        return "_".join(reversed(scope_chain))  
 
 class SymbolTable:
     def __init__(self, root):
@@ -114,8 +18,9 @@ class SymbolTable:
         self.content = defaultdict(dict)  # {<scope_id>: {symbol_name: Symbol}} >>  Diccionario con clave el id_scope y valor un diccionario con simbolos (diccionario interno, identificador de simbolo como clave; Objeto Simbolo como valor)
         self.global_scope = Scope(parent=None, scope_id = "global") # La tabla de simbolos de inicializa con un scope global en el que se almacenan simbolos que no esten debajo de otros scopes creados. 
         self.scopes = { "global": self.global_scope } # {<scope_id>: Scope} >> Scopes de la tabla almacenados en dicionarios que tiene por clave su identificador y su objeto por valor. 
+        self.addition_classes = self.__build_basic_classes()
         self.build_symbol_table(root, current_scope=self.global_scope) # Construye recursivamente la tabla de simbolos
-
+        
     def __str__(self)-> str:
         """Crea una version bonita y para consola de la tabla. 
 
@@ -162,7 +67,7 @@ class SymbolTable:
             # If statment >>> 'if' bool_value  'then' expr 'else' expr 'fi'
             if node.children:
                 if node.children[0].name == "if":
-                    current_line = self.if_build_expr_symbol(node=node, current_scope=current_scope, current_line=current_line+1)
+                    current_line = self.if_expr_build_symbol(node=node, current_scope=current_scope, current_line=current_line+1)
                     return current_line 
             # Attribute assignation >>> ID '<-' expr
             if node.children:
@@ -229,7 +134,7 @@ class SymbolTable:
                 parent_class = children[3].name
 
         class_name = node.children[1].name
-        class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", node=node,value=None, default_value=None,start_line = current_line, scope = current_scope)
+        class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", node=node,value=None, default_value=None,start_line = current_line, scope = current_scope, can_inherate=True)
 
         current_scope = self.start_scope(parent_scope=current_scope, scope_id=f'{current_scope.scope_id}_{class_name}(class)')
 
@@ -279,7 +184,7 @@ class SymbolTable:
 
         return current_line
 
-    def if_build_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
+    def if_expr_build_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
         
         if_symbol = self.insert(
             name = f"{current_line}_if", 
@@ -287,27 +192,33 @@ class SymbolTable:
             data_type = "void", 
             node = node, 
             default_value = None,
-            value = None,
+            value = node.children[1],
             start_line = current_line,
             scope = current_scope,
             parameters=[],
             is_function=True)
-        
-        if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}_IF({current_line}if)")
 
-        for child in node.children:
-            current_line = self.build_symbol_table(child, if_scope, current_line=current_line+1)
-        if_symbol.finish_line = current_line  
+        if_line = current_line
+        if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}_IF({if_line}if)")
+        if_content = node.children[3]
+        # If content
+        current_line = self.build_symbol_table(if_content, if_scope, current_line=current_line+1)
+        else_scope = self.start_scope(parent_scope=current_scope.parent, scope_id=f"{current_scope.scope_id}_ELSE({if_line}if)")
+        else_content = node.children[5]
+        current_line = self.build_symbol_table(else_content, else_scope, current_line=current_line+1)
+
+        if_symbol.finish_line = current_line 
 
         return current_line
 
     def attribute_asignation_build_expr_symbol(self, node:anytree.Node, current_scope: Scope, current_line: int)-> int:
         expression_string = self.get_expresion_to_str(node)
+        value_str = expression_string.split("<-")[1]
         self.insert(
             name = expression_string,
             data_type=None,
             semantic_type="attribute_assignation",
-            value=None,
+            value=value_str,
             default_value=None,
             start_line=current_line,
             finish_line=current_line,
@@ -340,7 +251,7 @@ class SymbolTable:
             return True
         return False
 
-    def insert(self, name, data_type, semantic_type, value, default_value, start_line = None, finish_line = None, scope = None, is_function = False, parameters = [], parameter_passing_method = None, node = None):
+    def insert(self, name, data_type, semantic_type, value, default_value, start_line = None, finish_line = None, scope = None, is_function = False, parameters = [], parameter_passing_method = None, node = None, can_inherate = False):
         """Inerta un simbolo a la tabla.
 
         Args:
@@ -355,7 +266,7 @@ class SymbolTable:
             parameter_passing_method (_type_, optional): Metodo por el cual se pasan los parametros (referencia o valor). Defaults to None.
         """
         scope = self.__check_or_get_default_scope(scope)
-        symbol = Symbol(name = name, value = value, node=node, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_line=start_line, finish_line=finish_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method)
+        symbol = Symbol(name = name, value = value, node=node, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_line=start_line, finish_line=finish_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method, can_inherate=can_inherate)
         scope.add_content(symbol)
         self.content[scope.scope_id][symbol.name] = symbol
         return symbol
@@ -396,6 +307,13 @@ class SymbolTable:
         self.scopes[scope_id] = new_scope
         return new_scope
     
+    # Pending implmentaion 
+    def __build_basic_classes(self)->Dict[str, Symbol]:
+        return {
+            "Object": Symbol(name="Object", data_type=None, semantic_type="class", can_inherate=True),
+            "IO": Symbol(name= "IO", data_type=None, )
+        }
+        pass
     def __check_or_get_default_scope(self, scope: Scope):
         """Revisa la validez de un scope y en caso no lo sea, devuelve el global para ser utilizado.
 
@@ -434,6 +352,21 @@ class SymbolTable:
         else:
             return expr_node
 
+    @staticmethod
+    def evaluate_expr(exp_node):
+        
+
+        pass
+    
+
+    
+    def get_ids_from_expression(expr_node: anytree.Node)-> list:
+        pass
+
+    
+    def get_bool_value_to_string(bool_value: anytree.Node)->str:
+        pass
+    
     def __get_parameters_from_method(self, method_node: anytree.Node) -> List[tuple]:
         """Partiendo del nodo metodo, obtiene sus parametros.
 
