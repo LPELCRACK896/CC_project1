@@ -267,7 +267,6 @@ def check_inheritance_relations(symbol_table: SymbolTable) -> (bool, SemanticFee
     classes = []
     # Recorremos todas las clases en la tabla de símbolos
     for class_name in symbol_table.scopes:
-        class_scope = symbol_table.scopes[class_name]
         if class_name == "global":
             class_content = symbol_table.content[class_name]
 

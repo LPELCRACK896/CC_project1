@@ -8,11 +8,11 @@ active_rules: ActiveRulesType = {
     "1_attributes_definition": attributes_definition,  # nose nocreo al 90%
     "2_has_class_main_containing_main_method": main_check,  # EZ: ia
     "3_main_call":  execution_start_check,  # EZ: tambien ia
-    "4_local_and_global_scope": scope_check,  # EZ: ia
+    "4_local_and_global_scope": scope_check,  # EZ: no
     "4_visibility_per_scope": visibility_check,  # Intermedio: ia
-    # Facil a priori: creo que ya
+    # Facil a priori: ya fijo
     "5_inheritance_relations": check_inheritance_relations,
-    # No se: creo que ia x2
+    # No se: necesita revision
     "5_inheritance_override_logic": check_inheritance_override_logic,
     "6_default_values": not_implemented_true,  # EZ: ia estaba desde la symbol table
     "7_casting_int_bool": check_casting,  # EZ:
