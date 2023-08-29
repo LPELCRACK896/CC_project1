@@ -47,7 +47,7 @@ def clear_error_labels(window):
 def create_gui(input_data):
     gui_window = tk.Tk()
     gui_window.title("Código Revisado")
-    gui_window.geometry("1000x1000")
+    gui_window.geometry("1400x800")
 
     def on_window_close():
         gui_window.destroy()  # Close the GUI window
@@ -57,12 +57,30 @@ def create_gui(input_data):
     # Bind the window close event to the on_window_close function
     gui_window.protocol("WM_DELETE_WINDOW", on_window_close)
 
-    # Agregar un widget de Texto más grande para mostrar el input_data
+    # Create a frame for line numbering
+    line_number_frame = tk.Frame(gui_window)
+    line_number_frame.pack(side="left", fill="y")
+
+    # Create a label for each line number and add them to the frame
+    lines_in_text_widget = input_data.split("\n")
+    for i in range(len(lines_in_text_widget)):
+        line_number_label = tk.Label(
+            line_number_frame, text=str(i + 1), anchor="e", padx=5, width=3)
+        line_number_label.grid(row=i, column=0, sticky="e")
+
+    # Add a scrollbar
+    scrollbar = tk.Scrollbar(gui_window)
+    scrollbar.pack(side="right", fill="y")
+
+    # Add a text widget for code display
     text_widget = tk.Text(gui_window, height=30,
-                          width=120, padx=20, pady=20)
+                          width=60, padx=20, pady=4, wrap="none",
+                          yscrollcommand=scrollbar.set, spacing3=6)
     text_widget.insert("1.0", input_data)
-    # Añade espacio en la parte superior e inferior
-    text_widget.pack(pady=10)
+
+    text_widget.pack(side="left", fill="both", expand=False)
+
+    scrollbar.config(command=text_widget.yview)
 
     # Agregar un botón personalizado para volver a ejecutar el programa
     button_style = {"padx": 20, "pady": 10,
