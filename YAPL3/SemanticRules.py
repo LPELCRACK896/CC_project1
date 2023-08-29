@@ -120,21 +120,43 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     all_passed = True
 
     main_method_exists = False
+    parameters_null = True
+    inherits_null = True
 
     # Recorremos todas las clases en la tabla de símbolos
     for class_name in symbol_table.scopes:
         class_scope = symbol_table.scopes[class_name]
-
         # Verificar si la clase 'Main' tiene un método 'main'
         if class_name == "global_Main(class)":
             main_method = class_scope.search_content("main")
             if main_method and main_method.semantic_type == "method":
                 main_method_exists = True
+                if main_method.parameters != None:  # verifica que no tenga parametros
+                    parameters_null = False
+        if class_name == "global":
+            main_method = class_scope.search_content("Main")
+            if main_method and main_method.data_type != "Object":
+                inherits_null = False
 
     # Verificar si el método 'main' existe
     if not main_method_exists:
         feedback.append(SemanticError(name="MainMethodNotFoundError",
                                       details="La clase 'Main' debe contener un método llamado 'main'.",
+                                      symbol=None,
+                                      scope=None))
+        all_passed = False
+
+    # Verificar que el método 'main' no tenga parameters
+    if not parameters_null:
+        feedback.append(SemanticError(name="MainMethodWithParameters",
+                                      details="La clase 'Main' tiene parámetros cuando no debería heredar de nadie.",
+                                      symbol=None,
+                                      scope=None))
+        all_passed = False
+
+    if not inherits_null:
+        feedback.append(SemanticError(name="MainMethodInherits",
+                                      details="La clase 'Main' hereda de otra clase cuando no debería.",
                                       symbol=None,
                                       scope=None))
         all_passed = False
@@ -248,6 +270,7 @@ def check_inheritance_relations(symbol_table: SymbolTable) -> (bool, SemanticFee
             class_name, symbol_table.global_scope)
         if class_symbol and class_symbol.semantic_type == "class":
             parent_class_name = class_symbol.data_type
+            # chequeo de herencia de main
             if parent_class_name != "Object":
                 parent_class = symbol_table.search(
                     parent_class_name, symbol_table.global_scope)
