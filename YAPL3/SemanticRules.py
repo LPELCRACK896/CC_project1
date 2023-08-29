@@ -264,21 +264,20 @@ def check_inheritance_relations(symbol_table: SymbolTable) -> (bool, SemanticFee
     feedback = []
     all_passed = True
 
+    classes = []
     # Recorremos todas las clases en la tabla de símbolos
     for class_name in symbol_table.scopes:
-        class_symbol = symbol_table.search(
-            class_name, symbol_table.global_scope)
-        if class_symbol and class_symbol.semantic_type == "class":
-            parent_class_name = class_symbol.data_type
-            # chequeo de herencia de main
-            if parent_class_name != "Object":
-                parent_class = symbol_table.search(
-                    parent_class_name, symbol_table.global_scope)
-                if not parent_class:
+        class_scope = symbol_table.scopes[class_name]
+        if class_name == "global":
+            class_content = symbol_table.content[class_name]
+
+            for clase in symbol_table.content[class_name]:
+                classes.append(class_content[clase].name)
+                if class_content[clase].data_type != "Object" and class_content[clase].data_type not in classes:
                     feedback.append(SemanticError(name="InheritanceError",
-                                                  details=f"La clase '{class_name}' hereda de '{parent_class_name}', pero la clase padre no está definida.",
-                                                  symbol=class_symbol,
-                                                  scope=class_symbol.scope))
+                                                  details=f"La clase '{class_content[clase].name}' hereda de '{class_content[clase].data_type}', pero la clase padre no está definida.",
+                                                  symbol="",
+                                                  scope=""))
                     all_passed = False
 
     return all_passed, feedback

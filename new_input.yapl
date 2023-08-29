@@ -1,13 +1,8 @@
-class Shape {
-    radius: Int;
-    color: String;
-}
+
 
 class Circle inherits Shape {
-    radius: Int <- while true loop 1 pool;
+    radius: Int <- 10;
     color: String <- "Red";
-    
-    
     
     diameter: Int <- radius + radius;
 
@@ -37,7 +32,7 @@ class Rectangle inherits Shape {
     }
 }
 
-class Main {
+class Main{
     main():Int{
         return 1;
     }
