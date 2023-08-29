@@ -311,7 +311,7 @@ class SymbolTable:
     def __build_basic_classes(self)->Dict[str, Symbol]:
         return {
             "Object": Symbol(name="Object", data_type=None, semantic_type="class", can_inherate=True),
-            "IO": Symbol(name= "IO", data_type=None, )
+            "IO": Symbol(name= "IO", data_type=None, semantic_type="class", can_inherate="IO")
         }
         pass
     def __check_or_get_default_scope(self, scope: Scope):
