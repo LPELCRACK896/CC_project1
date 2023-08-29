@@ -11,9 +11,9 @@ active_rules: ActiveRulesType = {
     "4_local_and_global_scope": scope_check,  # EZ: no
     "4_visibility_per_scope": visibility_check,  # Intermedio: ia
     # Facil a priori: ya fijo
-    "5_inheritance_relations": check_inheritance_relations,
+    "5_inheritance_relations": not_implemented_true,
     # No se: necesita revision
-    "5_inheritance_override_logic": check_inheritance_override_logic,
+    "5_inheritance_override_logic": not_implemented_true,
     "6_default_values": not_implemented_true,  # EZ: ia estaba desde la symbol table
     "7_casting_int_bool": check_casting,  # EZ:
     "8_assignation_expresions_type_on_each_side": check_assignment_types,  # Intermedio: si?

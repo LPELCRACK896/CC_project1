@@ -137,7 +137,7 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     for class_name in symbol_table.scopes:
         class_scope = symbol_table.scopes[class_name]
         # Verificar si la clase 'Main' tiene un método 'main'
-        if class_name == "global_Main(class)":
+        if class_name == "global-Main(class)":
             main_method = class_scope.search_content("main")
             if main_method and main_method.semantic_type == "method":
                 main_method_exists = True
@@ -544,31 +544,20 @@ def check_boolean_expression_type(symbol_table: SymbolTable) -> (bool, SemanticF
     feedback = []
     all_passed = True
 
-    def check_expr_type(node):
-        if node.name == "expr":
-            children = node.children
-            if len(children) > 1 and children[1].name == "<=":
-                return "Bool"
-
-        return None
-
     for scope_id, class_scope in symbol_table.scopes.items():
         if "global" == scope_id:
             continue
 
-        if class_scope.scope_id.endswith("(class)"):
-            class_name = class_scope.scope_id.split("-")[1].split("(")[0]
-            print(class_scope.content.values)
+        if class_scope.scope_id.endswith("(method)"):
+
             # Iterate through symbols in class scope
             for content_symbol in class_scope.content.values():
                 if content_symbol.semantic_type == "expression":
-                    expression_node = content_symbol.node
-                    if expression_node.name in ["if", "while"]:
-                        expr_type = check_expr_type(expression_node)
-
-                        if expr_type != "Bool":
+                    expression_node = content_symbol.get_value()
+                    if "if" in content_symbol.name or "while" in content_symbol.name:
+                        if expression_node != "bool_value":
                             feedback.append(SemanticError(name="InvalidBooleanExpression",
-                                                          details=f"La expresión en la estructura de control '{expression_node.name}' en la clase '{class_name}' debe tener un tipo de dato estático de tipo Bool.",
+                                                          details=f"La expresión en la estructura de control '{expression_node.name}' en el método '{class_scope.scope_id}' debe tener un tipo de dato estático de tipo Bool.",
                                                           symbol=content_symbol,
                                                           scope=class_scope,
                                                           line=""))
