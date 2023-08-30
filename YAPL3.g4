@@ -14,7 +14,7 @@ type: ID | 'SELF_TYPE' | 'Int' | 'String' | 'Bool' | 'IO' | 'Object';
 expr: 
      ID '<-' expr
     | expr '@' (type | CLASS_ID) '.' ID '(' (expr (',' expr)* )?')'
-    | ID '(' expr (',' expr)* ')'
+    | ID '(' (expr (',' expr)* )? ')'
     | 'if' bool_value  'then' expr 'else' expr 'fi'
     | 'while' bool_value 'loop' expr 'pool'
     | '{' expr (';' expr)* '}'
