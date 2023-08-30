@@ -64,7 +64,8 @@ class SymbolTable:
             return current_line 
         
         if node.name == "formals":
-            return current_line +1 
+            current_line = self.formals_build_symbol(node = node, current_scope=current_scope, current_line=current_line+1)
+            return current_line
         if node.name == "expr":
             # If statment >>> 'if' bool_value  'then' expr 'else' expr 'fi'
             if node.children:
@@ -589,6 +590,31 @@ class SymbolTable:
         
         return current_line 
         
+    def formals_build_symbol(self, node:Node, current_scope:Scope, current_line: int)->int:
+        
+        for formal in node.children:
+            if formal.name == "formal":
+                current_line += 1
+                formal_id = formal.children[0]
+                formal_type = formal.children[2].children[0]
+                self.insert(
+                    name = formal_id.name,
+                    data_type= formal_type.name,
+                    semantic_type="formal",
+                    value=None,
+                    default_value=None,
+                    start_index=current_line,
+                    end_index=current_line,
+                    start_line=node.start_line, 
+                    end_line=node.end_line, 
+                    scope=current_scope,
+                    is_function=None,
+                    parameters=None,
+                    parameter_passing_method=None,
+                    node=formal,
+                    type_of_expression=None
+                    )
+        return current_line
     def delete_content(self, name: str, scope: Scope=None)-> bool:
         """Utilizando el nombre del simbolo eliminar toda referencia del simbolo en el objeto.
 
