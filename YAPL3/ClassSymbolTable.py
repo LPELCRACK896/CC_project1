@@ -151,12 +151,12 @@ class SymbolTable:
     def method_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         method_name = node.children[0].name
         method_return_type = node.children[5].children[0].name
-        param_types = [param.children[0].name for param in node.children[2].children]
         full_signature = method_return_type
         method_scope_id = f"{current_scope.scope_id}-{method_name}(method)"
 
         method_scope = self.start_scope(parent_scope=current_scope, scope_id=method_scope_id)
         parameters = self.__get_parameters_from_method(node)
+        parameters = parameters if isinstance(parameters, list) else []
 
         method_symbol = self.insert(
             name = method_name,
@@ -282,7 +282,7 @@ class SymbolTable:
         Returns:
             bool: Indica si la operación se realizó con éxito. True si se elimino, False si no lo encontro en el scope.
         """
-        scope: Scope = self.__check_or_get_default_scope(scope)
+        scope: Scope = self.check_or_get_default_scope(scope)
         if name in self.content[scope.scope_id]:
             del self.content[scope.scope_id][name]
             scope.delete_content(name)
@@ -303,7 +303,7 @@ class SymbolTable:
             parameters (list, optional): listado de parametros. Defaults to [].
             parameter_passing_method (_type_, optional): Metodo por el cual se pasan los parametros (referencia o valor). Defaults to None.
         """
-        scope = self.__check_or_get_default_scope(scope)
+        scope = self.check_or_get_default_scope(scope)
         symbol = Symbol(name = name, value = value, node=node, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_line=start_line, finish_line=finish_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method, can_inherate=can_inherate)
         scope.add_content(symbol)
         self.content[scope.scope_id][symbol.name] = symbol
@@ -319,7 +319,7 @@ class SymbolTable:
         Returns:
             Symbol: El simbolo buscado con todos su atributos.
         """
-        scope: Scope = self.__check_or_get_default_scope(scope)
+        scope: Scope = self.check_or_get_default_scope(scope)
         item: Symbol = None
         found_item = False
         while not found_item and scope != None:
@@ -345,7 +345,42 @@ class SymbolTable:
         self.scopes[scope_id] = new_scope
         return new_scope
     
-    # Pending implmentaion 
+    
+    def check_inhertance_chain(self, class_name) -> tuple:
+        classes = self.global_scope.get_all_classees()
+        if class_name not in classes:
+            msg = f"OutOfScope: {class_name} not defined in global scope"
+            print(msg) # Comentar o eliminar despues 
+            return msg, True, [class_name], class_name
+
+        class_chain = [class_name]
+        class_object: Symbol = classes.get(class_name)
+
+
+        while class_object.name != "Object":
+
+            next_class = class_object.data_type
+            
+
+            if next_class not in classes:
+                return f"InhertanceMissingFather: Missing parent class reference of class \"{class_object}\", called \"{next_class}\"", True, class_chain, class_object.name
+
+            next_class_object:Symbol = classes.get(next_class)
+
+            if next_class in class_chain:
+                class_chain.append(next_class)
+                return f"InhertanceRecursive: Found circular reference on {next_class} class.", True, class_chain, next_class
+
+            if not next_class_object.can_inherate:
+                return f"NotAllowedInhertance: Class {class_object.name} cannot inherate from {next_class} special class.", True, class_chain, class_object.name
+ 
+            class_chain.append(next_class)
+            class_object = next_class_object
+
+            
+
+        return "", False, class_chain, None
+
 
     # Pendiente implementar el contenido dentro de los metodos 
     def __build_basic_classes(self)->Dict[str, Symbol]:
@@ -378,7 +413,7 @@ class SymbolTable:
 
         # Int
         self.insert(name= "Int", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=0, scope=self.global_scope)
-        
+        Int_scope = self.start_scope(parent_scope=self.global_scope, scope_id=f"{self.global_scope.scope_id}-Int(class)")
         # String
         self.insert(name="String", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value="", scope=self.global_scope)
         StringScope = self.start_scope(self.global_scope, f"{self.global_scope.scope_id}-String(class)")
@@ -395,9 +430,10 @@ class SymbolTable:
         self.insert(name="i", data_type="Int", semantic_type="formal", can_inherate=None, scope=StringSubstrScope, value=None, default_value=0, parameters=None, parameter_passing_method=None )
         self.insert(name="l", data_type="Int", semantic_type="formal", can_inherate=None, scope=StringSubstrScope, value=None, default_value=0, parameters=None, parameter_passing_method=None)
         # Bool
+        Int_scope = self.start_scope(parent_scope=self.global_scope, scope_id=f"{self.global_scope.scope_id}-Bool(class)")
         self.insert(name="Bool", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=False, scope=self.global_scope)
 
-    def __check_or_get_default_scope(self, scope: Scope):
+    def check_or_get_default_scope(self, scope: Scope):
         """Revisa la validez de un scope y en caso no lo sea, devuelve el global para ser utilizado.
 
         Args:
@@ -464,4 +500,4 @@ class SymbolTable:
                         else:
                             parameter_parts.append(part.name)
                 parameters.append(tuple(parameter_parts))
-            return parameters
+        return parameters

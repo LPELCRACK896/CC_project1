@@ -148,7 +148,7 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
             main_method = class_scope.search_content("main")
             if main_method and main_method.semantic_type == "method":
                 main_method_exists = True
-                if main_method.parameters != None:  # verifica que no tenga parametros
+                if main_method.parameters != []:  # verifica que no tenga parametros
                     parameters_null = False
         if class_name == "global":
             main_method = class_scope.search_content("Main")
