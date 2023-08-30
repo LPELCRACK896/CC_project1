@@ -41,7 +41,6 @@ class SymbolTable:
             current_scope (scope_actual, optional): En el cual se desea estableceer el nodo. Defaults to None.
         """
         
-        print(node.name, node.start_line, node.end_line)
         if node.name == "program":
             
             for child in node.children:
@@ -81,12 +80,13 @@ class SymbolTable:
             if node.children:
                 if len(node.children)>1:
                     if node.children[1].name=="@":
-                        current_line = self.parent_method_call_expr_symbol(node = node, current_scope=current_line, current_line=current_line+1)
+                        current_line = self.parent_method_call_expr_symbol(node = node, current_scope=current_scope, current_line=current_line+1)
                         return current_line
             # Local method call  >>> ID '(' expr (',' expr)* ')'
             if node.children:
                 if len(node.children)>1:
                     if node.children[1].name=="(":
+                        current_line = self.local_method_call_expr_call(node = node, current_scope=current_scope, current_line=current_line+1)
                         return current_line 
             # While bucle >>>'while' bool_value'loop' expr 'pool'
             if node.children:
@@ -96,6 +96,7 @@ class SymbolTable:
             # Key embeded  expr >>> '{' expr (';' expr)* '}'
             if node.children:
                 if node.children[0].name == "{":
+
                     return current_line 
             # Let statment >>> 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
             if node.children:
@@ -105,10 +106,12 @@ class SymbolTable:
             if node.children:
                 if len(node.children)>1:
                     if node.children[1].name==".":
+                        current_line = self.external_method_call_build_symbol(node= node, current_scope=current_scope, current_line=current_line)
                         return current_line
             # NEW Object >>> 'new' classDef
             if node.children:
                 if node.children[0].name == "new":
+                    
                     return current_line +1 
             # Isvoid statment 'isvoid' expr
             if node.children:
@@ -118,10 +121,19 @@ class SymbolTable:
             if node.children:
                 if node.children[0].name == "(":
                     return current_line +1
-            # Comparation expression expr op=OP expr
+            # op=OP expr  
+            if node.children: 
+                if len(node.children)>1:
+                    return current_line +1
+            # ID | INT | STRING | RW_FALSE | RW_TRUE | 
+            if node.children:
+                if len(node.children)==1:
+                    return current_line +1
+                
             '''
                 Implementar
             '''
+
             return current_line 
 
         for child in node.children:
@@ -134,7 +146,10 @@ class SymbolTable:
         children = node.children
         if len(children)>4:
             if children[2].name == 'inherits':
-                parent_class = children[3].name
+                if children[3].name == "type":
+                    parent_class = children[3].children[0].name
+                else: 
+                    parent_class = children[3].name
 
         class_name = node.children[1].name
         class_symbol = self.insert(
@@ -222,7 +237,8 @@ class SymbolTable:
             is_function=False, 
             parameters=[], 
             parameter_passing_method=None)
-
+        if attr_value:
+            current_line = self.build_symbol_table(node = attr_value, current_scope=current_scope, current_line=current_line+1)
         return current_line
 
     def if_expr_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
@@ -239,7 +255,9 @@ class SymbolTable:
             end_line=node.end_line, 
             scope = current_scope,
             parameters=[],
-            is_function=True)
+            is_function=True,
+            type_of_expression="if"
+)
 
         if_line = current_line
         if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}-IF({if_line}if)")
@@ -267,7 +285,10 @@ class SymbolTable:
             end_line=node.end_line, 
             scope = current_scope,
             parameters=[],
-            is_function=False) 
+            is_function=False,
+            type_of_expression="while"
+
+            ) 
         
         while_line = current_line
 
@@ -280,16 +301,15 @@ class SymbolTable:
         while_symbol.end_index = current_line
 
     
-        return current_line + 1
+        return current_line
     
     def attribute_asignation_build_expr_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         expression_string = self.get_expresion_to_str(node)
-        value_str = expression_string.split("<-")[1]
         self.insert(
             name = expression_string,
             data_type=None,
-            semantic_type="attribute_assignation",
-            value=value_str,
+            semantic_type="expression",
+            value=node.children[2],
             default_value=None,
             start_index=current_line,
             end_index=current_line,
@@ -301,10 +321,70 @@ class SymbolTable:
             parameter_passing_method=None,
             node=node
             )
+        
+        current_line = self.build_symbol_table(node = node.children[2], current_scope=current_scope, current_line=current_line+1)
+        
+        
         return current_line 
 
     def parent_method_call_expr_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
-        print(1)
+        self.insert(
+            name = self.get_expresion_to_str(node),
+            data_type=None,
+            semantic_type="expression",
+            value=node,
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="parent_call_method"
+            )
+        return current_line
+    
+    def local_method_call_expr_call(self, node: Node, current_scope: Scope, current_line: int)-> int:
+        self.insert(
+            name = self.get_expresion_to_str(node),
+            data_type=None,
+            semantic_type="expression",
+            value=node,
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="local_call_method"
+            )
+        return current_line
+
+    def external_method_call_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
+        self.insert(
+            name = self.get_expresion_to_str(node),
+            data_type=None,
+            semantic_type="expression",
+            value=node,
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="external_method_call"
+            )
         return current_line
 
     def delete_content(self, name: str, scope: Scope=None)-> bool:
@@ -324,7 +404,7 @@ class SymbolTable:
             return True
         return False
 
-    def insert(self, name, data_type, semantic_type, value, default_value, start_index = None, end_index = None, start_line = -1, end_line = 0,scope = None, is_function = False, parameters = [], parameter_passing_method = None, node = None, can_inherate = False):
+    def insert(self, name, data_type, semantic_type, value, default_value, start_index = None, end_index = None, start_line = -1, end_line = 0,scope = None, is_function = False, parameters = [], parameter_passing_method = None, node = None, can_inherate = False, type_of_expression = None):
         """Inerta un simbolo a la tabla.
 
         Args:
@@ -339,7 +419,26 @@ class SymbolTable:
             parameter_passing_method (_type_, optional): Metodo por el cual se pasan los parametros (referencia o valor). Defaults to None.
         """
         scope = self.check_or_get_default_scope(scope)
-        symbol = Symbol(name = name, value = value, node=node, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_index=start_index, end_index=end_index, start_line=start_line, end_line=end_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method, can_inherate=can_inherate)
+        symbol = Symbol(
+            name = name, 
+            value = value, 
+            node=node, 
+            default_value = default_value,
+            data_type = data_type,
+            semantic_type = semantic_type, 
+            start_index = start_index, 
+            end_index = end_index, 
+            start_line = start_line, 
+            end_line = end_line,
+            scope = scope.scope_id, 
+            is_function = is_function, 
+            parameters = parameters, 
+            parameter_passing_method = parameter_passing_method, 
+            can_inherate = can_inherate, 
+            type_of_expression = type_of_expression
+            )
+        if semantic_type == "expression": 
+            print(type_of_expression, SymbolTable.get_expresion_to_list(symbol.value))
         scope.add_content(symbol)
         self.content[scope.scope_id][symbol.name] = symbol
         return symbol
@@ -385,7 +484,6 @@ class SymbolTable:
         classes = self.global_scope.get_all_classees()
         if class_name not in classes:
             msg = f"OutOfScope: {class_name} not defined in global scope"
-            print(msg) # Comentar o eliminar despues 
             return msg, True, [class_name], class_name
 
         class_chain = [class_name]
@@ -398,7 +496,8 @@ class SymbolTable:
             
 
             if next_class not in classes:
-                return f"InhertanceMissingFather: Missing parent class reference of class \"{class_object}\", called \"{next_class}\"", True, class_chain, class_object.name
+                class_chain.append(next_class)
+                return f"InhertanceMissingFather: Missing parent class reference of class \"{class_object.data_type}\", called \"{next_class}\"", True, class_chain, class_object.name
 
             next_class_object:Symbol = classes.get(next_class)
 
@@ -407,6 +506,7 @@ class SymbolTable:
                 return f"InhertanceRecursive: Found circular reference on {next_class} class.", True, class_chain, next_class
 
             if not next_class_object.can_inherate:
+                class_chain.append(next_class)
                 return f"NotAllowedInhertance: Class {class_object.name} cannot inherate from {next_class} special class.", True, class_chain, class_object.name
  
             class_chain.append(next_class)
@@ -535,7 +635,29 @@ class SymbolTable:
             return expr_node.name
         else:
             return expr_node
+    @staticmethod
+    def get_expresion_to_list(expr_node: Node)-> str:
+        """Convierte Nodos de anytree con nombre expr en su valor to string deconstruyendo el valor de sus hijos.
 
+        Args:
+            expr_node (anytree.Node): Nodo base que referencia a demas nodos parte de la expresion.
+
+        Returns:
+            str: Version to string del nodo.
+        """
+        if isinstance(expr_node, Node):
+            children = expr_node.children
+            if expr_node.name == "expr":
+                content = []
+                for child in children:
+                    content.extend(SymbolTable.get_expresion_to_list(child))
+                return content
+
+            return [str(expr_node.name)]
+        else:
+            return [str(expr_node)]
+
+    
     @staticmethod
     def evaluate_expr(exp_node):
         

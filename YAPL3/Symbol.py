@@ -25,6 +25,7 @@ class Symbol:
     parameters: List[str] = field(default_factory=list)  
     parameter_passing_method: str = None  
     can_inherate: bool = False
+    type_of_expression: str = None
 
 
     def get_value(self):
