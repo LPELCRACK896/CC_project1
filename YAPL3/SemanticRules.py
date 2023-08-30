@@ -33,13 +33,23 @@ def class_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
 
             if not has_attributes and not has_methods:
                 class_symbol = symbol_table.search(class_name)
-                feedback.append(SemanticError(name="EmptyClass",
-                                              details=f"La clase '{class_name}' no tiene atributos ni métodos.",
-                                              symbol=class_symbol,
-                                              scope=class_scope,
-                                              line=class_symbol.start_line
-                                              ))
-                all_passed = False
+                if class_symbol.name in ["Int", "Bool"]:
+                    pass
+                    # feedback.append(SemanticError(name="EmptyClass As Should Be",
+                    #                               details=f"La clase '{class_name}' no tiene atributos ni métodos.",
+                    #                               symbol=class_symbol,
+                    #                               scope=class_scope,
+                    #                               line=class_symbol.start_line,
+                    #                               ))
+                    # all_passed = False
+                else:
+                    feedback.append(SemanticError(name="EmptyClass",
+                                                  details=f"La clase '{class_name}' no tiene atributos ni métodos.",
+                                                  symbol=class_symbol,
+                                                  scope=class_scope,
+                                                  line=class_symbol.start_line,
+                                                  ))
+                    all_passed = False
 
     return all_passed, feedback
 
@@ -189,17 +199,28 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
 def execution_start_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
+    main_call_exists = False
 
     # Verificar si existe la línea (new Main).main()
-    '''
-    main_call = symbol_table.search("main_call")
-    if not main_call:
+
+    # Recorremos todas las clases en la tabla de símbolos
+    for class_name in symbol_table.scopes:
+        class_scope = symbol_table.scopes[class_name]
+        # Verificar si existe el call
+        if class_name == "global":
+            main_call = class_scope.search_content("(newMain).main()")
+            if main_call:
+                main_call_exists = True
+
+    if not main_call_exists:
         feedback.append(SemanticError(name="MainCallNotFoundError",
                                       details="El programa debe contener la línea (new Main).main() para iniciar la ejecución.",
                                       symbol=None,
-                                      scope=None))
+                                      scope=None,
+                                      line="última"
+                                      ))
         all_passed = False
-    '''
+
     return all_passed, feedback
 
 
