@@ -629,7 +629,7 @@ class SymbolTable:
     def notInt_build_symbol(self, node:Node, current_scope:Scope, current_line: int)->int:
         items = self.get_expresion_to_list(node.children[1])
         self.insert(
-            name = f"{current_line} ~ "+" ".join(items),
+            name = f"({current_line}) ~ "+" ".join(items),
             data_type= "Int",
             semantic_type="expression",
             value=node.children[1],
@@ -650,7 +650,7 @@ class SymbolTable:
     def notBool_build_symbol(self, node:Node, current_scope:Scope, current_line: int)->int:
         items = self.get_expresion_to_list(node.children[1])
         self.insert(
-            name = f"{current_line}not "+" ".join(items),
+            name = f"({current_line})not "+" ".join(items),
             data_type= "Bool",
             semantic_type="expression",
             value=node.children[1],
