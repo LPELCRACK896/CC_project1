@@ -4,7 +4,7 @@ program: classDef* (expr';')* EOF;
 
 
 
-classDef: RW_CLASS CLASS_ID (RW_INHERITS CLASS_ID)? '{' feature* '}';
+classDef: RW_CLASS CLASS_ID (RW_INHERITS (CLASS_ID  | type))? '{' feature* '}';
 feature: attr | method;
 attr: ID ':' type ('<-' expr)? ';';
 method: ID '(' formals ')' ':' type '{' (expr ';')* func_return '}';
@@ -13,14 +13,14 @@ formal: ID ':' type;
 type: ID | 'SELF_TYPE' | 'Int' | 'String' | 'Bool' | 'IO' | 'Object';
 expr: 
      ID '<-' expr
-    | expr '@' type '.' ID '(' expr (',' expr)* ')'
+    | expr '@' type '.' ID '(' (expr (',' expr)* )?')'
     | ID '(' expr (',' expr)* ')'
     | 'if' bool_value  'then' expr 'else' expr 'fi'
-    | 'while' bool_value'loop' expr 'pool'
+    | 'while' bool_value 'loop' expr 'pool'
     | '{' expr (';' expr)* '}'
     | 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
-    | expr '.' ID '(' (expr (',' expr)*)? ')'
-    | 'new' CLASS_ID
+    | expr '.' ID '(' (expr (',' expr)* )? ')'
+    | 'new' (CLASS_ID | type)
     | 'isvoid' expr
     | expr op=OP expr
     | '(' expr ')'
