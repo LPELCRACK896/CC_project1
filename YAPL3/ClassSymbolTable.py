@@ -18,8 +18,7 @@ class SymbolTable:
         self.content = defaultdict(dict)  # {<scope_id>: {symbol_name: Symbol}} >>  Diccionario con clave el id_scope y valor un diccionario con simbolos (diccionario interno, identificador de simbolo como clave; Objeto Simbolo como valor)
         self.global_scope = Scope(parent=None, scope_id = "global") # La tabla de simbolos de inicializa con un scope global en el que se almacenan simbolos que no esten debajo de otros scopes creados. 
         self.scopes = { "global": self.global_scope } # {<scope_id>: Scope} >> Scopes de la tabla almacenados en dicionarios que tiene por clave su identificador y su objeto por valor. 
-        self.addition_classes = self.__build_basic_classes()
-        self.build_symbol_table(root, current_scope=self.global_scope) # Construye recursivamente la tabla de simbolos
+        self.build_symbol_table(node = root, current_scope=self.global_scope, current_line=self.__build_basic_classes()) # Construye recursivamente la tabla de simbolos
         
     def __str__(self)-> str:
         """Crea una version bonita y para consola de la tabla. 
@@ -28,10 +27,10 @@ class SymbolTable:
             str: Tabla estetica. 
         """
         table = PrettyTable()
-        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type",  "S. line", "F. Line"]
+        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type",  "S.Index", "E.Index", "S.Line", "E.Line"]
         for scope_id,  symbols in self.content.items():
             for symbol_name, symbol in symbols.items():
-                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.start_line, symbol.finish_line])
+                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.start_index, symbol.end_index, symbol.start_line, symbol.end_line])
         return str(table)
 
     def build_symbol_table(self, node, current_scope = None, current_line = 0) -> int:
@@ -41,7 +40,10 @@ class SymbolTable:
             node (anytree.Node): Nodo el cual se deasea ubicar en tabla de simbolos.
             current_scope (scope_actual, optional): En el cual se desea estableceer el nodo. Defaults to None.
         """
+        
+        print(node.name, node.start_line, node.end_line)
         if node.name == "program":
+            
             for child in node.children:
                 current_line = self.build_symbol_table(child, current_scope, current_line+1)
             return current_line
@@ -135,7 +137,18 @@ class SymbolTable:
                 parent_class = children[3].name
 
         class_name = node.children[1].name
-        class_symbol = self.insert(name = class_name, data_type = parent_class, semantic_type="class", node=node,value=None, default_value=None,start_line = current_line, scope = current_scope, can_inherate=True)
+        class_symbol = self.insert(
+            name = class_name, 
+            data_type = parent_class, 
+            semantic_type="class", 
+            node=node,value=None, 
+            default_value=None,
+            start_index = current_line, 
+            scope = current_scope, 
+            can_inherate=True, 
+            start_line=node.start_line, 
+            end_line=node.end_line
+            )
 
         current_scope = self.start_scope(parent_scope=current_scope, scope_id=f'{current_scope.scope_id}-{class_name}(class)')
 
@@ -143,7 +156,7 @@ class SymbolTable:
         for child in node.children:
             current_line = self.build_symbol_table(child, current_scope, current_line=current_line + 1)
 
-        class_symbol.finish_line = current_line
+        class_symbol.end_index = current_line
         current_scope = current_scope.get_parent()
 
         return current_line
@@ -165,15 +178,18 @@ class SymbolTable:
             node=node,
             default_value=None,
             value=None, 
-            start_line=current_line, 
+            start_index=current_line, 
+            start_line=node.start_line, 
+            end_line=node.end_line, 
             scope = current_scope, 
             parameters=parameters, 
             is_function=True,
-            parameter_passing_method="reference")
+            parameter_passing_method="reference"
+            )
 
         for child in node.children:
             current_line = self.build_symbol_table(child, method_scope, current_line=current_line+1)
-        method_symbol.finish_line = current_line
+        method_symbol.end_index = current_line
         current_scope = method_scope.get_parent()
 
         return current_line
@@ -192,7 +208,20 @@ class SymbolTable:
         elif attr_type == "Int":
             default_value = 0
 
-        self.insert(name = attr_name, data_type=attr_type, semantic_type="attr" ,node =node, value=attr_value, default_value = default_value, start_line=current_line, finish_line=current_line,scope=current_scope, is_function=False, parameters=[], parameter_passing_method=None)
+        self.insert(
+            name = attr_name,
+            data_type=attr_type, 
+            semantic_type="attr" ,
+            node =node, value=attr_value, 
+            default_value = default_value, 
+            start_index=current_line, 
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope, 
+            is_function=False, 
+            parameters=[], 
+            parameter_passing_method=None)
 
         return current_line
 
@@ -205,7 +234,9 @@ class SymbolTable:
             node = node, 
             default_value = None,
             value = node.children[1],
-            start_line = current_line,
+            start_index = current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
             scope = current_scope,
             parameters=[],
             is_function=True)
@@ -219,7 +250,7 @@ class SymbolTable:
         else_content = node.children[5]
         current_line = self.build_symbol_table(else_content, else_scope, current_line=current_line+1)
 
-        if_symbol.finish_line = current_line 
+        if_symbol.end_index = current_line 
 
         return current_line
 
@@ -231,7 +262,9 @@ class SymbolTable:
             node = node, 
             default_value = None,
             value = node.children[1],
-            start_line = current_line,
+            start_index = current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
             scope = current_scope,
             parameters=[],
             is_function=False) 
@@ -244,7 +277,7 @@ class SymbolTable:
 
         current_line += 2
 
-        while_symbol.finish_line = current_line
+        while_symbol.end_index = current_line
 
     
         return current_line + 1
@@ -258,8 +291,10 @@ class SymbolTable:
             semantic_type="attribute_assignation",
             value=value_str,
             default_value=None,
-            start_line=current_line,
-            finish_line=current_line,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
             scope=current_scope,
             is_function=None,
             parameters=None,
@@ -289,7 +324,7 @@ class SymbolTable:
             return True
         return False
 
-    def insert(self, name, data_type, semantic_type, value, default_value, start_line = None, finish_line = None, scope = None, is_function = False, parameters = [], parameter_passing_method = None, node = None, can_inherate = False):
+    def insert(self, name, data_type, semantic_type, value, default_value, start_index = None, end_index = None, start_line = -1, end_line = 0,scope = None, is_function = False, parameters = [], parameter_passing_method = None, node = None, can_inherate = False):
         """Inerta un simbolo a la tabla.
 
         Args:
@@ -304,7 +339,7 @@ class SymbolTable:
             parameter_passing_method (_type_, optional): Metodo por el cual se pasan los parametros (referencia o valor). Defaults to None.
         """
         scope = self.check_or_get_default_scope(scope)
-        symbol = Symbol(name = name, value = value, node=node, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_line=start_line, finish_line=finish_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method, can_inherate=can_inherate)
+        symbol = Symbol(name = name, value = value, node=node, default_value=default_value,data_type = data_type,semantic_type=semantic_type, start_index=start_index, end_index=end_index, start_line=start_line, end_line=end_line,scope=scope.scope_id, is_function = is_function, parameters=parameters, parameter_passing_method=parameter_passing_method, can_inherate=can_inherate)
         scope.add_content(symbol)
         self.content[scope.scope_id][symbol.name] = symbol
         return symbol
@@ -383,55 +418,85 @@ class SymbolTable:
 
 
     # Pendiente implementar el contenido dentro de los metodos 
-    def __build_basic_classes(self)->Dict[str, Symbol]:
+    def __build_basic_classes(self)-> int:
+        current_index = 1
         # Object
-        self.insert(name = "Object", data_type=None, semantic_type="class", can_inherate=True, scope=self.global_scope, value=None, default_value=None)
+        self.insert(name = "Object", data_type=None, semantic_type="class", can_inherate=True, scope=self.global_scope, value=None, default_value=None, start_index=current_index, end_index=current_index)
         object_scope = self.start_scope(self.global_scope, scope_id=f"{self.global_scope.scope_id}-Object(class)")
+        current_index += 1
         # abort()
-        self.insert(name = "abort", data_type="Object", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
-        # type_name()
-        self.insert(name = "type_name", data_type="String", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
-        # copy()
-        self.insert(name = "copy", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
+        self.insert(name = "abort", data_type="Object", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
+        
+        # Añadir mas linea segun se agreggue contenido al metodo
 
+        # type_name()
+
+        self.insert(name = "type_name", data_type="String", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
+
+        # Añadir mas linea segun se agreggue contenido al metodo
+
+        # copy()
+        self.insert(name = "copy", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
+
+        # Añadir mas linea segun se agreggue contenido al metodo
 
         # IO
-        self.insert(name= "IO", data_type="Object", semantic_type="class", can_inherate=True, value=None, default_value=None)
+        self.insert(name= "IO", data_type="Object", semantic_type="class", can_inherate=True, value=None, default_value=None, start_index=current_index, end_index=current_index)
+        current_index += 1
         IO_scope = self.start_scope(self.global_scope, scope_id=f"{self.global_scope.scope_id}-IO(class)")
         # out_string(x: String) : SELF_TYPE
-        self.insert(name = "out_string", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "String")], parameter_passing_method="value")
+        self.insert(name = "out_string", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "String")], parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
         IO_out_string_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_string(method)")
-        self.insert(name = "x", data_type="String", semantic_type="formal", can_inherate=None, scope=IO_out_string_scope, value=None, default_value="", parameters=None)
+        self.insert(name = "x", data_type="String", semantic_type="formal", can_inherate=None, scope=IO_out_string_scope, value=None, default_value="", parameters=None, start_index=current_index, end_index=current_index)
+        current_index += 1
         # out_int(x: Int): SELF_TYPE
-        self.insert(name = "out_int", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "Int")], parameter_passing_method="value")
+        self.insert(name = "out_int", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "Int")], parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
         IO_out_int_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_int(method)")
-        self.insert(name="x", data_type="Int", semantic_type="formal", can_inherate=None, scope=IO_out_int_scope, value=None, default_value=0, parameters=None, parameter_passing_method=None)
+        self.insert(name="x", data_type="Int", semantic_type="formal", can_inherate=None, scope=IO_out_int_scope, value=None, default_value=0, parameters=None, parameter_passing_method=None, start_index=current_index, end_index=current_index)
+        current_index += 1
         # in_string() : String
-        self.insert(name = "in_string", data_type="String", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value="", parameters=[], parameter_passing_method="value")
+        self.insert(name = "in_string", data_type="String", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value="", parameters=[], parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
         # in_int(): Int
-        self.insert(name = "in_int", data_type="Int", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=0, parameters=[], parameter_passing_method="value")
-
+        self.insert(name = "in_int", data_type="Int", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=0, parameters=[], parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
         # Int
-        self.insert(name= "Int", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=0, scope=self.global_scope)
+        self.insert(name= "Int", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=0, scope=self.global_scope, start_index=current_index, end_index=current_index)
+        current_index += 1
         Int_scope = self.start_scope(parent_scope=self.global_scope, scope_id=f"{self.global_scope.scope_id}-Int(class)")
         # String
-        self.insert(name="String", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value="", scope=self.global_scope)
+        self.insert(name="String", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value="", scope=self.global_scope, start_index=current_index, end_index=current_index)
+        current_index += 1
         StringScope = self.start_scope(self.global_scope, f"{self.global_scope.scope_id}-String(class)")
 
         # length() : Int
-        self.insert(name="length", data_type="Int", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value=0, parameters=[], parameter_passing_method="value")
+        self.insert(name="length", data_type="Int", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value=0, parameters=[], parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
         # concat(s: String) :String
-        self.insert(name="concat", data_type="String", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value="", parameters=[("s", "String")])
+        self.insert(name="concat", data_type="String", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value="", parameters=[("s", "String")], start_index=current_index, end_index=current_index)
+        current_index += 1
         StringConcatScope = self.start_scope(StringScope, f"{StringScope.scope_id}-concat")
-        self.insert(name="s", data_type="String", semantic_type="formal", can_inherate=None, scope=StringConcatScope, value=None, default_value="")
+        self.insert(name="s", data_type="String", semantic_type="formal", can_inherate=None, scope=StringConcatScope, value=None, default_value="", start_index=current_index, end_index=current_index)
+        current_index += 1
         # substr(i: Int, l: Int) : String
-        self.insert(name="substr", data_type="String", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value=0, parameters=[("i", "Int"), ("l", "Int")],parameter_passing_method="value")
+        self.insert(name="substr", data_type="String", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value=0, parameters=[("i", "Int"), ("l", "Int")],parameter_passing_method="value", start_index=current_index, end_index=current_index)
+        current_index += 1
         StringSubstrScope = self.start_scope(StringScope, f"{StringScope.scope_id}-substr")
-        self.insert(name="i", data_type="Int", semantic_type="formal", can_inherate=None, scope=StringSubstrScope, value=None, default_value=0, parameters=None, parameter_passing_method=None )
-        self.insert(name="l", data_type="Int", semantic_type="formal", can_inherate=None, scope=StringSubstrScope, value=None, default_value=0, parameters=None, parameter_passing_method=None)
+        self.insert(name="i", data_type="Int", semantic_type="formal", can_inherate=None, scope=StringSubstrScope, value=None, default_value=0, parameters=None, parameter_passing_method=None, start_index=current_index, end_index=current_index)
+        current_index += 1
+        self.insert(name="l", data_type="Int", semantic_type="formal", can_inherate=None, scope=StringSubstrScope, value=None, default_value=0, parameters=None, parameter_passing_method=None, start_index=current_index, end_index=current_index)
+        current_index += 1
         # Bool
         Int_scope = self.start_scope(parent_scope=self.global_scope, scope_id=f"{self.global_scope.scope_id}-Bool(class)")
-        self.insert(name="Bool", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=False, scope=self.global_scope)
+        self.insert(name="Bool", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=False, scope=self.global_scope, start_index=current_index, end_index=current_index)
+        current_index += 1
+        
+        return current_index
 
     def check_or_get_default_scope(self, scope: Scope):
         """Revisa la validez de un scope y en caso no lo sea, devuelve el global para ser utilizado.

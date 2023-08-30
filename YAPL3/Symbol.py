@@ -14,8 +14,10 @@ class Symbol:
     node: anytree.Node = None
     default_value: any = None
     is_local_scope: bool = False 
-    start_line: str = None
-    finish_line: str = None
+    start_index: str = None
+    end_index: str = None
+    start_line: str = -1
+    end_line: str = 0
     value: any = None
     memory_position: int = None
     scope: str = None
