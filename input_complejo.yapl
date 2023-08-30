@@ -24,6 +24,9 @@ class Circle inherits Shape {
         
         let id: Int <- 1 in id+3;
         new Main;
+        not true;
+        not false; 
+        ~ 1;
 
         if true then 
             radius <- 8

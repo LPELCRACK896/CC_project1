@@ -22,6 +22,8 @@ expr:
     | expr '.' ID '(' (expr (',' expr)* )? ')'
     | 'new' (CLASS_ID | type)
     | 'isvoid' expr
+    | 'not' expr
+    | '~' expr
     | expr op=OP expr
     | '(' expr ')'
     | ID

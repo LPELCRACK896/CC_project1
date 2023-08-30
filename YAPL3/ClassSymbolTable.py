@@ -112,7 +112,6 @@ class SymbolTable:
                     if node.children[0].children[0].name == "let":
                         current_line = self.let_expression_build_symbol(node = node.children[0], current_scope=current_scope, current_line=current_line+1)
                         return current_line 
-
             # External method call >>> expr '.' ID '(' expr (',' expr)* ')'
             if node.children:
                 if len(node.children)>1:
@@ -138,6 +137,16 @@ class SymbolTable:
                             current_line += self.build_symbol_table(node = node_expr, current_scope = current_scope, current_line = current_line+1)
 
                     return current_line 
+            # 'not' expr
+            if node.children:
+                if node.children[0].name== "not":
+                    current_line = self.notBool_build_symbol(node = node, current_scope=current_scope, current_line=current_line+1)
+                    return current_line
+            # '~' expr
+            if node.children:
+                if node.children[0].name== "~":
+                    current_line = self.notInt_build_symbol(node = node, current_scope=current_scope, current_line=current_line+1)
+                    return current_line
             # op=OP expr  
             if node.children: 
                 if len(node.children)>1:
@@ -148,7 +157,8 @@ class SymbolTable:
                 if len(node.children)==1:
                     current_line = self.simple_expression_build_symbol(node=node, current_scope=current_scope, current_line=current_line)
                     return current_line 
-                
+
+            
             return current_line
         for child in node.children:
             current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
@@ -615,6 +625,49 @@ class SymbolTable:
                     type_of_expression=None
                     )
         return current_line
+    
+    def notInt_build_symbol(self, node:Node, current_scope:Scope, current_line: int)->int:
+        items = self.get_expresion_to_list(node.children[1])
+        self.insert(
+            name = f"{current_line} ~ "+" ".join(items),
+            data_type= "Int",
+            semantic_type="expression",
+            value=node.children[1],
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="unitary"
+            )
+        
+        return current_line 
+    def notBool_build_symbol(self, node:Node, current_scope:Scope, current_line: int)->int:
+        items = self.get_expresion_to_list(node.children[1])
+        self.insert(
+            name = f"{current_line}not "+" ".join(items),
+            data_type= "Bool",
+            semantic_type="expression",
+            value=node.children[1],
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="unitary"
+            )
+        
+        return current_line     
     def delete_content(self, name: str, scope: Scope=None)-> bool:
         """Utilizando el nombre del simbolo eliminar toda referencia del simbolo en el objeto.
 
