@@ -1,6 +1,5 @@
 import os
 import sys
-import re
 from tkinter import filedialog, Tk
 import tkinter as tk
 from antlr4 import *
