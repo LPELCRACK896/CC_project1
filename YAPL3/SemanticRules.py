@@ -37,7 +37,7 @@ def class_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                               details=f"La clase '{class_name}' no tiene atributos ni métodos.",
                                               symbol=class_symbol,
                                               scope=class_scope,
-                                              line=""
+                                              line=class_symbol.start_line
                                               ))
                 all_passed = False
 
@@ -94,7 +94,7 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Int.",
                                                           symbol=content_symbol,
                                                           scope=class_scope,
-                                                          line=""))
+                                                          line=content_symbol.start_line))
                             all_passed = False
 
                         # chequear si es agrupacion de variables
@@ -109,7 +109,7 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                                                   details=f"El atributo '{content_name}' de la clase '{class_name}' tiene asignacion de 2 o más variables de diferente tipo.",
                                                                   symbol=content_symbol,
                                                                   scope=class_scope,
-                                                                  line=""))
+                                                                  line=content_symbol.start_line))
                                     all_passed = False
 
                     elif content_symbol.data_type == "String":
@@ -118,7 +118,7 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo String y estar entre comillas dobles.",
                                                           symbol=content_symbol,
                                                           scope=class_scope,
-                                                          line=""))
+                                                          line=content_symbol.start_line))
                             all_passed = False
                     elif content_symbol.data_type == "Bool":
                         if value is not None and value not in ["true", "false", "1", "0"]:
@@ -126,7 +126,7 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                                           details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true', 'false', '1' o '0').",
                                                           symbol=content_symbol,
                                                           scope=class_scope,
-                                                          line=""))
+                                                          line=content_symbol.start_line))
                             all_passed = False
 
     return all_passed, feedback
@@ -139,6 +139,7 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     main_method_exists = False
     parameters_null = True
     inherits_null = True
+    main_line = 0
 
     # Recorremos todas las clases en la tabla de símbolos
     for class_name in symbol_table.scopes:
@@ -146,6 +147,7 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
         # Verificar si la clase 'Main' tiene un método 'main'
         if class_name == "global-Main(class)":
             main_method = class_scope.search_content("main")
+            main_line = main_method.start_line
             if main_method and main_method.semantic_type == "method":
                 main_method_exists = True
                 if main_method.parameters != []:  # verifica que no tenga parametros
@@ -161,7 +163,7 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                       details="La clase 'Main' debe contener un método llamado 'main'.",
                                       symbol=None,
                                       scope=None,
-                                      line=""))
+                                      line=main_line))
         all_passed = False
 
     # Verificar que el método 'main' no tenga parameters
@@ -170,7 +172,7 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                       details="La clase 'Main' tiene parámetros cuando no debería heredar de nadie.",
                                       symbol=None,
                                       scope=None,
-                                      line=""))
+                                      line=main_line))
         all_passed = False
 
     if not inherits_null:
@@ -178,7 +180,7 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                       details="La clase 'Main' hereda de otra clase cuando no debería.",
                                       symbol=None,
                                       scope=None,
-                                      line=""))
+                                      line=main_line-1))
         all_passed = False
 
     return all_passed, feedback
@@ -212,7 +214,7 @@ def scope_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                           details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
                                           symbol=symbol,
                                           scope=current_scope,
-                                          line=""))
+                                          line=symbol.start_line))
             return False
         return True
 
@@ -263,7 +265,7 @@ def visibility_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                                   details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
                                                   symbol=symbol,
                                                   scope=scope,
-                                                  line=""))
+                                                  line=symbol.start_line))
                     all_passed = False
 
             # Verificar visibilidad en ámbito global
@@ -277,7 +279,7 @@ def visibility_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                                           details=f"El símbolo '{symbol.name}' no es visible en este ámbito.",
                                                           symbol=global_symbol,
                                                           scope=scope,
-                                                          line=""))
+                                                          line=symbol.start_line))
                             all_passed = False
 
     return all_passed, feedback
@@ -399,14 +401,14 @@ def check_casting(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                                                       details=f"No es posible realizar el casting implícito de Bool a Int para el atributo '{content_name}' de la clase '{class_name}', porque un valor Int es diferente a 1 o 0.",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope,
-                                                                      line=""))
+                                                                      line=content_symbol.start_line))
                                         all_passed = False
                                     if not isinstance(new_value, int) and not isinstance(new_value2, int):
                                         feedback.append(SemanticError(name="InvalidCasting",
                                                                       details=f"No es posible realizar el casting implícito de Bool a Int para el atributo '{content_name}' de la clase '{class_name}'.",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope,
-                                                                      line=""))
+                                                                      line=content_symbol.start_line))
                                         all_passed = False
                                     else:
                                         content_symbol.value = new_value
@@ -420,7 +422,7 @@ def check_casting(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                                                       details=f"No es posible realizar el casting implícito de Int a Bool para el atributo '{content_name}' de la clase '{class_name}'.",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope,
-                                                                      line=""))
+                                                                      line=content_symbol.start_line))
                                         all_passed = False
                     except:
                         pass
@@ -476,7 +478,7 @@ def check_assignment_types(symbol_table: SymbolTable) -> (bool, SemanticFeedBack
                                                                       details=f"El tipo de la expresión de asignación para el atributo '{attr_name}' de la clase '{class_name}' no coincide con el tipo del atributo.",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope,
-                                                                      line=""))
+                                                                      line=content_symbol.start_line))
                                         all_passed = False
 
     return all_passed, feedback
@@ -552,7 +554,7 @@ def check_type_compatibility(symbol_table: SymbolTable) -> (bool, SemanticFeedBa
                                                                       details=f"La expresión de asignación para el atributo '{attr_name}' de la clase '{class_name}' tiene tipos incompatibles.",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope,
-                                                                      line=""))
+                                                                      line=content_symbol.start_line))
                                         all_passed = False
 
     return all_passed, feedback
@@ -595,7 +597,7 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
                                                                       details=f"La llamada al método '{method_name}' en la clase '{class_name}' no tiene el número correcto de argumentos.",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope,
-                                                                      line=""))
+                                                                      line=content_symbol.start_line))
                                         all_passed = False
                                     else:
                                         for arg_node, param_type in zip(argument_nodes, method_parameters):
@@ -606,7 +608,7 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
                                                                               details=f"El tipo del argumento en la llamada al método '{method_name}' en la clase '{class_name}' no coincide con el tipo esperado.",
                                                                               symbol=content_symbol,
                                                                               scope=class_scope,
-                                                                              line=""))
+                                                                              line=content_symbol.start_line))
                                                 all_passed = False
 
                                 # Verificar valores de retorno
@@ -618,7 +620,7 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
                                                                       details=f"El tipo de valor de retorno en el método '{method_name}' en la clase '{class_name}' no coincide con el tipo de retorno declarado.",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope,
-                                                                      line=""))
+                                                                      line=content_symbol.start_line))
                                         all_passed = False
 
     return all_passed, feedback
@@ -644,21 +646,21 @@ def check_boolean_object_expression_type(symbol_table: SymbolTable) -> (bool, Se
                                                           details=f"La expresión en la estructura de control '{expression_node.name}' en el método '{class_scope.scope_id}' debe tener un tipo de dato estático de tipo Bool.",
                                                           symbol=content_symbol,
                                                           scope=class_scope,
-                                                          line=""))
+                                                          line=content_symbol.start_line))
                             all_passed = False
                     if "if" in content_symbol.name and content_symbol.data_type != "block":
                         feedback.append(SemanticError(name="IfNoBlock",
                                                       details=f"La expresión en la estructura de control '{expression_node.name}' en el método '{class_scope.scope_id}' debe ser de tipo block.",
                                                       symbol=content_symbol,
                                                       scope=class_scope,
-                                                      line=""))
+                                                      line=content_symbol.start_line))
                         all_passed = False
                     if "while" in content_symbol.name and content_symbol.data_type != "Object":
                         feedback.append(SemanticError(name="WhileNoObject",
                                                       details=f"La expresión en la estructura de control '{expression_node.name}' en el método '{class_scope.scope_id}' debe ser de tipo object.",
                                                       symbol=content_symbol,
                                                       scope=class_scope,
-                                                      line=""))
+                                                      line=content_symbol.start_line))
                         all_passed = False
 
     return all_passed, feedback

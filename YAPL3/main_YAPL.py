@@ -271,7 +271,9 @@ def main_program(input_data, gui_window=None):
         else:
             print("\n")
             for error in semantic_errors:
-                print(error.name, ": ", error.details)
+                print("Error en linea " +
+                      str(error.line) + ": " + str(error.name) +
+                      " : " + str(error.details))
             print(
                 "----------------------------------------------------------------------------------")
             print(
@@ -284,7 +286,9 @@ def main_program(input_data, gui_window=None):
 
                 error_message = "¡Se encontraron errores semánticos en el código!\n"
                 for error in semantic_errors:
-                    error = str(error.name) + ": " + str(error.details) + "\n"
+                    error = "Error en linea " + \
+                        str(error.line) + ": " + str(error.name) + \
+                        " : " + str(error.details) + "\n"
                     error_message += error  # Appending each error message
 
                 # Create the error label widget with the constructed error message
