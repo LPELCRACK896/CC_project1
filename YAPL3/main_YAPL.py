@@ -36,15 +36,14 @@ def build_anytree(node, antlr_node, parser):
         value = antlr_node.getText()
         # Replace double quotes with single quotes
         value = value.replace('"', "'")
-        Node(value, node, start_line = antlr_node.symbol.line, end_line = antlr_node.symbol.line)
+        Node(value, node, start_line=antlr_node.symbol.line,
+             end_line=antlr_node.symbol.line)
         1
-        """         if isinstance(antlr_node.symbol,antlr4.CommonToken) and antlr_node.symbol.type == YAPL3Parser.ERROR:
-            error_node = Node("SYNTAX_ERROR: " +
-                              antlr_node.symbol.text, parent=node) """
     else:
         rule_name = parser.ruleNames[antlr_node.getRuleIndex()]
 
-        child_node = Node(rule_name, node, start_line = antlr_node.start.line, end_line = antlr_node.stop.line)
+        child_node = Node(
+            rule_name, node, start_line=antlr_node.start.line, end_line=antlr_node.stop.line)
         for child in antlr_node.getChildren():
             build_anytree(child_node, child, parser)
 
@@ -217,7 +216,8 @@ def main_program(input_data, gui_window=None):
     else:
         print(tree.toStringTree(recog=parser))
 
-        root = Node(name = parser.ruleNames[tree.getRuleIndex()], start_line = 0, end_line = -1)
+        root = Node(
+            name=parser.ruleNames[tree.getRuleIndex()], start_line=0, end_line=-1)
         build_anytree(root, tree, parser)
 
         # Imprime el árbol anytree
