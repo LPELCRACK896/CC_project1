@@ -6,6 +6,9 @@ class Shape {
 class Circle inherits Shape {
     radius: Int <- 10;
     color: String <- "Red";
+
+    castbool: Bool <- 1;
+    castint: Int <- true;
     
     hasCorners: Bool <- true;
     sumbool: Int <- 1;

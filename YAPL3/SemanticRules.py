@@ -49,16 +49,21 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
     all_passed = True
 
     def check_elements(dictionary, elements_list):
+        type_set = set()
 
         for element in elements_list:
             if element.isnumeric():
                 element = int(element)
-            if element in dictionary and dictionary[element][0] != 'Int':
-                if not isinstance(element, int):
-                    return False
-            elif element not in dictionary and not isinstance(element, int):
+            if element in dictionary:
+                type_set.add(dictionary[element][0])
+            elif not isinstance(element, int):
                 return False
-        return True
+
+        # Considerar las combinaciones "Int" y "Bool" para despues realizar el casteo
+        if len(type_set) > 1 and {"Int", "Bool"} in (type_set, {"Int"}, {"Bool"}):
+            return True
+
+        return len(type_set) <= 1
 
     attr_dir = {}
     # Recorremos todas las clases en la tabla de símbolos
@@ -94,16 +99,18 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
 
                         # chequear si es agrupacion de variables
                         if isinstance(value, str):
-                            value = re.split(r'\s*[-+*/]\s*', value)
-                            value = [val for val in value if val.strip() != '']
+                            if value not in ["true", "false"]:
+                                value = re.split(r'\s*[-+*/]\s*', value)
+                                value = [
+                                    val for val in value if val.strip() != '']
 
-                            if not check_elements(attr_dir, value):
-                                feedback.append(SemanticError(name="InvalidAttributeValue",
-                                                              details=f"El atributo '{content_name}' de la clase '{class_name}' tiene asignacion de 2 o más variables de diferente tipo.",
-                                                              symbol=content_symbol,
-                                                              scope=class_scope,
-                                                              line=""))
-                                all_passed = False
+                                if not check_elements(attr_dir, value):
+                                    feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                                  details=f"El atributo '{content_name}' de la clase '{class_name}' tiene asignacion de 2 o más variables de diferente tipo.",
+                                                                  symbol=content_symbol,
+                                                                  scope=class_scope,
+                                                                  line=""))
+                                    all_passed = False
 
                     elif content_symbol.data_type == "String":
                         if value is not None and not (isinstance(value, str)):
@@ -114,9 +121,9 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                                           line=""))
                             all_passed = False
                     elif content_symbol.data_type == "Bool":
-                        if value is not None and value not in ["true", "false"]:
+                        if value is not None and value not in ["true", "false", "1", "0"]:
                             feedback.append(SemanticError(name="InvalidAttributeValue",
-                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true' o 'false').",
+                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true', 'false', '1' o '0').",
                                                           symbol=content_symbol,
                                                           scope=class_scope,
                                                           line=""))
@@ -339,7 +346,84 @@ def check_casting(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
 
+    attr_dir = {}
+
+    def cast_bool_to_int(value):
+        if value == "true":
+            return 1
+        elif value == "false":
+            return 0
+        return value
+
+    def cast_int_to_bool(value):
+        if value.isnumeric():
+            value = int(value)
+        if isinstance(value, int):
+            return value != 0
+        if value == "true":
+            return True
+        else:
+            return False
+
     # Recorremos todas las clases en la tabla de símbolos
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" == scope_id:
+            continue  # Pasar a la siguiente clase si es 'global' o 'main'
+
+        if class_scope.scope_id.endswith("(class)"):
+            class_name = class_scope.scope_id.split("-")[1].split(
+                "(")[0]  # Extraer el nombre de la clase del scope_id
+
+            # Verificar atributos en la clase
+            for content_name, content_symbol in class_scope.content.items():
+                if content_symbol.semantic_type == "attr" and content_symbol.data_type in ["Int", "Bool"]:
+                    attr_dir[content_name] = [
+                        content_symbol.data_type, content_symbol.get_value()]
+                    try:
+                        value = content_symbol.get_value()
+                        value = re.split(r'\s*[-+*/]\s*', value)
+                        value = [val for val in value if val.strip() != '']
+                        if len(value) == 2:
+                            param1 = value[0]
+                            param2 = value[1]
+
+                            if (attr_dir[param1][0] == "Int" and attr_dir[param2][0] == "Bool") or (attr_dir[param1][0] == "Bool" and attr_dir[param2][0] == "Int"):
+
+                                if content_symbol.data_type == "Int":
+                                    new_value = int(cast_bool_to_int(
+                                        attr_dir[param1][1]))
+                                    new_value2 = int(cast_bool_to_int(
+                                        attr_dir[param2][1]))
+                                    if (new_value > 1) or (new_value2 > 1):
+                                        feedback.append(SemanticError(name="InvalidCasting",
+                                                                      details=f"No es posible realizar el casting implícito de Bool a Int para el atributo '{content_name}' de la clase '{class_name}', porque un valor Int es diferente a 1 o 0.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope,
+                                                                      line=""))
+                                        all_passed = False
+                                    if not isinstance(new_value, int) and not isinstance(new_value2, int):
+                                        feedback.append(SemanticError(name="InvalidCasting",
+                                                                      details=f"No es posible realizar el casting implícito de Bool a Int para el atributo '{content_name}' de la clase '{class_name}'.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope,
+                                                                      line=""))
+                                        all_passed = False
+                                    else:
+                                        content_symbol.value = new_value
+                                elif content_symbol.data_type == "Bool":
+                                    new_value = cast_int_to_bool(
+                                        attr_dir[param1][1])
+                                    new_value2 = cast_int_to_bool(
+                                        attr_dir[param2][1])
+                                    if not isinstance(new_value, bool) and not isinstance(new_value2, bool):
+                                        feedback.append(SemanticError(name="InvalidCasting",
+                                                                      details=f"No es posible realizar el casting implícito de Int a Bool para el atributo '{content_name}' de la clase '{class_name}'.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope,
+                                                                      line=""))
+                                        all_passed = False
+                    except:
+                        pass
 
     return all_passed, feedback
 
@@ -540,7 +624,7 @@ def check_method_calls_and_return_values(symbol_table: SymbolTable) -> (bool, Se
     return all_passed, feedback
 
 
-def check_boolean_expression_type(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+def check_boolean_object_expression_type(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
 
@@ -562,5 +646,19 @@ def check_boolean_expression_type(symbol_table: SymbolTable) -> (bool, SemanticF
                                                           scope=class_scope,
                                                           line=""))
                             all_passed = False
+                    if "if" in content_symbol.name and content_symbol.data_type != "block":
+                        feedback.append(SemanticError(name="IfNoBlock",
+                                                      details=f"La expresión en la estructura de control '{expression_node.name}' en el método '{class_scope.scope_id}' debe ser de tipo block.",
+                                                      symbol=content_symbol,
+                                                      scope=class_scope,
+                                                      line=""))
+                        all_passed = False
+                    if "while" in content_symbol.name and content_symbol.data_type != "Object":
+                        feedback.append(SemanticError(name="WhileNoObject",
+                                                      details=f"La expresión en la estructura de control '{expression_node.name}' en el método '{class_scope.scope_id}' debe ser de tipo object.",
+                                                      symbol=content_symbol,
+                                                      scope=class_scope,
+                                                      line=""))
+                        all_passed = False
 
     return all_passed, feedback
