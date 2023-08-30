@@ -1,6 +1,10 @@
-class Shape {
+class Shape inherits Int{
     radius: Int;
     color: String;
+
+    getArea (diameter:Int): Int {
+        return 1;
+    }
 }
 
 class Circle inherits Shape {
@@ -17,12 +21,21 @@ class Circle inherits Shape {
     diameter: Int <- radius + radius;
 
     getArea(diameter:Int): Int {
+        
+        let id: Int <- 1 in id+3;
+        new Main;
+
         if true then 
             radius <- 8
         else 
             radius <- 4
         fi;
 
+        (new Shape)@Shape.copy();
+
+        isvoid radius;
+        1+1;
+        "hola";
         while true loop 1 pool;
         return 3 * radius * radius;
     }
@@ -31,6 +44,7 @@ class Circle inherits Shape {
 
 
     getColor(): String {
+        getColor();
         return color;
     }
 }
@@ -39,7 +53,7 @@ class Rectangle inherits Shape {
     length: Int <- 5;
     width: Int <- 10;
     
-    getArea(): Int {
+    getArea(diamaaterr:String, radius:Int): Int {
         while length < width loop {
             length <- length + 1
         } pool;
@@ -47,7 +61,7 @@ class Rectangle inherits Shape {
     }
 }
 
-class Main{
+class Main {
     main():Int{
         return 1;
     }

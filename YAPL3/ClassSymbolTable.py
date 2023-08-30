@@ -27,10 +27,10 @@ class SymbolTable:
             str: Tabla estetica. 
         """
         table = PrettyTable()
-        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type",  "S.Index", "E.Index", "S.Line", "E.Line"]
+        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type",  "S.Index", "E.Index", "S.Line", "E.Line", "Exp. Type"]
         for scope_id,  symbols in self.content.items():
             for symbol_name, symbol in symbols.items():
-                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.start_index, symbol.end_index, symbol.start_line, symbol.end_line])
+                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.start_index, symbol.end_index, symbol.start_line, symbol.end_line, symbol.type_of_expression])
         return str(table)
 
     def build_symbol_table(self, node, current_scope = None, current_line = 0) -> int:
@@ -91,51 +91,63 @@ class SymbolTable:
             # While bucle >>>'while' bool_value'loop' expr 'pool'
             if node.children:
                 if node.children[0].name == "while":
-                    current_line = self.while_exp_build_symbol(node=node, current_scope=current_scope, current_line=current_line)
+                    current_line = self.while_exp_build_symbol(node=node, current_scope=current_scope, current_line=current_line+1)
                     return current_line
             # Key embeded  expr >>> '{' expr (';' expr)* '}'
             if node.children:
                 if node.children[0].name == "{":
+                    for node_expr in node.children:
+                        if node.name != "{" and node.name != "}" and node.name != ";":
+                            current_line += self.build_symbol_table(node = node_expr, current_scope = current_scope, current_line = current_line+1)
 
                     return current_line 
             # Let statment >>> 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
             if node.children:
                 if node.children[0].name == "let":
+                    current_line = self.let_expression_build_symbol(node = node, current_scope=current_scope, current_line=current_line+1)
                     return current_line 
+                elif node.children[0].children:
+                    if node.children[0].children[0].name == "let":
+                        current_line = self.let_expression_build_symbol(node = node.children[0], current_scope=current_scope, current_line=current_line+1)
+                        return current_line 
+
             # External method call >>> expr '.' ID '(' expr (',' expr)* ')'
             if node.children:
                 if len(node.children)>1:
                     if node.children[1].name==".":
-                        current_line = self.external_method_call_build_symbol(node= node, current_scope=current_scope, current_line=current_line)
+                        current_line = self.external_method_call_build_symbol(node= node, current_scope=current_scope, current_line=current_line+1)
                         return current_line
             # NEW Object >>> 'new' classDef
             if node.children:
                 if node.children[0].name == "new":
-                    
-                    return current_line +1 
+                    current_line = self.new_object_expression_build_symbol(node=node, current_scope=current_scope, current_line=current_line+1)
+
+                    return current_line
             # Isvoid statment 'isvoid' expr
             if node.children:
                 if node.children[0].name == "isvoid":
-                    return current_line +1
+                    current_line = self.isvoid_expression_build_symbol(node = node, current_scope=current_scope, current_line=current_line)
+                    return current_line 
             # '(' expr ')'
             if node.children:
                 if node.children[0].name == "(":
-                    return current_line +1
+                    for node_expr in node.children:
+                        if node.name != "(" and node.name != ")":
+                            current_line += self.build_symbol_table(node = node_expr, current_scope = current_scope, current_line = current_line+1)
+
+                    return current_line 
             # op=OP expr  
             if node.children: 
                 if len(node.children)>1:
+                    current_line = self.operation_expression_build_symbol(node = node, current_scope=current_scope, current_line=current_line+1)
                     return current_line +1
             # ID | INT | STRING | RW_FALSE | RW_TRUE | 
             if node.children:
                 if len(node.children)==1:
-                    return current_line +1
+                    current_line = self.simple_expression_build_symbol(node=node, current_scope=current_scope, current_line=current_line)
+                    return current_line 
                 
-            '''
-                Implementar
-            '''
-
-            return current_line 
-
+            return current_line
         for child in node.children:
             current_line = self.build_symbol_table(child, current_scope, current_line=current_line+1)
         
@@ -386,6 +398,177 @@ class SymbolTable:
             type_of_expression="external_method_call"
             )
         return current_line
+
+    def let_expression_build_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
+
+        let_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}-let({current_line}let)")    
+    
+        let_content = list(node.children)
+        found_in = False
+        
+        item: Node = let_content.pop(0)
+
+        let_value = None
+
+        while  not found_in:
+
+            if item.name == "in":
+                let_value = let_content.pop(0)
+                found_in = True
+                current_line += 1
+            
+            elif item.name != "," and item.name != ":" and item.name != "<-" and item.name != "let":
+                identificador = item.name
+                valor = None
+                tipo = None
+
+                next_item = item
+                while let_content and next_item.name != "type":
+                    next_item = let_content.pop(0) 
+
+                tipo = next_item.children[0]
+                        
+
+                next_item = let_content.pop(0)
+
+                if next_item.name == "<-":
+                    valor = let_content.pop(0)
+            
+                current_line += 1
+                self.variable_declaration_assignation(node = valor, current_scope=let_scope, current_line = current_line , ID = identificador, tipo = tipo.name  )
+                
+                item = let_content.pop(0)
+            else:
+                item = let_content.pop(0)
+
+        let_symbol = self.insert(
+            name = self.get_expresion_to_str(node),
+            data_type=None,
+            semantic_type="expression",
+            value=let_value,
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="external_method_call"
+            )
+        return current_line
+
+    def variable_declaration_assignation(self, node:Node, current_scope:Scope, current_line:int, ID: str, tipo: str)->int:
+        self.insert(
+            name = ID,
+            data_type=tipo,
+            semantic_type="expression",
+            value=node,
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="declaration_assignation"
+            )
+        return current_line
+
+    def new_object_expression_build_symbol(self, node:Node, current_scope:Scope, current_line:int)->int:
+        items = self.get_expresion_to_list(node)
+        self.insert(
+            name = " ".join(items),
+            data_type= items[1],
+            semantic_type="expression",
+            value=node,
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="object_incialization"
+            )
+        return current_line
+
+    def isvoid_expression_build_symbol(self, node:Node, current_scope:Scope, current_line: int)->int:
+        items = self.get_expresion_to_list(node)
+        self.insert(
+            name = " ".join(items),
+            data_type= "Bool",
+            semantic_type="expression",
+            value=node,
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="isvoid"
+            )
+        return current_line
+
+    def operation_expression_build_symbol(self, node:Node, current_scope:Scope, current_line: int)->int:
+        items = self.get_expresion_to_list(node)
+        self.insert(
+            name = " ".join(items),
+            data_type= None,
+            semantic_type="expression",
+            value=node,
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="operation"
+            )
+        return current_line
+
+
+    def simple_expression_build_symbol(self, node:Node, current_scope:Scope, current_line: int)->int:
+        content: str = str(node.children[0].name)
+        d_type = "Int" if content.isnumeric() else "String" if content.startswith('\'') else "Bool"
+        self.insert(
+            name = content,
+            data_type= d_type,
+            semantic_type="expression",
+            value=node.children[0],
+            default_value=None,
+            start_index=current_line,
+            end_index=current_line,
+            start_line=node.start_line, 
+            end_line=node.end_line, 
+            scope=current_scope,
+            is_function=None,
+            parameters=None,
+            parameter_passing_method=None,
+            node=node,
+            type_of_expression="simple_item"
+            )
+        return current_line
+
+
+        return current_line
+
 
     def delete_content(self, name: str, scope: Scope=None)-> bool:
         """Utilizando el nombre del simbolo eliminar toda referencia del simbolo en el objeto.
