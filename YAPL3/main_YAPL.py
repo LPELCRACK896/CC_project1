@@ -37,6 +37,9 @@ def build_anytree(node, antlr_node, parser):
         # Replace double quotes with single quotes
         value = value.replace('"', "'")
         Node(value, parent=node)
+        if isinstance(antlr_node.symbol, CommonToken) and antlr_node.symbol.type == YAPL3Parser.ERROR:
+            error_node = Node("SYNTAX_ERROR: " +
+                              antlr_node.symbol.text, parent=node)
     else:
         rule_name = parser.ruleNames[antlr_node.getRuleIndex()]
         child_node = Node(rule_name, parent=node)
