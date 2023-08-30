@@ -248,6 +248,7 @@ class SymbolTable:
 
     
         return current_line + 1
+    
     def attribute_asignation_build_expr_symbol(self, node: Node, current_scope: Scope, current_line: int)-> int:
         expression_string = self.get_expresion_to_str(node)
         value_str = expression_string.split("<-")[1]
@@ -353,10 +354,8 @@ class SymbolTable:
         object_scope = self.start_scope(self.global_scope, scope_id=f"{self.global_scope.scope_id}-Object(class)")
         # abort()
         self.insert(name = "abort", data_type="Object", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
-        
         # type_name()
         self.insert(name = "type_name", data_type="String", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
-        
         # copy()
         self.insert(name = "copy", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=object_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
 
@@ -364,34 +363,39 @@ class SymbolTable:
         # IO
         self.insert(name= "IO", data_type="Object", semantic_type="class", can_inherate=True, value=None, default_value=None)
         IO_scope = self.start_scope(self.global_scope, scope_id=f"{self.global_scope.scope_id}-IO(class)")
-        
-
         # out_string(x: String) : SELF_TYPE
         self.insert(name = "out_string", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "String")], parameter_passing_method="value")
         IO_out_string_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_string(method)")
-
         self.insert(name = "x", data_type="String", semantic_type="formal", can_inherate=None, scope=IO_out_string_scope, value=None, default_value="", parameters=None)
-
-
         # out_int(x: Int): SELF_TYPE
         self.insert(name = "out_int", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[("x", "Int")], parameter_passing_method="value")
         IO_out_int_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_int(method)")
-
-        self.insert(name="x", data_type="Int", semantic_type="formal", can_inherate=None, scope=IO_out_int_scope, value=None, default_value="0", parameters=None, parameter_passing_method=None)
-
+        self.insert(name="x", data_type="Int", semantic_type="formal", can_inherate=None, scope=IO_out_int_scope, value=None, default_value=0, parameters=None, parameter_passing_method=None)
         # in_string() : String
-        self.insert(name = "in_string", data_type="String", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
-        
+        self.insert(name = "in_string", data_type="String", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value="", parameters=[], parameter_passing_method="value")
         # in_int(): Int
-        self.insert(name = "in_int", data_type="Int", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=None, parameters=[], parameter_passing_method="value")
-
+        self.insert(name = "in_int", data_type="Int", semantic_type="method", can_inherate=None, scope=IO_scope, value=None, default_value=0, parameters=[], parameter_passing_method="value")
 
         # Int
-        self.insert(name= "Int", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=None)
+        self.insert(name= "Int", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=0, scope=self.global_scope)
         
         # String
-        self.insert(name="String", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=None)
+        self.insert(name="String", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value="", scope=self.global_scope)
+        StringScope = self.start_scope(self.global_scope, f"{self.global_scope.scope_id}-String(class)")
 
+        # length() : Int
+        self.insert(name="length", data_type="Int", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value=0, parameters=[], parameter_passing_method="value")
+        # concat(s: String) :String
+        self.insert(name="concat", data_type="String", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value="", parameters=[("s", "String")])
+        StringConcatScope = self.start_scope(StringScope, f"{StringScope.scope_id}-concat")
+        self.insert(name="s", data_type="String", semantic_type="formal", can_inherate=None, scope=StringConcatScope, value=None, default_value="")
+        # substr(i: Int, l: Int) : String
+        self.insert(name="substr", data_type="String", semantic_type="method", can_inherate=None, scope=StringScope, value=None, default_value=0, parameters=[("i", "Int"), ("l", "Int")],parameter_passing_method="value")
+        StringSubstrScope = self.start_scope(StringScope, f"{StringScope.scope_id}-substr")
+        self.insert(name="i", data_type="Int", semantic_type="formal", can_inherate=None, scope=StringSubstrScope, value=None, default_value=0, parameters=None, parameter_passing_method=None )
+        self.insert(name="l", data_type="Int", semantic_type="formal", can_inherate=None, scope=StringSubstrScope, value=None, default_value=0, parameters=None, parameter_passing_method=None)
+        # Bool
+        self.insert(name="Bool", data_type="Object", semantic_type="class", can_inherate=False, value=None, default_value=False, scope=self.global_scope)
 
     def __check_or_get_default_scope(self, scope: Scope):
         """Revisa la validez de un scope y en caso no lo sea, devuelve el global para ser utilizado.
