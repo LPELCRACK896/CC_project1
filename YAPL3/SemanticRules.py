@@ -710,3 +710,39 @@ def check_boolean_object_expression_type(symbol_table: SymbolTable) -> (bool, Se
                         all_passed = False
 
     return all_passed, feedback
+
+
+def check_unitary(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    for scope_id, class_scope in symbol_table.scopes.items():
+        if "global" == scope_id:
+            continue
+
+        if class_scope.scope_id.endswith("(method)"):
+
+            # Iterate through symbols in class scope
+            for content_symbol in class_scope.content.values():
+                if content_symbol.type_of_expression == "unitary":
+                    resultado = re.search(
+                        r'\((.*?)\)\s*(.*)', content_symbol.name)
+                    texto_despues_del_parentesis = resultado.group(2)
+                    result = texto_despues_del_parentesis.split()
+                    if result[0] == "not":
+                        if result[1] != "true" and result[1] != "false":
+                            feedback.append(SemanticError(name="UnaryNotBadlyUsed",
+                                                          details=f"La expresión unaria '{texto_despues_del_parentesis}' en el método '{class_scope.scope_id}' no esta bien aplicada.",
+                                                          symbol=content_symbol,
+                                                          scope=class_scope,
+                                                          line=content_symbol.start_line))
+                            all_passed = False
+                    if result[0] == "~" and not result[1].isnumeric():
+                        feedback.append(SemanticError(name="UnaryNotBadlyUsed",
+                                                      details=f"La expresión unaria '{texto_despues_del_parentesis}' en el método '{class_scope.scope_id}' no esta bien aplicada.",
+                                                      symbol=content_symbol,
+                                                      scope=class_scope,
+                                                      line=content_symbol.start_line))
+                        all_passed = False
+
+    return all_passed, feedback

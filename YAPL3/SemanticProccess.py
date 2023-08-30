@@ -26,6 +26,7 @@ active_rules: ActiveRulesType = {
     "12_special_io_class": not_implemented_true,  # Dios nos salve
     "extra_ambit_rules": not_implemented_true,  # Dios nos salve
     "extra_methods_and_return_values": not_implemented_true,  # Dios nos salve
+    "extra_unitary_check": check_unitary,
 }
 
 
