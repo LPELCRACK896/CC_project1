@@ -7,12 +7,12 @@ class Circle inherits Shape {
     radius: Int <- 10;
     color: String <- "Red";
 
-    castbool: Bool <- 1;
-    castint: Int <- true;
+    castbol: Bool <- 1;
+    castinnt: Int <- true;
     
     hasCorners: Bool <- true;
-    sumbool: Int <- 1;
-    rescasted: Int <- hasCorners + sumbool;
+    sumbol: Int <- 1;
+    rescasted: Int <- hasCorners + sumbol;
     
     diameter: Int <- radius + radius;
 

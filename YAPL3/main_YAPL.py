@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from tkinter import filedialog, Tk
 import tkinter as tk
 from antlr4 import *
@@ -12,6 +13,12 @@ from CustomErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
 from SemanticProccess import check_semantic
+
+reserved_keywords = ["if", "else", "while", "for",
+                     "Int", "String", "Bool"]
+reserved_ops = ["+", "-", "*", "/", ">=", ">", "=", "<", "<="]
+reserved_signaling = ["{", "}", ":", "return",
+                      "class", "inherits", "(new Main).main()", ";"]
 
 
 def run_program(text_widget, gui_window):
@@ -44,9 +51,65 @@ def clear_error_labels(window):
             widget.destroy()
 
 
+def highlight_keywords(text_widget):
+    # Obtén el contenido del text_widget
+    text = text_widget.get("1.0", "end-1c")
+
+    # Lista de palabras clave reservadas
+    reserved_keywords
+
+    for keyword in reserved_keywords:
+        start_index = "1.0"
+        while True:
+            # Busca la siguiente ocurrencia de la palabra clave
+            start_index = text_widget.search(
+                keyword, start_index, stopindex="end", nocase=True)
+            if not start_index:
+                break
+            end_index = f"{start_index}+{len(keyword)}c"
+
+            # Aplica formato de color a la palabra clave
+            text_widget.tag_add(keyword, start_index, end_index)
+            text_widget.tag_configure(keyword, foreground="blue")
+
+            start_index = end_index
+
+    for keyword in reserved_ops:
+        start_index = "1.0"
+        while True:
+            # Busca la siguiente ocurrencia de la palabra clave
+            start_index = text_widget.search(
+                keyword, start_index, stopindex="end", nocase=True)
+            if not start_index:
+                break
+            end_index = f"{start_index}+{len(keyword)}c"
+
+            # Aplica formato de color a la palabra clave
+            text_widget.tag_add(keyword, start_index, end_index)
+            text_widget.tag_configure(keyword, foreground="red")
+
+            start_index = end_index
+
+    for keyword in reserved_signaling:
+        start_index = "1.0"
+        while True:
+            # Busca la siguiente ocurrencia de la palabra clave
+            start_index = text_widget.search(
+                keyword, start_index, stopindex="end", nocase=True)
+            if not start_index:
+                break
+            end_index = f"{start_index}+{len(keyword)}c"
+
+            # Aplica formato de color a la palabra clave
+            text_widget.tag_add(keyword, start_index, end_index)
+            text_widget.tag_configure(keyword, foreground="purple")
+
+            start_index = end_index
+
+
 def create_gui(input_data):
     gui_window = tk.Tk()
-    gui_window.title("Código Revisado")
+    gui_window.title("Visual Studio Lite")
     gui_window.geometry("1400x800")
 
     def on_window_close():
@@ -76,7 +139,11 @@ def create_gui(input_data):
     text_widget = tk.Text(gui_window, height=30,
                           width=70, padx=20, pady=4, wrap="none",
                           yscrollcommand=scrollbar.set, spacing3=6)
+
     text_widget.insert("1.0", input_data)
+
+    # Highlight reserved keywords
+    highlight_keywords(text_widget)
 
     text_widget.pack(side="left", fill="both", expand=False)
 
