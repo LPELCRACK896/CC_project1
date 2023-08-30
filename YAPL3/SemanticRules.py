@@ -132,12 +132,37 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                             all_passed = False
                     elif content_symbol.data_type == "Bool":
                         if value is not None and value not in ["true", "false", "1", "0"]:
-                            feedback.append(SemanticError(name="InvalidAttributeValue",
-                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true', 'false', '1' o '0').",
-                                                          symbol=content_symbol,
-                                                          scope=class_scope,
-                                                          line=content_symbol.start_line))
-                            all_passed = False
+                            try:  # si es valor asignado por objetis
+                                value_splitted = value.split("=")
+                                if len(value_splitted) > 1:
+                                    tipo_objeto = []
+                                    for val in value_splitted:
+                                        tipo_objeto.append(
+                                            attr_dir[val][1].split("new")[1])
+                                        # verifica que ambos sean objetos
+                                        if attr_dir[val][0] != "Object":
+                                            feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                                          details=f"El atributo '{content_name}' de la clase '{class_name}' debe ser bool asignado por comparacion de objetos.",
+                                                                          symbol=content_symbol,
+                                                                          scope=class_scope,
+                                                                          line=content_symbol.start_line))
+                                            all_passed = False
+                                    # verifica que ambos sean objetos de misma clase
+                                    if all(elemento == tipo_objeto[0] for elemento in tipo_objeto) == False:
+                                        feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                                      details=f"El atributo '{content_name}' de la clase '{class_name}' debe ser bool asignado por comparacion de objetos de la misma clase.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope,
+                                                                      line=content_symbol.start_line))
+                                        all_passed = False
+
+                            except:
+                                feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                              details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true', 'false', '1' o '0', o objetos iguales).",
+                                                              symbol=content_symbol,
+                                                              scope=class_scope,
+                                                              line=content_symbol.start_line))
+                                all_passed = False
 
     return all_passed, feedback
 

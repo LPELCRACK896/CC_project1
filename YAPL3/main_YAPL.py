@@ -6,7 +6,7 @@ from antlr4 import *
 from YAPL3Lexer import YAPL3Lexer
 from YAPL3Parser import YAPL3Parser
 from anytree import Node, RenderTree
-from anytree.exporter import UniqueDotExporter
+from anytree.exporter import UniqueDotExporter, DotExporter
 # import del escuchador de errores personalizado
 from CustomErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode

@@ -11,6 +11,10 @@ class Rectangle{
 }
 
 class Main{
+    rectangulo1: Object <- new Rectangle;
+    rectangulo2: Object <- new Rectangle;
+    rectangulo3: Bool <- rectangulo1 = rectangulo2;
+    
     main():Int{
         return 1;
     }
