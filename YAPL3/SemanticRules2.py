@@ -152,6 +152,46 @@ def check_inhertance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
 
 def single_declaration_identifier(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = symbol_table.construction_errors["Repeated Decaration::"] if "Repeated Decaration::" in symbol_table.construction_errors else []
-    all_passed = bool(len(feedback))
+    all_passed = not bool(len(feedback))
 
     return all_passed, feedback
+
+
+def check_method(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = []
+    all_passed = True
+
+    classes = symbol_table.global_scope.get_all_classees()
+    
+    for _class, _class_symbol in classes.items(): 
+        class_scope_name = f"global-{_class}(class)"
+        class_scope: Scope = symbol_table.scopes.get(class_scope_name)
+        methods = class_scope.get_all_methods()
+
+        for method, method_symbol in methods.items():
+            method_scope_name = f"{class_scope_name}-{method}(method)"
+            method_scope: Scope = symbol_table.scopes.get(method_scope_name)
+            if not method_scope:
+                continue
+            calls_methods = {name: symbol for name, symbol in method_scope.content.items() if symbol.type_of_expression == "local_call_method"}
+            for local_call_name, local_call_symbol in calls_methods.items():
+                lcl_name = local_call_name.split("(")[0]
+                if lcl_name not in methods:
+                    feedback.append(SemanticError(
+                        name = "Local Call Unfound Reference::",
+                        details=f"Cannot find reference \"{lcl_name}\"",
+                        symbol=local_call_symbol,
+                        scope=symbol_table.global_scope,
+                        line = str(local_call_symbol.start_line)
+
+                        ))
+                    all_passed = False
+            
+    return all_passed, feedback
+
+
+
+
+
+
+

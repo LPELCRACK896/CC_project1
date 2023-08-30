@@ -1,6 +1,7 @@
 from ClassSymbolTable import SymbolTable, Symbol, Scope
 from SemanticCommon import SemanticError, ActiveRulesType
 from SemanticRules import *
+from SemanticRules2 import *
 
 from typing import List
 
@@ -14,10 +15,8 @@ active_rules: ActiveRulesType = {
     "4_local_and_global_scope": scope_check,  # EZ: no
     "4_visibility_per_scope": visibility_check,  # Intermedio: ia
     # Facil a priori: ya fijo
-    "5_inheritance_relations": not_implemented_true,
+    "5_inheritance_relations": check_inhertance,
     # No se: necesita revision
-    "5_inheritance_override_logic": not_implemented_true,
-    "6_default_values": not_implemented_true,  # EZ: ia estaba desde la symbol table
     "7_casting_int_bool": check_casting,  # EZ:
     "8_assignation_expresions_type_on_each_side": check_assignment_types,  # Intermedio: si?
     # Compleja: talvez?
@@ -25,11 +24,9 @@ active_rules: ActiveRulesType = {
     "9_method_calls_and_return_values": check_method_calls_and_return_values,  # Complejo
     "10_control_structures": check_boolean_object_expression_type,  # Facil a priori
     # Un poco más dificil, implica implementar guardar expresiones en tabla de simbolos o algo por el estilo.
-    "11_operators_and_expressions": not_implemented_true,
-    "12_special_io_class": not_implemented_true,  # Dios nos salve
-    "extra_ambit_rules": not_implemented_true,  # Dios nos salve
-    "extra_methods_and_return_values": not_implemented_true,  # Dios nos salve
     "extra_unitary_check": check_unitary,
+    "single_declaration_on_scope": single_declaration_identifier,
+    "method_availabilty": check_method
 }
 
 

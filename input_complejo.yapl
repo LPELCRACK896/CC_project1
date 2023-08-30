@@ -1,4 +1,4 @@
-class Shape inherits Int{
+class Shape {
     radius: Int;
     color: String;
 
@@ -22,7 +22,10 @@ class Circle inherits Shape {
 
     getArea(diameter:Int): Int {
         
-        let id: Int <- 1 in id+3;
+        let 
+            id: Int <- 1
+            
+         in id+3;
         new Main;
         not true;
         not false; 
@@ -56,7 +59,7 @@ class Rectangle inherits Shape {
     length: Int <- 5;
     width: Int <- 10;
     
-    getArea(diamaaterr:String, radius:Int): Int {
+    getArea(diameter:Int): Int {
         while length < width loop {
             length <- length + 1
         } pool;

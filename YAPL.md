@@ -1,4 +1,4 @@
-# YAPL
+x   # YAPL
 
 ## ¿Qué es YAPL?
 Es un compilador funcional, subconjunto del lenguaje de programación COOL (*Classroom Object-Oriented Language*). Los programas escritos en **YAPL** constan de un conjunto de clases que cumple, a grandes rasgos, lo siguiente: 
@@ -163,7 +163,7 @@ Un método se define de la siguietne forma:
 **Asignaciones**
 - Una asignación tiene la forma:
     ```
-    a <id> <- <expr>
+    <id> <- <expr>
     ```
 - El tipo estático ``<expr>`` debe coincidir con el tipo declarado para el ``<id>``. 
 - El valor de ``<expr>`` del lado derecho se convierte en el valor del objeto ``<id>``. 

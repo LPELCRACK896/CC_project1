@@ -20,7 +20,9 @@ class Circle inherits Shape {
             radius <- 4
         fi;
 
-        while true loop 1 pool;
+        while true 
+        loop 1 
+        pool;
         return 3 * radius * radius;
     }
 

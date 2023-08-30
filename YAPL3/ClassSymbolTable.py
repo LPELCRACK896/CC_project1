@@ -949,12 +949,120 @@ class SymbolTable:
             return [str(expr_node)]
 
     
-    @staticmethod
-    def evaluate_expr(exp_node):
-        
+    
+    def evaluate_expr(self, exp_node: Node, scope: Scope, feed_back:list):
+        # If statment >>> 'if' bool_value  'then' expr 'else' expr 'fi'
+        if exp_node.children:
+            if exp_node.children[0].name == "if":
+                feed_back.append(
+                    SemanticError(
+                        name= "IF evaluation:: ",
+                        details="Cannot set a value of an if to an identifier.",
+                        symbol=None,
+                        scope=scope, 
+                        line = None
+                    )
+                )
+                return (None, "void")
+        # Attribute assignation >>> ID '<-' expr
+        if exp_node.children:
+            if len(exp_node.children)>1:
+                if exp_node.children[1].name=="<-":
+                    ID = exp_node.children[0]
+                    expression = exp_node.children[2]
+                    content, last_scope_search = scope.search_availabilty_of_content(ID)
+
+                    type_gotted = None
+                    if not content:
+                        feed_back.append(
+                            SemanticError(
+                                name= "Undeclared variable evaluation:: ",
+                                details=f"Cannot use undeclared identifier.\"{ID}\"",
+                                symbol=None,
+                                scope=scope, 
+                                line = None
+                            )
+                        )
+                        return (None, "void")
+                    type_expected = SymbolTable.check_existing_type()
+                    if type_expected not in self.global_scope.get_all_classees():
+                        feed_back.append(
+                            SemanticError(
+                                name= "Declared on unexsisting type::",
+                                details=f"Cannot use undeclared type.\"{type_expected}\"",
+                                symbol=None,
+                                scope=scope, 
+                                line = None
+                            )
+                        )
+                        return (None, "void")
+
+
+                             
+        # Parent Class method >>> expr '@' type '.' ID '(' expr (',' expr)* ')'
+        if exp_node.children:
+            if len(exp_node.children)>1:
+                if exp_node.children[1].name=="@":
+                    pass
+        # Local method call  >>> ID '(' expr (',' expr)* ')'
+        if exp_node.children:
+            if len(exp_node.children)>1:
+                if exp_node.children[1].name=="(":
+                    pass
+        # While bucle >>>'while' bool_value'loop' expr 'pool'
+        if exp_node.children:
+            if exp_node.children[0].name == "while":
+                pass
+        # Key embeded  expr >>> '{' expr (';' expr)* '}'
+        if exp_node.children:
+            if exp_node.children[0].name == "{":
+                pass
+        # Let statment >>> 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
+        if exp_node.children:
+            if exp_node.children[0].name == "let":
+                pass
+            elif exp_node.children[0].children:
+                if exp_node.children[0].children[0].name == "let":
+                    pass
+        # External method call >>> expr '.' ID '(' expr (',' expr)* ')'
+        if exp_node.children:
+            if len(exp_node.children)>1:
+                if exp_node.children[1].name==".":
+                    pass
+        # NEW Object >>> 'new' classDef
+        if exp_node.children:
+            if exp_node.children[0].name == "new":
+                pass
+        # Isvoid statment 'isvoid' expr
+        if exp_node.children:
+            if exp_node.children[0].name == "isvoid":
+                pass
+        # '(' expr ')'
+        if exp_node.children:
+            if exp_node.children[0].name == "(":
+                for node_expr in exp_node.children:
+                    if exp_node.name != "(" and exp_node.name != ")":
+                        pass
+            pass
+        # 'not' expr
+        if exp_node.children:
+            if exp_node.children[0]== "not":
+                pass
+        # '~' expr
+        if exp_node.children:
+            if exp_node.children[0].name== "~":
+                pass
+        # op=OP expr  
+        if exp_node.children: 
+            if len(exp_node.children)>1:
+                pass
+        # ID | INT | STRING | RW_FALSE | RW_TRUE | 
+        if exp_node.children:
+            if len(exp_node.children)==1:
+                pass
+
 
         pass
-    
     
     def __get_parameters_from_method(self, method_node: Node) -> List[tuple]:
         """Partiendo del nodo metodo, obtiene sus parametros.
