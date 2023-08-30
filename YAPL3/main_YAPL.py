@@ -214,15 +214,15 @@ def main_program(input_data, gui_window=None):
             # If there are errors, show the GUI window again
             gui_window.deiconify()
     else:
-        print(tree.toStringTree(recog=parser))
+        # print(tree.toStringTree(recog=parser))
 
         root = Node(
             name=parser.ruleNames[tree.getRuleIndex()], start_line=0, end_line=-1)
         build_anytree(root, tree, parser)
 
         # Imprime el árbol anytree
-        for pre, fill, node in RenderTree(root):
-            print(f'{pre}{node.name}')
+        """ for pre, fill, node in RenderTree(root):
+            print(f'{pre}{node.name}') """
 
         # Genera una representación visual del árbol anytree
         dot_exporter = UniqueDotExporter(root)

@@ -721,8 +721,7 @@ class SymbolTable:
             can_inherate = can_inherate, 
             type_of_expression = type_of_expression
             )
-        if semantic_type == "expression": 
-            print(type_of_expression, SymbolTable.get_expresion_to_list(symbol.value))
+
         symbol, error = scope.add_content(symbol)
         
         if error:
