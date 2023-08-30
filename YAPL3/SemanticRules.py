@@ -1,8 +1,10 @@
 from ClassSymbolTable import SymbolTable, Symbol, Scope
-from SemanticCommon import SemanticError, SemanticFeedBack
+from SemanticCommon import SemanticError
 from SemanticRules import *
 import re
+from typing import List
 
+SemanticFeedBack = List[SemanticError]
 
 def not_implemented_true(symbol_table: SymbolTable = None) -> (bool, SemanticFeedBack):
     return True, [SemanticError(name="Sin Implementar", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None, line="")]

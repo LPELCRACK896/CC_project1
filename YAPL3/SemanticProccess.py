@@ -1,7 +1,10 @@
 from ClassSymbolTable import SymbolTable, Symbol, Scope
-from SemanticCommon import SemanticError, ActiveRulesType, SemanticFeedBack
+from SemanticCommon import SemanticError, ActiveRulesType
 from SemanticRules import *
 
+from typing import List
+
+SemanticFeedBack = List[SemanticError]
 
 active_rules: ActiveRulesType = {
     "1_class_definition": class_definition,  # EZ: lista
