@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from ClassSymbolTable import SymbolTable, Symbol, Scope
+from Symbol import Symbol
+from Scope import Scope
 from typing import Callable, Dict, List
 
 
@@ -13,4 +14,3 @@ class SemanticError:
 
 
 ActiveRulesType = Dict[str, Callable]
-SemanticFeedBack = List[SemanticError]

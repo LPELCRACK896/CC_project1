@@ -6,6 +6,8 @@ from anytree import Node
 
 from Symbol import Symbol
 from Scope import Scope
+from SemanticCommon import *
+from typing import List, Dict
 
 
 class SymbolTable:
@@ -16,6 +18,7 @@ class SymbolTable:
             root (anytree.Node): Nodo raiz del árbol de análisis sintáctico generado por anytree para la gramática. 
         """
         self.content = defaultdict(dict)  # {<scope_id>: {symbol_name: Symbol}} >>  Diccionario con clave el id_scope y valor un diccionario con simbolos (diccionario interno, identificador de simbolo como clave; Objeto Simbolo como valor)
+        self.construction_errors: Dict[str : List[SemanticError]] = {}
         self.global_scope = Scope(parent=None, scope_id = "global") # La tabla de simbolos de inicializa con un scope global en el que se almacenan simbolos que no esten debajo de otros scopes creados. 
         self.scopes = { "global": self.global_scope } # {<scope_id>: Scope} >> Scopes de la tabla almacenados en dicionarios que tiene por clave su identificador y su objeto por valor. 
         self.build_symbol_table(node = root, current_scope=self.global_scope, current_line=self.__build_basic_classes()) # Construye recursivamente la tabla de simbolos
@@ -468,7 +471,7 @@ class SymbolTable:
             parameters=None,
             parameter_passing_method=None,
             node=node,
-            type_of_expression="external_method_call"
+            type_of_expression="let"
             )
         return current_line
 
@@ -720,7 +723,14 @@ class SymbolTable:
             )
         if semantic_type == "expression": 
             print(type_of_expression, SymbolTable.get_expresion_to_list(symbol.value))
-        scope.add_content(symbol)
+        symbol, error = scope.add_content(symbol)
+        
+        if error:
+            semanticErr = SemanticError(name=error.name, details=error.details, symbol=error.symbol, scope=error.scope, line=error.line)
+            if semanticErr.name in self.construction_errors:
+                self.construction_errors[semanticErr.name].append(semanticErr)
+            else:
+                self.construction_errors[semanticErr.name] = [semanticErr]
         self.content[scope.scope_id][symbol.name] = symbol
         return symbol
 

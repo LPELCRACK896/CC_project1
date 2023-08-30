@@ -1,4 +1,11 @@
 from Symbol import Symbol
+from typing import List, Dict
+from dataclasses import dataclass
+from typing import Callable, Dict, List
+from collections import namedtuple
+
+Error = namedtuple('Error', ['name', 'details', "symbol", "scope", "line"])
+
 
 class Scope:
     """Representa un espacio en una tabla de simbolos y son el objeto que tiene una referencia directa a simbolos. Estos a su vez pueden tener scopes padres. 
@@ -31,8 +38,22 @@ class Scope:
         Returns:
             Symbol: El símbolo añadido
         """
+        
+        if symbol.name in self.get_identifiers():
+            error = Error(
+                name="Repeated Decaration::", 
+                details=f"Identifier \"{symbol.name}\" tried to be declared on same scope. Was already declared in line {self.get_identifiers()[symbol.name].start_line} as {self.get_identifiers()[symbol.name].data_type} type.", 
+                symbol= symbol, 
+                scope= self, 
+                line= symbol.start_line
+            )
+            return symbol, error
+        
         self.content[symbol.name] = symbol
-        return symbol
+        return symbol, None
+
+    def get_identifiers(self):
+        return {name: symbol for name, symbol in self.content.items() if symbol.semantic_type != "expression" or symbol.type_of_expression == "declaration_assignation"}
 
     def search_content(self, name: str)->Symbol:
         """En base al nombre del símbolo, lo busca dentro del scope. 

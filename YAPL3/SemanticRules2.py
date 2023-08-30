@@ -1,6 +1,10 @@
 from ClassSymbolTable import SymbolTable, Symbol, Scope
-from SemanticCommon import SemanticError, SemanticFeedBack
+from SemanticCommon import SemanticError
 
+
+from typing import List
+
+SemanticFeedBack = List[SemanticError]
 
 
 def check_inhertance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
@@ -142,5 +146,12 @@ def check_inhertance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                     scope=class_method_symbol.scope,
                                     line= class_method_symbol.start_line
                                 ))
+
+    return all_passed, feedback
+
+
+def single_declaration_identifier(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = symbol_table.construction_errors["Repeated Decaration::"] if "Repeated Decaration::" in symbol_table.construction_errors else []
+    all_passed = bool(len(feedback))
 
     return all_passed, feedback
