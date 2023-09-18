@@ -6,6 +6,7 @@ from typing import List
 
 SemanticFeedBack = List[SemanticError]
 
+
 def not_implemented_true(symbol_table: SymbolTable = None) -> (bool, SemanticFeedBack):
     return True, [SemanticError(name="Sin Implementar", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None, line="")]
 
@@ -134,6 +135,7 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                             all_passed = False
                     elif content_symbol.data_type == "Bool":
                         if value is not None and value not in ["true", "false", "1", "0"]:
+                            print(value)
                             try:  # si es valor asignado por objetis
                                 value_splitted = value.split("=")
                                 if len(value_splitted) > 1:

@@ -30,10 +30,10 @@ class SymbolTable:
             str: Tabla estetica. 
         """
         table = PrettyTable()
-        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Deafult Value", "Data type",  "S.Index", "E.Index", "S.Line", "E.Line", "Exp. Type"]
+        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Memory bytes", "Data type",  "S.Index", "E.Index", "S.Line", "E.Line", "Exp. Type"]
         for scope_id,  symbols in self.content.items():
             for symbol_name, symbol in symbols.items():
-                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.default_value,symbol.data_type, symbol.start_index, symbol.end_index, symbol.start_line, symbol.end_line, symbol.type_of_expression])
+                table.add_row([scope_id, symbol_name, symbol.semantic_type, self.get_expresion_to_str(symbol.value) if symbol.value else symbol.value, symbol.bytes_memory_size, symbol.data_type, symbol.start_index, symbol.end_index, symbol.start_line, symbol.end_line, symbol.type_of_expression])
         return str(table)
 
     def build_symbol_table(self, node, current_scope = None, current_line = 0) -> int:
@@ -723,6 +723,7 @@ class SymbolTable:
             )
 
         symbol, error = scope.add_content(symbol)
+        symbol.estimate_memory_size()
         
         if error:
             semanticErr = SemanticError(name=error.name, details=error.details, symbol=error.symbol, scope=error.scope, line=error.line)

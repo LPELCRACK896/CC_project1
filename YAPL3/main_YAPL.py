@@ -193,6 +193,7 @@ def main_program(input_data, gui_window=None):
     for error in syntax_errors:
         print(error)
 
+    print(tree.toStringTree(recog=parser))
     if syntax_errors:
         print("----------------------------------------------------------------------------------")
         print("\nYa que hay 1 o más errores no se armará el árbol sintáctico del archivo input.\n")
@@ -214,7 +215,6 @@ def main_program(input_data, gui_window=None):
             # If there are errors, show the GUI window again
             gui_window.deiconify()
     else:
-        # print(tree.toStringTree(recog=parser))
 
         root = Node(
             name=parser.ruleNames[tree.getRuleIndex()], start_line=0, end_line=-1)
