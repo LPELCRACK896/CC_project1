@@ -10,7 +10,7 @@ class Symbol:
     """
     name: str
     data_type: str
-    semantic_type:str
+    semantic_type: str
     node: anytree.Node = None
     default_value: any = None
     is_local_scope: bool = False
@@ -28,15 +28,13 @@ class Symbol:
     type_of_expression: str = None
     bytes_memory_size: int = None
 
-
-
     def get_value(self):
-        if self.value == None:
+        if self.value is None:
             if not self.data_type:
                 return None
-            if self.data_type == "Int" or self.data_type == "String" or self.data_type == "Bool" :
+            if self.data_type == "Int" or self.data_type == "String" or self.data_type == "Bool":
                 return self.default_value
-        return get_expresion_to_str(self.value)
+        return get_expression_to_str(self.value)
 
     def estimate_memory_size(self):
         if self.semantic_type == "class":
@@ -49,7 +47,6 @@ class Symbol:
             self.bytes_memory_size = self.get_formal_size()
         elif self.semantic_type == "attr":
             self.bytes_memory_size = self.get_attr_size()
-
 
     def get_class_size(self):
         # Default return
@@ -88,7 +85,9 @@ class Symbol:
         # Add memory necessary for other meta-data
         # Pending code
         return total_size
-def get_expresion_to_str(expr_node: anytree.Node)-> str:
+
+
+def get_expression_to_str(expr_node: anytree.Node) -> str:
     """Convierte Nodos de anytree con nombre expr en su valor to string deconstruyendo el valor de sus hijos.
 
     Args:
@@ -102,7 +101,7 @@ def get_expresion_to_str(expr_node: anytree.Node)-> str:
         if expr_node.name == "expr":
             content = []
             for child in children:
-                content.append(get_expresion_to_str(child))
+                content.append(get_expression_to_str(child))
             return "".join(content)
 
         return expr_node.name

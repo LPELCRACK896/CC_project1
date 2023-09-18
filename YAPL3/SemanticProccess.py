@@ -15,7 +15,7 @@ active_rules: ActiveRulesType = {
     "4_local_and_global_scope": scope_check,  # EZ: no
     "4_visibility_per_scope": visibility_check,  # Intermedio: ia
     # Facil a priori: ya fijo
-    "5_inheritance_relations": check_inhertance,
+    "5_inheritance_relations": check_inheritance,
     # No se: necesita revision
     "7_casting_int_bool": check_casting,  # EZ:
     "8_assignation_expresions_type_on_each_side": check_assignment_types,  # Intermedio: si?

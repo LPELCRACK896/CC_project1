@@ -41,7 +41,7 @@ class Scope:
         
         if symbol.name in self.get_identifiers():
             error = Error(
-                name="Repeated Decaration::", 
+                name="Repeated Declaration::",
                 details=f"Identifier \"{symbol.name}\" tried to be declared on same scope. Was already declared in line {self.get_identifiers()[symbol.name].start_line} as {self.get_identifiers()[symbol.name].data_type} type.", 
                 symbol= symbol, 
                 scope= self, 

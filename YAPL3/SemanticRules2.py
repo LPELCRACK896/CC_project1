@@ -7,7 +7,7 @@ from typing import List
 SemanticFeedBack = List[SemanticError]
 
 
-def check_inhertance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+def check_inheritance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
 
     feedback = []
     all_passed = True
@@ -21,7 +21,8 @@ def check_inhertance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     # Revisa la herencia sesa valida
     while classes:
         i_class = classes.pop()
-        error_content, found_an_error, classes_checked, class_w_error = symbol_table.check_inhertance_chain(class_name=i_class)
+        error_content, found_an_error, classes_checked, class_w_error = symbol_table.check_inheritance_chain(
+            class_name=i_class)
         if found_an_error:
             symbol: Symbol = all_classes_dict.get(i_class)
             name,  content= error_content.split(":") 
@@ -72,32 +73,23 @@ def check_inhertance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
 
                 if son_return_type != parent_return_type:
                     feedback.append(SemanticError(
-                        name= "MissMatchFirmReturn",
-                        details = f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected to return {parent_return_type} type but got {son_return_type} instead.",
-                        symbol= class_method_symbol,
+                        name="MissMatchFirmReturn",
+                        details=f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected to return {parent_return_type} type but got {son_return_type} instead.",
+                        symbol=class_method_symbol,
                         scope=class_method_symbol.scope,
-                        line= class_method_symbol.start_line
+                        line=class_method_symbol.start_line
                     ))
 
                 if len(son_parameters) == len(parent_parameters):
-                    for i, (son_parameter_i, parent_paramter_i) in enumerate(zip(son_parameters, parent_parameters)):
-                        if parent_paramter_i[0] != son_parameter_i[0]:
+                    for i, (son_parameter_i, parent_parameter_i) in enumerate(zip(son_parameters, parent_parameters)):
+                        if parent_parameter_i[0] != son_parameter_i[0] or parent_parameter_i[1] != son_parameter_i[1]:
                             feedback.append(SemanticError(
-                                name  = "MisMatchFirmNameFormal",
-                                details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the name \"{parent_paramter_i[0]}\" but got \"{son_parameter_i[0]}\" instead.",
-                                symbol= class_method_symbol,
+                                name="MisMatchFirmNameFormal",
+                                details=f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the name \"{parent_parameter_i[0]}\" but got \"{son_parameter_i[0]}\" instead.",
+                                symbol=class_method_symbol,
                                 scope=class_method_symbol.scope,
-                                line= class_method_symbol.start_line
+                                line=class_method_symbol.start_line
                             ))
-                                
-                        if parent_paramter_i[1] != son_parameter_i[1]:
-                            feedback.append(SemanticError(
-                                name  = "MisMatchFirmTypeFormal",
-                                details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the type \"{parent_paramter_i[1]}\" but got \"{son_parameter_i[1]}\" instead.",
-                                symbol= class_method_symbol,
-                                scope=class_method_symbol.scope,
-                                line= class_method_symbol.start_line
-                            ))      
                 else:
                     feedback.append(SemanticError(
                         name= "MissMatchParametersInInherateMethod",
@@ -126,22 +118,22 @@ def check_inhertance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                 line= class_method_symbol.start_line
                             ))
                         else: # Existe en ambos 
-                            parent_paramter_i = parent_parameters[i]
+                            parent_parameter_i = parent_parameters[i]
                             son_parameter_i = son_parameters[i]
                             # El nombre del parametro
-                            if parent_paramter_i[0] != son_parameter_i[0]:
+                            if parent_parameter_i[0] != son_parameter_i[0]:
                                 feedback.append(SemanticError(
                                     name  = "MisMatchFirmNameFormal",
-                                    details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the name \"{parent_paramter_i[0]}\" but got \"{son_parameter_i[0]}\"",
+                                    details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the name \"{parent_parameter_i[0]}\" but got \"{son_parameter_i[0]}\"",
                                     symbol= class_method_symbol,
                                     scope=class_method_symbol.scope,
                                     line= class_method_symbol.start_line
                                 ))
                                 
-                            if parent_paramter_i[1] != son_parameter_i[1]:
+                            if parent_parameter_i[1] != son_parameter_i[1]:
                                 feedback.append(SemanticError(
                                     name  = "MisMatchFirmTypeFormal",
-                                    details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the type \"{parent_paramter_i[1]}\" but got \"{son_parameter_i[1]}\"",
+                                    details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the type \"{parent_parameter_i[1]}\" but got \"{son_parameter_i[1]}\"",
                                     symbol= class_method_symbol,
                                     scope=class_method_symbol.scope,
                                     line= class_method_symbol.start_line
@@ -151,7 +143,7 @@ def check_inhertance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
 
 
 def single_declaration_identifier(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
-    feedback = symbol_table.construction_errors["Repeated Decaration::"] if "Repeated Decaration::" in symbol_table.construction_errors else []
+    feedback = symbol_table.construction_errors["Repeated Declaration::"] if "Repeated Declaration::" in symbol_table.construction_errors else []
     all_passed = not bool(len(feedback))
 
     return all_passed, feedback
@@ -178,7 +170,7 @@ def check_method(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                 lcl_name = local_call_name.split("(")[0]
                 if lcl_name not in methods:
                     feedback.append(SemanticError(
-                        name = "Local Call Unfound Reference::",
+                        name="Local Call Unfounded Reference::",
                         details=f"Cannot find reference \"{lcl_name}\"",
                         symbol=local_call_symbol,
                         scope=symbol_table.global_scope,
