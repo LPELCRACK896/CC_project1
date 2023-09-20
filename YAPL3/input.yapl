@@ -1,0 +1,68 @@
+class Shape {
+    radius: Int;
+    color: String;
+
+    getArea (diameter:Int): Int {
+        return 1;
+    }
+}
+
+class Circle inherits Shape {
+    radius: Int <- 10;
+    color: String <- "Red";
+
+    castbol: Bool <- 1;
+    castinnt: Int <- true;
+
+    hasCorners: Bool <- true;
+    sumbol: Int <- 1;
+    rescasted: Int <- hasCorners + sumbol;
+
+    diameter: Int <- radius + radius;
+
+    getArea(diameter:Int): Int {
+
+        not true;
+        not false;
+        ~ 1;
+
+        radius <- 4;
+
+
+
+        1+1;
+        "hola";
+        while true loop 1 pool;
+        return 3 * radius * radius;
+    }
+
+
+
+
+    getColor(): String {
+
+        return color;
+    }
+}
+
+class Rectangle inherits Shape {
+    length: Int <- 5;
+    width: Int <- 10;
+
+    getArea(diameter:Int): Int {
+        while length < width loop {
+            length <- length + 1
+        } pool;
+        return length * width;
+    }
+}
+
+class Main {
+
+    figura3: Bool <- false;
+
+    main():Int{
+        return 1;
+    }
+}
+(new Main).main();

@@ -37,7 +37,9 @@ class Symbol:
         return get_expression_to_str(self.value)
 
     def estimate_memory_size(self):
-        if self.semantic_type == "class":
+        if self.name in br.special_cases:
+            self.bytes_memory_size = br.special_cases.get(self.name)
+        elif self.semantic_type == "class":
             self.bytes_memory_size = self.get_class_size()
         elif self.semantic_type == "expression":
             self.bytes_memory_size = self.get_expression_size()
@@ -47,6 +49,7 @@ class Symbol:
             self.bytes_memory_size = self.get_formal_size()
         elif self.semantic_type == "attr":
             self.bytes_memory_size = self.get_attr_size()
+        return self.bytes_memory_size
 
     def get_class_size(self):
         # Default return
@@ -85,6 +88,54 @@ class Symbol:
         # Add memory necessary for other meta-data
         # Pending code
         return total_size
+
+    def construct_scope_name(self):
+        # Faltan scopes let e if
+        if (self.semantic_type == "method" or self.semantic_type == "class") or (
+                self.semantic_type == "expr" and self.type_of_expression != "let"):
+
+            if self.semantic_type == "method":
+                return self.scope + "-" + self.name + "(method)"
+            elif self.semantic_type == "class":
+                return self.scope + "-" + self.name + "(class)"
+            # Otros con scope
+        return None
+
+    def set_bytes_memory_size(self, bytes_memory_size):
+        self.bytes_memory_size = bytes_memory_size
+
+    def is_admitted_as_based_only_in_type(self):
+        return (
+                (self.semantic_type == "formal") or
+                (self.semantic_type == "attr") or
+                (self.semantic_type == "simple_item") or
+                (self.semantic_type == "expression" and self.type_of_expression == "simple_item") or
+                (self.semantic_type == "expression" and self.type_of_expression == "declaration_assignation") or
+                (self.semantic_type == "expression" and self.type_of_expression == "isvoid") or  # Hotfix might be rmv.
+                (self.semantic_type == "expression" and self.type_of_expression == "unitary") or  # Hotfix might be rmv.
+                (self.semantic_type == "expression" and self.type_of_expression == "operation") or  # Hotfix must remove
+                (self.semantic_type == "func_return")  # Hotfix must remove
+
+        )
+
+    def mem_size__cost_based_on_basic_type(self):
+        """
+        Returns a number value in case
+        :return:
+        """
+
+        if self.data_type in br.basic_types_data_required:
+            return br.basic_types_data_required.get(self.data_type)
+        print("Expected data with basic type")
+        return None
+
+    def simple_calculate_memory_size(self):
+
+        if self.is_admitted_as_based_only_in_type():
+            return self.mem_size__cost_based_on_basic_type()
+        # Pending handle complex symbols
+        return None
+
 
 
 def get_expression_to_str(expr_node: anytree.Node) -> str:

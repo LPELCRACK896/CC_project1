@@ -569,9 +569,11 @@ class SymbolTable:
 
     def operation_expression_build_symbol(self, node: Node, current_scope: Scope, current_line: int) -> int:
         items = self.get_expression_to_list(node)
+        data_type = "Int"  # Hot fix must remove
+        # ^^ Assumes that all operations means arithmetic operation. FIX to identify bool operations!!
         self.insert(
             name=" ".join(items),
-            data_type=None,
+            data_type=data_type,
             semantic_type="expression",
             value=node,
             default_value=None,
@@ -612,9 +614,10 @@ class SymbolTable:
 
     def return_build_symbol(self, node: Node, current_scope: Scope, current_line: int) -> int:
         items = self.get_expression_to_list(node.children[1])
+        data_type = "Int"  # Hot fix must remove
         self.insert(
             name=f"{current_line}return " + " ".join(items),
-            data_type=None,
+            data_type=data_type,
             semantic_type="func_return",
             value=node.children[1],
             default_value=None,
@@ -702,6 +705,15 @@ class SymbolTable:
 
         return current_line
 
+    def get_symbol_scope(self, symbol: Symbol) -> Scope:
+        name = symbol.construct_scope_name()
+        if not name:
+            return
+        if name in self.scopes:
+            return self.scopes.get(name)
+        print("Couldn't find symbol in scope.")
+        return None
+
     def delete_content(self, name: str, scope: Scope = None) -> bool:
         """Utilizando el nombre del simbolo eliminar toda referencia del simbolo en el objeto.
 
@@ -756,7 +768,6 @@ class SymbolTable:
         )
 
         symbol, error = scope.add_content(symbol)
-        symbol.estimate_memory_size()
 
         if error:
             semanticErr = SemanticError(name=error.name, details=error.details, symbol=error.symbol, scope=error.scope,
@@ -803,6 +814,64 @@ class SymbolTable:
         new_scope = Scope(parent=parent_scope, scope_id=scope_id)
         self.scopes[scope_id] = new_scope
         return new_scope
+
+    @staticmethod
+    def est__symbol_has_scope(symbol: Symbol):
+        return (
+                symbol.semantic_type == "class" or
+                symbol.semantic_type == "method"
+        )
+
+    @staticmethod
+    def est__symbol_is_basic(symbol: Symbol):
+        return (
+                (symbol.semantic_type == "class" and symbol.name == "Object") or
+                (symbol.semantic_type == "class" and symbol.name == "IO") or
+                (symbol.semantic_type == "class" and symbol.name == "Int") or
+                (symbol.semantic_type == "class" and symbol.name == "String") or
+                (symbol.semantic_type == "class" and symbol.name == "Bool") or
+                (symbol.scope.startswith("global-Object(class)")) or
+                (symbol.scope.startswith("global-IO(class)")) or
+                (symbol.scope.startswith("global-String(class)"))
+        )
+
+    def estimate_symbol_table_memory_usage(self):
+        total_usage = 0  # Might not me precise since it
+        for scope_id, symbols in self.content.items():
+            for symbol_name, symbol in symbols.items():
+                symbol_mem = self.estimate_symbol_memory_usage(symbol)
+                total_usage += symbol_mem if symbol_mem is not None else 0
+        return total_usage
+
+    def estimate_symbol_memory_usage(self, symbol: Symbol):
+        if self.est__symbol_is_basic(symbol):  # Basic class that has no code and will be added directly into assembler.
+            symbol.set_bytes_memory_size(None)  # So it has no memory estimated in symbol table.
+            return None
+        else:
+            if self.est__symbol_has_scope(symbol):
+                mem_size = self.scoped_calculate_memory_size(symbol)
+                symbol.set_bytes_memory_size(mem_size)
+                return mem_size
+            mem_size = symbol.simple_calculate_memory_size()
+            symbol.set_bytes_memory_size(mem_size)
+            return mem_size
+
+    def scoped_calculate_memory_size(self, symbol):
+        scope_name = symbol.construct_scope_name()
+        if scope_name is None:
+            print(f"{symbol} no tiene nomre de scope valido")
+            return 0
+        if scope_name not in self.scopes:
+            print(f"{symbol}({scope_name}) no se encuentra en tabla de simbolos")
+            return 0
+        scope: Scope = self.scopes.get(scope_name)
+        content = scope.content
+        total_cost = 0
+        for symbol_name, symbol in content.items():
+            cost = self.estimate_symbol_memory_usage(symbol)
+            if cost is not None and isinstance(cost, int):
+                total_cost += cost
+        return total_cost
 
     def check_inheritance_chain(self, class_name) -> tuple:
         classes = self.global_scope.get_all_classees()
@@ -945,7 +1014,7 @@ class SymbolTable:
         current_index += 1
         # Bool
         bool_scope = self.start_scope(parent_scope=self.global_scope,
-                                     scope_id=f"{self.global_scope.scope_id}-Bool(class)")
+                                      scope_id=f"{self.global_scope.scope_id}-Bool(class)")
         self.insert(name="Bool", data_type="Object", semantic_type="class", can_inherate=False, value=None,
                     default_value=False, scope=self.global_scope, start_index=current_index, end_index=current_index)
         current_index += 1
@@ -1122,7 +1191,6 @@ class SymbolTable:
                 pass
 
         pass
-
 
     def __get_parameters_from_method(self, method_node: Node) -> List[tuple]:
         """Partiendo del nodo metodo, obtiene sus parametros.

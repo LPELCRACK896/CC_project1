@@ -58,8 +58,7 @@ def highlight_keywords(text_widget):
     # Obtén el contenido del text_widget
     text = text_widget.get("1.0", "end-1c")
 
-    # Lista de palabras clave reservadas
-    reserved_keywords
+    # Lista de palabras clave reservada
 
     for keyword in reserved_keywords:
         start_index = "1.0"
@@ -231,7 +230,7 @@ def main_program(input_data, gui_window=None):
 
         # Build the symbol table
         symbol_table = SymbolTable(root)
-
+        symbol_table.estimate_symbol_table_memory_usage()
         print(symbol_table)
 
         # funciones de insertar, busqueda y elminacion de symboltable
