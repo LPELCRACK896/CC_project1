@@ -47,7 +47,9 @@
             <div class="errores">
                 {% if syntax_errors %}
                 <h2>Errores Sintácticos:</h2>
-                <p>{{ syntax_errors }}</p>
+                {% for syn_err in syntax_errors %}
+                <p>- {{ syn_err }}</p>
+                {% endfor %}
                 {% elif semantic_errors %}
                 <h2>Errores Semánticos:</h2>
                 {% for sem_err in semantic_errors %}
