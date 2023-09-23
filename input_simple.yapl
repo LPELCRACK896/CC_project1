@@ -1,6 +1,7 @@
 class Rectangle{
     length: Int <- 5;
     width: Int <- length + 10;
+    newbool: Bool <- 2;
     
     getArea(): Int {
         while length < width loop {
@@ -11,7 +12,7 @@ class Rectangle{
 }
 
 class Main{
-    rectangulo1: Object <- new Rectangle
+    rectangulo1: Object <- new Rectangle;
     rectangulo2: Object <- new Rectangle;
     rectangulo3: Bool <- rectangulo1 = rectangulo2;
     

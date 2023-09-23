@@ -134,9 +134,8 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                                           line=content_symbol.start_line))
                             all_passed = False
                     elif content_symbol.data_type == "Bool":
-                        if value is not None and value not in ["true", "false", "1", "0"]:
-                            print(value)
-                            try:  # si es valor asignado por objetis
+                        if value is not None:
+                            try:  # si es valor asignado por objetos
                                 value_splitted = value.split("=")
                                 if len(value_splitted) > 1:
                                     tipo_objeto = []
@@ -155,6 +154,14 @@ def attributes_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack)
                                     if all(elemento == tipo_objeto[0] for elemento in tipo_objeto) == False:
                                         feedback.append(SemanticError(name="InvalidAttributeValue",
                                                                       details=f"El atributo '{content_name}' de la clase '{class_name}' debe ser bool asignado por comparacion de objetos de la misma clase.",
+                                                                      symbol=content_symbol,
+                                                                      scope=class_scope,
+                                                                      line=content_symbol.start_line))
+                                        all_passed = False
+                                else:
+                                    if value not in ["true", "false", "1", "0"]:
+                                        feedback.append(SemanticError(name="InvalidAttributeValue",
+                                                                      details=f"El atributo '{content_name}' de la clase '{class_name}' debe tener un valor de tipo Bool ('true', 'false', '1' o '0', o objetos iguales).",
                                                                       symbol=content_symbol,
                                                                       scope=class_scope,
                                                                       line=content_symbol.start_line))
