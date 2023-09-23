@@ -64,13 +64,3 @@ h1, h2 {
 .cm-s-midnight.CodeMirror{
     height: 60vh!important;
 }
-
-/* Highlight the line when hovered */
-.CodeMirror-activeline-background {
-    background: rgba(255, 255, 255, 0.2); /* Change the background color as desired */
-}
-
-/* Custom class for hovered lines */
-.hovered-line {
-    background: rgba(255, 255, 255, 0.2); /* Change the background color as desired */
-}

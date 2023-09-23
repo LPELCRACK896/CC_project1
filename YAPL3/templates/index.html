@@ -12,18 +12,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.3/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.3/mode/clike/clike.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.3/theme/midnight.css">
-    <style>
-        /* Establecer un ancho del 100% para los textarea */
-        .code-editor textarea {
-            width: 100%;
-        }
-    </style>
+
 </head>
 <body>
     <div class="row">
         <div class="col-lg-6">
             <form action="/" method="POST" enctype="multipart/form-data">
-                <input type="file" name="file">
+                <input type="file" name="file" accept=".yapl">
                 <input class="button" type="submit" value="Compilar">
             </form>
         
@@ -59,7 +54,7 @@
                 <p>- Error en la linea {{ sem_err.line }}: {{ sem_err.name }}: {{ sem_err.details }}</p>
                 {% endfor %}
                 {% else %}
-                <h2 style="color: greenyellow;">Compilado sin errores:</h2>
+                <h2 style="color: greenyellow;">Compilado sin errores</h2>
                 {% endif %}
             </div>
         </div>

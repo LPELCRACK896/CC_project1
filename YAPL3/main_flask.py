@@ -171,7 +171,6 @@ def index():
                     # Genera una representación visual del árbol anytree
                     dot_exporter = UniqueDotExporter(root)
                     dot_exporter.to_picture("visual_tree.png")
-                    os.system(f"start visual_tree.png")
 
                     # Build the symbol table
                     symbol_table = SymbolTable(root)
