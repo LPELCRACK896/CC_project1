@@ -1,0 +1,76 @@
+/* style.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 1%!important;
+    padding: 0;
+    background-color: #0d131d!important;
+    color: #fff!important;
+}
+
+h1, h2 {
+    color: #fff;
+}
+
+
+.line-numbers {
+    width: 3%; /* Adjust the width as needed */
+    background-color: #3a7ca5;
+    padding: 0 22px;
+    border-right: 1px solid #3a7ca5;
+    text-align: right;
+    white-space: pre-wrap; /* Allow line wrapping in line numbers */
+    position: sticky;
+    top: 0; /* Stick to the top of the code editor */
+    height: 100%;
+    text-align: center;
+}
+
+.line-numbers span {
+    display: block;
+    color: #fff;
+}
+
+
+.button{
+    background-color: #3ababd;
+    color: #fff;
+    margin: 5px 0;
+    padding: 5px 10px;
+    transition: 0.5s;
+    border: none;
+    border-radius: 5px;
+}
+
+.button:hover{
+    background-color: #459fa1;
+}
+
+.errores{
+    background-color: #0e192b;
+    color: #bc3034;
+    padding: 20px;
+    height: 140px;
+    overflow-y: scroll;
+}
+
+/* Remove any previous width settings for .code-editor textarea */
+.code-editor textarea {
+    box-sizing: border-box; /* Ensure padding and borders are included in the width */
+    width: 100%;
+    height: 60vh;
+    box-sizing: border-box; /* Ensure padding and borders are included in the width */
+}
+
+.cm-s-midnight.CodeMirror{
+    height: 60vh!important;
+}
+
+/* Highlight the line when hovered */
+.CodeMirror-activeline-background {
+    background: rgba(255, 255, 255, 0.2); /* Change the background color as desired */
+}
+
+/* Custom class for hovered lines */
+.hovered-line {
+    background: rgba(255, 255, 255, 0.2); /* Change the background color as desired */
+}

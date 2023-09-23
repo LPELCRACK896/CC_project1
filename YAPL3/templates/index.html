@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Visual Studio Ultra Light</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+
+    <!-- Agregar las bibliotecas de CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.3/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.3/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.3/mode/clike/clike.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.3/theme/midnight.css">
+    <style>
+        /* Establecer un ancho del 100% para los textarea */
+        .code-editor textarea {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="row">
+        <div class="col-lg-6">
+            <form action="/" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file">
+                <input class="button" type="submit" value="Compilar">
+            </form>
+        
+            <!-- Agregar CodeMirror al primer textarea -->
+            <form action="/" method="POST" enctype="multipart/form-data">
+                <div class="code-editor">
+                    <textarea id="edited_code" name="edited_code" rows="10" cols="50">{{ input_data }}</textarea>
+                </div>
+                <input type="submit" value="Recompilar" class="button">
+            </form>
+        
+        </div>
+
+        <div class="col-lg-6">
+            <div style="height: 44px;"></div>
+            <form action="/" method="POST" enctype="multipart/form-data">
+                <div class="code-editor">
+                    <!-- Agregar CodeMirror al segundo textarea -->
+                    <textarea id="tresdir" name="tresdir" rows="10" cols="50"></textarea>
+                </div>
+                <input type="submit" value="Generar Código de 3 Direcciones" class="button">
+            </form>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="errores">
+                {% if syntax_errors %}
+                <h2>Errores Sintácticos:</h2>
+                <p>{{ syntax_errors }}</p>
+                {% elif semantic_errors %}
+                <h2>Errores Semánticos:</h2>
+                {% for sem_err in semantic_errors %}
+                <p>- Error en la linea {{ sem_err.line }}: {{ sem_err.name }}: {{ sem_err.details }}</p>
+                {% endfor %}
+                {% else %}
+                <h2 style="color: greenyellow;">Compilado sin errores:</h2>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Inicializar CodeMirror en los textareas -->
+    <script>
+        // Inicializar CodeMirror en el primer textarea
+        var editedCodeEditor = CodeMirror.fromTextArea(document.getElementById("edited_code"), {
+            mode: "text/x-java",
+            theme: "midnight",
+            lineNumbers: true,
+            styleActiveLine: true, // Enable line highlighting on hover
+        });
+
+        // Inicializar CodeMirror en el segundo textarea
+        var tresdirEditor = CodeMirror.fromTextArea(document.getElementById("tresdir"), {
+            mode: "text/x-java",
+            theme: "midnight",
+            lineNumbers: true,
+            styleActiveLine: true, // Enable line highlighting on hover
+        });
+
+        // Add mousemove event listener to highlight lines on hover
+        editedCodeEditor.on('mousemove', function (e) {
+            var pos = e.target.coordsChar({ left: e.clientX, top: e.clientY });
+            editedCodeEditor.addLineClass(pos.line, 'wrap', 'hovered-line');
+        });
+
+        tresdirEditor.on('mousemove', function (e) {
+            var pos = e.target.coordsChar({ left: e.clientX, top: e.clientY });
+            tresdirEditor.addLineClass(pos.line, 'wrap', 'hovered-line');
+        });
+
+    </script>
+</body>
+</html>

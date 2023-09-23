@@ -186,7 +186,14 @@ def main_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
         # Verificar si la clase 'Main' tiene un método 'main'
         if class_name == "global-Main(class)":
             main_method = class_scope.search_content("main")
-            main_line = main_method.start_line
+            if main_method is not None:
+                main_line = main_method.start_line
+            else:
+                feedback.append(SemanticError(name="MainMethodNotFoundError",
+                                              details="La clase 'Main' debe contener un método llamado 'main'.",
+                                              symbol=None,
+                                              scope=None,
+                                              line=main_line))
             if main_method and main_method.semantic_type == "method":
                 main_method_exists = True
                 if main_method.parameters != []:  # verifica que no tenga parametros
