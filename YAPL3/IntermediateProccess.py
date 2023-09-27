@@ -1,18 +1,18 @@
 from ClassSymbolTable import SymbolTable
-from IntermediateCode import generate_expression_quadruples
+from IntermediateCode import *
 
 generative = {
     "expr": generate_expression_quadruples,
+    "type": generate_type_quadruples,
 }
 
 
 def build_cuadruples(symbol_table: SymbolTable = None, generative_rules=generative):
     quadruples = []
     for rule, method in generative_rules.items():
-        if symbol_table:
-            quadruple = method(symbol_table)
-            quadruples.extend(quadruple)
-            print(rule, " >>> ", quadruple)
+        quadruple = method(symbol_table)
+        quadruples.extend(quadruple)
+        print(rule, " >>> ", quadruple)
     return quadruples
 
 

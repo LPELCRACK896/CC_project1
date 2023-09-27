@@ -9,6 +9,7 @@ import os
 from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter, DotExporter
 from tkinter import filedialog, Tk
+from SyntaxTree import SyntaxTree
 from IntermediateProccess import build_cuadruples
 
 app = Flask(__name__)
@@ -108,7 +109,6 @@ def index():
                         print("\nInicio de Construcción de Código Intermedio!\n")
                         quadruples = build_cuadruples(symbol_table)
 
-                        print(quadruples)
                     else:
                         print("\n")
                         for error in semantic_errors:
@@ -194,7 +194,6 @@ def index():
                         print("\nInicio de Construcción de Código Intermedio!\n")
                         quadruples = build_cuadruples(symbol_table)
 
-                        print(quadruples)
                     else:
                         print("\n")
                         for error in semantic_errors:
