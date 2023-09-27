@@ -12,6 +12,7 @@ from CustomErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
 from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
 from SemanticProccess import check_semantic
+from SyntaxTree import SyntaxTree
 
 reserved_keywords = ["if", "else", "while", "for",
                      "Int", "String", "Bool"]
@@ -31,23 +32,6 @@ def run_program(text_widget, gui_window):
     main_program(input_data, gui_window)
 
 
-def build_anytree(node, antlr_node, parser):
-    if isinstance(antlr_node, TerminalNode):
-        value = antlr_node.getText()
-        # Replace double quotes with single quotes
-        value = value.replace('"', "'")
-        Node(value, node, start_line=antlr_node.symbol.line,
-             end_line=antlr_node.symbol.line)
-        1
-    else:
-        rule_name = parser.ruleNames[antlr_node.getRuleIndex()]
-
-        child_node = Node(
-            rule_name, node, start_line=antlr_node.start.line, end_line=antlr_node.stop.line)
-        for child in antlr_node.getChildren():
-            build_anytree(child_node, child, parser)
-
-
 def clear_error_labels(window):
     for widget in window.winfo_children():
         if isinstance(widget, tk.Label) and widget.cget("fg") == "red":
@@ -58,7 +42,8 @@ def highlight_keywords(text_widget):
     # Obtén el contenido del text_widget
     text = text_widget.get("1.0", "end-1c")
 
-    # Lista de palabras clave reservada
+    # Lista de palabras clave reservadas
+    reserved_keywords
 
     for keyword in reserved_keywords:
         start_index = "1.0"
@@ -170,29 +155,13 @@ def create_gui(input_data):
 
 def main_program(input_data, gui_window=None):
 
-    input_stream = InputStream(input_data)
+    syntax_tree = SyntaxTree(input_data)
 
-    # error listener customizado en español
-    error_listener = CustomErrorListener()
+    if syntax_tree.has_errors():
+        syntax_tree.print_errors()
 
-    lexer = YAPL3Lexer(input_stream)
-    lexer.removeErrorListeners()
-    lexer.addErrorListener(error_listener)
+    syntax_errors = syntax_tree.syntax_errors
 
-    stream = CommonTokenStream(lexer)
-    parser = YAPL3Parser(stream)
-    parser.removeErrorListeners()
-    parser.addErrorListener(error_listener)
-
-    # Aplica la regla inicial de la gramática (expr)
-    tree = parser.program()
-
-    # Print errors if any
-    syntax_errors = error_listener.get_errors()
-    for error in syntax_errors:
-        print(error)
-
-    print(tree.toStringTree(recog=parser))
     if syntax_errors:
         print("----------------------------------------------------------------------------------")
         print("\nYa que hay 1 o más errores no se armará el árbol sintáctico del archivo input.\n")
@@ -213,46 +182,12 @@ def main_program(input_data, gui_window=None):
 
             # If there are errors, show the GUI window again
             gui_window.deiconify()
+
+        syntax_tree.print_tree()
     else:
-
-        root = Node(
-            name=parser.ruleNames[tree.getRuleIndex()], start_line=0, end_line=-1)
-        build_anytree(root, tree, parser)
-
-        # Imprime el árbol anytree
-        """ for pre, fill, node in RenderTree(root):
-            print(f'{pre}{node.name}') """
-
-        # Genera una representación visual del árbol anytree
-        dot_exporter = UniqueDotExporter(root)
-        dot_exporter.to_picture("visual_tree.png")
-        os.system(f"start visual_tree.png")
-
         # Build the symbol table
-        symbol_table = SymbolTable(root)
-        symbol_table.estimate_symbol_table_memory_usage()
-        print(symbol_table)
+        symbol_table = SymbolTable(syntax_tree.root_at)
 
-        # funciones de insertar, busqueda y elminacion de symboltable
-        '''
-        # Inserta símbolo en global scope
-        symbol_table.insert(name="MySymbol", data_type="int",
-                            semantic_type="var", value=5, scope=symbol_table.global_scope)
-
-        print(symbol_table)
-
-        searched_symbol = symbol_table.search("MySymbol")
-        print("\nBúsqueda de símbolo en tabla:")
-        print(searched_symbol)
-
-        symbol_table.delete_content("MySymbol")
-
-        searched_symbol = symbol_table.search("MySymbol")
-        print("\nSímbolo tras eliminacion:")
-        print(searched_symbol)
-
-        print(symbol_table)
-        '''
         # Proyecto # 1 Análisis Semántico
         print("\nInicio del Chequeo Semántico:\n")
 
@@ -299,14 +234,13 @@ def main_program(input_data, gui_window=None):
                 gui_window.deiconify()
 
 
-# Pide al usuario que seleccione un archivo
-root = tk.Tk()
-root.withdraw()
-input_file = filedialog.askopenfilename(initialdir=os.getcwd(),
-                                        filetypes=(('YAPL files', '*.yapl'), ('All files', '*.*')))
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.withdraw()
+    input_file = filedialog.askopenfilename(initialdir=os.getcwd(),
+                                            filetypes=(('YAPL files', '*.yapl'), ('All files', '*.*')))
 
-with open(input_file, 'r') as file:
-    input_data = file.read()
+    with open(input_file, 'r') as file:
+        input_data = file.read()
 
-# Llamar a la función principal para ejecutar el análisis semántico y mostrar la GUI
-main_program(input_data)
+    main_program(input_data)
