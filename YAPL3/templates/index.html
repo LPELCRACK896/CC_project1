@@ -50,14 +50,16 @@
                 {% for syn_err in syntax_errors %}
                 <p>- {{ syn_err }}</p>
                 {% endfor %}
-                {% elif semantic_errors %}
+                {% endif %}
+                {% if semantic_errors %}
                 <h2>Errores Semánticos:</h2>
                 {% for sem_err in semantic_errors %}
                 <p>- Error en la linea {{ sem_err.line }}: {{ sem_err.name }}: {{ sem_err.details }}</p>
                 {% endfor %}
-                {% else %}
-                <h2 style="color: greenyellow;">Compilado sin errores</h2>
                 {% endif %}
+
+                <!--h2 style="color: greenyellow;">Compilado sin errores</h2-->
+
             </div>
         </div>
     </div>
