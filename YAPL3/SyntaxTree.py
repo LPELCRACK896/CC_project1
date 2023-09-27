@@ -1,7 +1,7 @@
 from anytree.exporter import UniqueDotExporter, DotExporter
 from CustomErrorListener import CustomErrorListener
 from antlr4 import InputStream, CommonTokenStream
-from antlr4.tree.Tree import TerminalNode
+from antlr4.tree.Tree import TerminalNode, ErrorNode
 from anytree import Node, RenderTree
 from YAPL3Parser import YAPL3Parser
 from YAPL3Lexer import YAPL3Lexer
@@ -96,7 +96,10 @@ class SyntaxTree:
         :param antlr_node: Node but build by antlr
         :return: void
         """
-        if isinstance(antlr_node, TerminalNode):
+        if isinstance(antlr_node, ErrorNode):
+            return
+
+        elif isinstance(antlr_node, TerminalNode):
             value = antlr_node.getText()
             # Replace double quotes with single quotes
             value = value.replace('"', "'")
@@ -120,10 +123,6 @@ class SyntaxTree:
         self.__build_anytree(root_at, self.tree)
         self.root_at = root_at
 
-
-    def explore_tree(self):
-        self.tree.getRuleIndex()
-
     def explore_node_and_children(self, node, level=0):
         """
         Prints a node and its children in a readable format.
@@ -139,6 +138,26 @@ class SyntaxTree:
         if node.children:
             for child in node.children:
                 self.explore_node_and_children(child, level + 1)
+
+    def containsEOF(self):
+
+        queue = [self.root_at]
+
+        empty_que = False
+        found_eof = False
+        explored_nodes = 0
+        while not (empty_que or found_eof):
+            if len(queue) < 1:
+                empty_que = True
+            else:
+                current_node = queue.pop(0)
+                explored_nodes += 1
+                if current_node.name == "<EOF>":
+                    found_eof = True
+                else:
+                    queue.extend(current_node.children)
+        return found_eof
+
 
     """
     Auxiliar methods
@@ -174,3 +193,7 @@ class SyntaxTree:
         dot_exporter.to_picture(f"{output_name}.png")
         if show:
             os.system(f"start {output_name}.png")
+
+    def print_tree(self):
+        for pre, fill, node in RenderTree(self.root_at):
+            print(f'{pre}{node.name}')
