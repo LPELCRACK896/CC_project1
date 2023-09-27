@@ -60,6 +60,9 @@ class SyntaxTree:
         stream = CommonTokenStream(lexer)
 
         parser = YAPL3Parser(stream)
+
+        parser._errHandler.beginErrorCondition(parser)
+
         parser.removeErrorListeners()
         parser.addErrorListener(error_listener)
 
@@ -117,6 +120,25 @@ class SyntaxTree:
         self.__build_anytree(root_at, self.tree)
         self.root_at = root_at
 
+
+    def explore_tree(self):
+        self.tree.getRuleIndex()
+
+    def explore_node_and_children(self, node, level=0):
+        """
+        Prints a node and its children in a readable format.
+
+        :param node: The starting node.
+        :param level: The level of indentation for printing.
+        :return: void
+        """
+        indent = '    ' * level  # four spaces per level
+        print(f"{indent}Node: {node.name}, Start Line: {node.start_line}, End Line: {node.end_line}")
+
+        # Check if the node has children and recurse if needed.
+        if node.children:
+            for child in node.children:
+                self.explore_node_and_children(child, level + 1)
 
     """
     Auxiliar methods
