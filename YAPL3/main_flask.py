@@ -9,6 +9,7 @@ import os
 from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter, DotExporter
 from tkinter import filedialog, Tk
+from IntermediateProccess import build_cuadruples
 
 app = Flask(__name__)
 
@@ -88,7 +89,7 @@ def index():
                     # Genera una representación visual del árbol anytree
                     dot_exporter = UniqueDotExporter(root)
                     dot_exporter.to_picture("visual_tree.png")
-                    os.system(f"start visual_tree.png")
+                    # os.system(f"start visual_tree.png")
 
                     # Build the symbol table
                     symbol_table = SymbolTable(root)
@@ -104,6 +105,10 @@ def index():
                     if semantic_verification:
                         print("\nChequeo semántico exitoso!\n")
 
+                        print("\nInicio de Construcción de Código Intermedio!\n")
+                        quadruples = build_cuadruples(symbol_table)
+
+                        print(quadruples)
                     else:
                         print("\n")
                         for error in semantic_errors:
@@ -186,6 +191,10 @@ def index():
                     if semantic_verification:
                         print("\nChequeo semántico exitoso!\n")
 
+                        print("\nInicio de Construcción de Código Intermedio!\n")
+                        quadruples = build_cuadruples(symbol_table)
+
+                        print(quadruples)
                     else:
                         print("\n")
                         for error in semantic_errors:

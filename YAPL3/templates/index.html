@@ -58,7 +58,9 @@
                 {% endfor %}
                 {% endif %}
 
-                <!--h2 style="color: greenyellow;">Compilado sin errores</h2-->
+                {% if not syntax_errors and not semantic_errors %}
+                    <h2 style="color: greenyellow;">Compilado sin errores</h2>
+                {% endif %}
 
             </div>
         </div>

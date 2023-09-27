@@ -1,7 +1,7 @@
 class Rectangle{
     length: Int <- 5;
     width: Int <- length + 10;
-    newbool: Bool <- 2;
+    newbool: Bool <- 1;
     
     getArea(): Int {
         while length < width loop {
