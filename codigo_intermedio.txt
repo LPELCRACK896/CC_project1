@@ -1,0 +1,61 @@
+= tokenActual RW_CLASS T0
+ifFalse T0 goto L_error
+= tokenSiguiente _ Circle
+= tokenSiguiente _ T2
+if T2 RW_INHERITS L_inherits
+goto L_body
+L_inherits = tokenSiguiente T4
+= T4 inherits_False | type T5
+goto L_body
+L_body = tokenSiguiente '{'
+= tokenSiguiente '}' _
+   
+= tokenActual ID T7
+ifFalse T7 goto L_error
+= tokenSiguiente _ :
+= tokenSiguiente _ Int
+= tokenSiguiente _ <-
+ifFalse tokenActual goto L_semicolon
+= tokenSiguiente _ expr
+L_semicolon = tokenSiguiente _ ;
+= T6 expr _
+   
+goto End
+= tokenActual ID T10
+ifFalse T10 goto L_error
+= tokenSiguiente _ :
+= tokenSiguiente _ Int
+= tokenSiguiente _ <-
+ifFalse tokenActual goto L_semicolon
+= tokenSiguiente _ expr
+L_semicolon = tokenSiguiente _ ;
+= T9 expr _
+   
+goto End
+= tokenActual ID T13
+ifFalse T13 goto L_error
+= tokenSiguiente _ :
+= tokenSiguiente _ Bool
+= tokenSiguiente _ <-
+ifFalse tokenActual goto L_semicolon
+= tokenSiguiente _ expr
+L_semicolon = tokenSiguiente _ ;
+= T12 expr _
+   
+goto End
+L_error   
+End   
+= tokenActual RW_CLASS T15
+ifFalse T15 goto L_error
+= tokenSiguiente _ Main
+= tokenSiguiente _ T17
+if T17 RW_INHERITS L_inherits
+goto L_body
+L_inherits = tokenSiguiente T19
+= T19 inherits_False | type T20
+goto L_body
+L_body = tokenSiguiente '{'
+= tokenSiguiente '}' _
+   
+L_error   
+End   

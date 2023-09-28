@@ -2,8 +2,7 @@ from ClassSymbolTable import SymbolTable
 from IntermediateCode import *
 
 generative = {
-    "expr": generate_expression_quadruples,
-    "type": generate_type_quadruples,
+    "general_scope_quadruples": general_scope_quadruples,
 }
 
 
@@ -12,7 +11,7 @@ def build_cuadruples(symbol_table: SymbolTable = None, generative_rules=generati
     for rule, method in generative_rules.items():
         quadruple = method(symbol_table)
         quadruples.extend(quadruple)
-        print(rule, " >>> ", quadruple)
+        #print(rule, " >>> ", quadruple)
     return quadruples
 
 

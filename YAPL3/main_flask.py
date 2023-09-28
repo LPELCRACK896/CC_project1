@@ -49,7 +49,6 @@ def index():
 
                 s_tree = SyntaxTree(input_data)
 
-
                 # Print errors if any
                 syntax_errors = s_tree.syntax_errors
 
@@ -81,6 +80,18 @@ def index():
                         print("\nInicio de Construcción de Código Intermedio!\n")
                         quadruples = build_cuadruples(symbol_table)
 
+                        # Abrir el archivo en modo escritura
+                        with open("codigo_intermedio.txt", "w") as archivo:
+                            # Recorrer cada tupla en la lista y escribirla en el archivo
+                            for tupla in quadruples:
+                                # Convertir la tupla en una cadena
+                                linea = " ".join(tupla)
+                                # Escribir la cadena en el archivo seguida de un salto de línea
+                                archivo.write(linea + "\n")
+
+                        with open("codigo_intermedio.txt", "r") as archivo:
+                            tres_dir = archivo.read()
+
                     else:
                         print("\n")
                         for error in semantic_errors:
@@ -95,7 +106,7 @@ def index():
                             "----------------------------------------------------------------------------------")
 
                 # Renderiza una plantilla con los resultados
-                return render_template('/index.html', input_data=input_data, syntax_errors=syntax_errors, semantic_errors=semantic_errors)
+                return render_template('/index.html', input_data=input_data, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir)
             else:
                 return redirect(url_for('index'))
         else:
@@ -106,7 +117,6 @@ def index():
                 input_data = edited_code
 
                 s_tree = SyntaxTree(input_data)
-
 
                 if s_tree.has_errors():
                     s_tree.print_errors()
@@ -136,6 +146,18 @@ def index():
                         print("\nInicio de Construcción de Código Intermedio!\n")
                         quadruples = build_cuadruples(symbol_table)
 
+                        # Abrir el archivo en modo escritura
+                        with open("codigo_intermedio.txt", "w") as archivo:
+                            # Recorrer cada tupla en la lista y escribirla en el archivo
+                            for tupla in quadruples:
+                                # Convertir la tupla en una cadena
+                                linea = " ".join(tupla)
+                                # Escribir la cadena en el archivo seguida de un salto de línea
+                                archivo.write(linea + "\n")
+
+                        with open("codigo_intermedio.txt", "r") as archivo:
+                            tres_dir = archivo.read()
+
                     else:
                         print("\n")
                         for error in semantic_errors:
@@ -150,7 +172,7 @@ def index():
                             "----------------------------------------------------------------------------------")
 
                 # Renderiza una plantilla con los resultados
-                return render_template('/index.html', input_data=edited_code, syntax_errors=syntax_errors, semantic_errors=semantic_errors)
+                return render_template('/index.html', input_data=edited_code, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir)
             else:
                 return redirect(url_for('index'))
     return render_template('/index.html')

@@ -37,9 +37,10 @@
             <form action="/" method="POST" enctype="multipart/form-data">
                 <div class="code-editor">
                     <!-- Agregar CodeMirror al segundo textarea -->
-                    <textarea id="tresdir" name="tresdir" rows="10" cols="50"></textarea>
+                    {% if tres_dir %}
+                    <textarea id="tresdir" name="tresdir" rows="10" cols="50">{{tres_dir}}</textarea>
+                    {% endif %}
                 </div>
-                <input type="submit" value="Generar Código de 3 Direcciones" class="button">
             </form>
         </div>
 

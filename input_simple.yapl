@@ -1,21 +1,10 @@
 class Rectangle{
     length: Int <- 5;
-    width: Int <- length + 10;
+    width: Int <- 10;
     newbool: Bool <- 1;
-    
-    getArea(): Int {
-        while length < width loop {
-            length <- length + 1
-        } pool;
-        return length * width;
-    }
 }
 
-class Main{
-    rectangulo1: Object <- new Rectangle;
-    rectangulo2: Object <- new Rectangle;
-    rectangulo3: Bool <- rectangulo1 = rectangulo2;
-    
+class Main{    
     main():Int{
         return 1;
     }
