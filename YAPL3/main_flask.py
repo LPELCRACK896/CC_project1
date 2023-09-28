@@ -12,6 +12,7 @@ from tkinter import filedialog, Tk
 from SyntaxTree import SyntaxTree
 from IntermediateProccess import build_cuadruples
 
+
 app = Flask(__name__)
 
 
@@ -46,30 +47,14 @@ def index():
             if uploaded_file.filename != '':
                 input_data = uploaded_file.read().decode('utf-8')
 
-                input_stream = InputStream(input_data)
+                s_tree = SyntaxTree(input_data)
 
-                # error listener customizado en español
-                error_listener = CustomErrorListener()
-
-                lexer = YAPL3Lexer(input_stream)
-                lexer.removeErrorListeners()
-                lexer.addErrorListener(error_listener)
-
-                stream = CommonTokenStream(lexer)
-                parser = YAPL3Parser(stream)
-                parser.removeErrorListeners()
-                parser.addErrorListener(error_listener)
-
-                # Aplica la regla inicial de la gramática (expr)
-                tree = parser.program()
 
                 # Print errors if any
-                syntax_errors = error_listener.get_errors()
-                for error in syntax_errors:
-                    print(error)
+                syntax_errors = s_tree.syntax_errors
 
-                print(tree.toStringTree(recog=parser))
-                if syntax_errors:
+                if s_tree.has_errors():
+                    s_tree.print_errors()
                     print(
                         "----------------------------------------------------------------------------------")
                     print(
@@ -78,20 +63,7 @@ def index():
                         "----------------------------------------------------------------------------------")
 
                 else:
-
-                    root = Node(
-                        name=parser.ruleNames[tree.getRuleIndex()], start_line=0, end_line=-1)
-                    build_anytree(root, tree, parser)
-
-                    # Imprime el árbol anytree
-                    """ for pre, fill, node in RenderTree(root):
-                        print(f'{pre}{node.name}') """
-
-                    # Genera una representación visual del árbol anytree
-                    dot_exporter = UniqueDotExporter(root)
-                    dot_exporter.to_picture("visual_tree.png")
-                    # os.system(f"start visual_tree.png")
-
+                    root = s_tree.root_at
                     # Build the symbol table
                     symbol_table = SymbolTable(root)
                     symbol_table.estimate_symbol_table_memory_usage()
@@ -131,31 +103,13 @@ def index():
             edited_code = request.form.get(
                 'edited_code', '')  # Get edited code from form
             if edited_code:
+                input_data = edited_code
 
-                input_stream = InputStream(edited_code)
+                s_tree = SyntaxTree(input_data)
 
-                # error listener customizado en español
-                error_listener = CustomErrorListener()
 
-                lexer = YAPL3Lexer(input_stream)
-                lexer.removeErrorListeners()
-                lexer.addErrorListener(error_listener)
-
-                stream = CommonTokenStream(lexer)
-                parser = YAPL3Parser(stream)
-                parser.removeErrorListeners()
-                parser.addErrorListener(error_listener)
-
-                # Aplica la regla inicial de la gramática (expr)
-                tree = parser.program()
-
-                # Print errors if any
-                syntax_errors = error_listener.get_errors()
-                for error in syntax_errors:
-                    print(error)
-
-                print(tree.toStringTree(recog=parser))
-                if syntax_errors:
+                if s_tree.has_errors():
+                    s_tree.print_errors()
                     print(
                         "----------------------------------------------------------------------------------")
                     print(
@@ -164,19 +118,7 @@ def index():
                         "----------------------------------------------------------------------------------")
 
                 else:
-
-                    root = Node(
-                        name=parser.ruleNames[tree.getRuleIndex()], start_line=0, end_line=-1)
-                    build_anytree(root, tree, parser)
-
-                    # Imprime el árbol anytree
-                    """ for pre, fill, node in RenderTree(root):
-                        print(f'{pre}{node.name}') """
-
-                    # Genera una representación visual del árbol anytree
-                    dot_exporter = UniqueDotExporter(root)
-                    dot_exporter.to_picture("visual_tree.png")
-
+                    root = s_tree.root_at
                     # Build the symbol table
                     symbol_table = SymbolTable(root)
                     symbol_table.estimate_symbol_table_memory_usage()
