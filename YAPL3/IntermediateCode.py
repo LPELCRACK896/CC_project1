@@ -18,31 +18,30 @@ def general_scope_quadruples(symbol_table):
 
                         # Generar cuádruplas para la definición de la clase
                         quadruples.append(
-                            ("=", "tokenActual", "RW_CLASS", f"T{temp_counter}"))
+                            ("=", "tokenActual", "RW_CLASS", f"temp_{temp_counter}"))
                         temp_counter += 1
                         quadruples.append(
-                            ("ifFalse", f"T{temp_counter - 1}", "goto", f"L_error"))
+                            ("ifFalse", f"temp_{temp_counter - 1}", "goto", "L_error"))
                         temp_counter += 1
                         quadruples.append(
                             ("=", "tokenSiguiente", "_", class_id))
                         quadruples.append(
-                            ("=", "tokenSiguiente", "_", f"T{temp_counter}"))
+                            ("=", "tokenSiguiente", "_", f"temp_{temp_counter}"))
                         temp_counter += 1
                         quadruples.append(
-                            ("if", f"T{temp_counter - 1}", "RW_INHERITS", f"L_inherits"))
+                            ("if", f"temp_{temp_counter - 1}", "RW_INHERITS", "L_inherits"))
                         temp_counter += 1
-                        quadruples.append(("goto", f"L_body"))
+                        quadruples.append(("goto", "L_body"))
                         quadruples.append(
-                            ("L_inherits", "=", "tokenSiguiente", f"T{temp_counter}"))
+                            ("L_inherits", "=", "tokenSiguiente", f"temp_{temp_counter}"))
                         temp_counter += 1
                         quadruples.append(
-                            ("=", f"T{temp_counter - 1}", f"{inherits} | type", f"T{temp_counter}"))
+                            ("=", f"temp_{temp_counter - 1}", f"{inherits} | type", f"temp_{temp_counter}"))
                         temp_counter += 1
-                        quadruples.append(("goto", f"L_body"))
+                        quadruples.append(("goto", "L_body"))
                         quadruples.append(
                             ("L_body", "=", "tokenSiguiente", "'{'"))
                         quadruples.append(("=", "tokenSiguiente", "'}'", "_"))
-                        quadruples.append(("", "", "", ""))
 
                     # PROCESAR CADA ÁMBITO PARA GENERAR CUÁDRUPAS
                     rec_symbol = symbol_table.search(symbol_name)
@@ -54,15 +53,16 @@ def general_scope_quadruples(symbol_table):
                             attr_id = symbol_name_scope
                             attr_type = symbol_scope.data_type
 
-                            # Asignar una nueva variable temporal
-                            temp_var = f"T{temp_counter}"
-                            temp_counter += 1
+                            # Asignar una nueva variable temporal para el atributo y la expresión
+                            temp_attr = f"temp_{temp_counter}"
+                            temp_expr = f"temp_{temp_counter + 1}"
+                            temp_counter += 2
 
                             quadruples.append(
-                                ("=", "tokenActual", "ID", f"T{temp_counter}"))
+                                ("=", "tokenActual", "ID", f"temp_{temp_counter}"))
                             temp_counter += 1
                             quadruples.append(
-                                ("ifFalse", f"T{temp_counter - 1}", "goto", "L_error"))
+                                ("ifFalse", f"temp_{temp_counter - 1}", "goto", "L_error"))
                             temp_counter += 1
                             quadruples.append(
                                 ("=", "tokenSiguiente", "_", ":"))
@@ -73,20 +73,27 @@ def general_scope_quadruples(symbol_table):
                             quadruples.append(
                                 ("ifFalse", "tokenActual", "goto", "L_semicolon"))
                             quadruples.append(
-                                ("=", "tokenSiguiente", "_", "expr"))
+                                ("=", "tokenSiguiente", "_", f"temp_{temp_counter}"))
+                            temp_counter += 1
                             quadruples.append(
                                 ("L_semicolon", "=", "tokenSiguiente", "_", ";"))
 
-                            # Utilizar temp_var en lugar de "T1", "T2", etc.
-                            quadruples.append(("=", temp_var, "expr", "_"))
-                            quadruples.append(("", "", "", ""))
+                            # Asignar el valor de la expresión a la variable temporal del atributo
+                            quadruples.append(("=", temp_expr, "expr", "_"))
+
+                            # Puedes agregar comentarios explicativos para cada cuádrupla
+                            comment = f"// Atributo: {attr_id}, Tipo: {attr_type}"
+                            quadruples.append((comment, "", "", "", ""))
+
+                            # Puedes usar temp_attr y temp_expr en lugar de "T1", "T2", etc.
+                            quadruples.append(("=", temp_attr, temp_expr, "_"))
 
                             # Puedes agregar aquí el procesamiento adicional del atributo, como almacenar el nombre,
                             # tipo y, si existe, la expresión de asignación en la tabla de símbolos o donde corresponda.
 
                             quadruples.append(("goto", "End"))
 
-                    quadruples.append(("L_error", "", "", ""))
-                    quadruples.append(("End", "", "", ""))
+                    quadruples.append(("L_error", "_", "_", "_"))
+                    quadruples.append(("End", "_", "_", "_"))
 
     return quadruples

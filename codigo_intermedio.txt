@@ -1,61 +1,62 @@
-= tokenActual RW_CLASS T0
-ifFalse T0 goto L_error
-= tokenSiguiente _ Circle
-= tokenSiguiente _ T2
-if T2 RW_INHERITS L_inherits
+= tokenActual RW_CLASS temp_0
+ifFalse temp_0 goto L_error
+= tokenSiguiente _ Rectangle
+= tokenSiguiente _ temp_2
+if temp_2 RW_INHERITS L_inherits
 goto L_body
-L_inherits = tokenSiguiente T4
-= T4 inherits_False | type T5
+L_inherits = tokenSiguiente temp_4
+= temp_4 inherits_False | type temp_5
 goto L_body
 L_body = tokenSiguiente '{'
 = tokenSiguiente '}' _
-   
-= tokenActual ID T7
-ifFalse T7 goto L_error
+= tokenActual ID temp_8
+ifFalse temp_8 goto L_error
 = tokenSiguiente _ :
 = tokenSiguiente _ Int
 = tokenSiguiente _ <-
 ifFalse tokenActual goto L_semicolon
-= tokenSiguiente _ expr
+= tokenSiguiente _ temp_10
 L_semicolon = tokenSiguiente _ ;
-= T6 expr _
-   
+= temp_7 expr _
+// Atributo: length, Tipo: Int    
+= temp_6 temp_7 _
 goto End
-= tokenActual ID T10
-ifFalse T10 goto L_error
+= tokenActual ID temp_13
+ifFalse temp_13 goto L_error
 = tokenSiguiente _ :
 = tokenSiguiente _ Int
 = tokenSiguiente _ <-
 ifFalse tokenActual goto L_semicolon
-= tokenSiguiente _ expr
+= tokenSiguiente _ temp_15
 L_semicolon = tokenSiguiente _ ;
-= T9 expr _
-   
+= temp_12 expr _
+// Atributo: pedro, Tipo: Int    
+= temp_11 temp_12 _
 goto End
-= tokenActual ID T13
-ifFalse T13 goto L_error
+= tokenActual ID temp_18
+ifFalse temp_18 goto L_error
 = tokenSiguiente _ :
 = tokenSiguiente _ Bool
 = tokenSiguiente _ <-
 ifFalse tokenActual goto L_semicolon
-= tokenSiguiente _ expr
+= tokenSiguiente _ temp_20
 L_semicolon = tokenSiguiente _ ;
-= T12 expr _
-   
+= temp_17 expr _
+// Atributo: newbool, Tipo: Bool    
+= temp_16 temp_17 _
 goto End
-L_error   
-End   
-= tokenActual RW_CLASS T15
-ifFalse T15 goto L_error
+L_error _ _ _
+End _ _ _
+= tokenActual RW_CLASS temp_21
+ifFalse temp_21 goto L_error
 = tokenSiguiente _ Main
-= tokenSiguiente _ T17
-if T17 RW_INHERITS L_inherits
+= tokenSiguiente _ temp_23
+if temp_23 RW_INHERITS L_inherits
 goto L_body
-L_inherits = tokenSiguiente T19
-= T19 inherits_False | type T20
+L_inherits = tokenSiguiente temp_25
+= temp_25 inherits_False | type temp_26
 goto L_body
 L_body = tokenSiguiente '{'
 = tokenSiguiente '}' _
-   
-L_error   
-End   
+L_error _ _ _
+End _ _ _

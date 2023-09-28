@@ -36,10 +36,8 @@
             <div style="height: 44px;"></div>
             <form action="/" method="POST" enctype="multipart/form-data">
                 <div class="code-editor">
-                    <!-- Agregar CodeMirror al segundo textarea -->
-                    {% if tres_dir %}
-                    <textarea id="tresdir" name="tresdir" rows="10" cols="50">{{tres_dir}}</textarea>
-                    {% endif %}
+                    <!-- Agregar CodeMirror al segundo textarea -->    
+                    <textarea id="tresdir" name="tresdir" rows="10" cols="50">{% if tres_dir %}{{tres_dir}}{% endif %}</textarea>                   
                 </div>
             </form>
         </div>
