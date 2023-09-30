@@ -11,7 +11,7 @@ from anytree.exporter import UniqueDotExporter, DotExporter
 from tkinter import filedialog, Tk
 from SyntaxTree import SyntaxTree
 from IntermediateProccess import build_cuadruples
-
+from Tres_Dir import IntermediateCode
 
 app = Flask(__name__)
 
@@ -78,16 +78,28 @@ def index():
                         print("\nChequeo semántico exitoso!\n")
 
                         print("\nInicio de Construcción de Código Intermedio!\n")
+                        # OPCION 1 PARA CODIGO INTERMEDIO
                         quadruples = build_cuadruples(symbol_table)
+
+                        # OPCION 2 PARA CODIGO INTERMEDIO
+                        visitor = IntermediateCode()
+                        walker = ParseTreeWalker()
+                        walker.walk(visitor, s_tree.tree)
+
+                        codigo_intermedio = visitor.get_codigo_intermedio()
 
                         # Abrir el archivo en modo escritura
                         with open("codigo_intermedio.txt", "w") as archivo:
-                            # Recorrer cada tupla en la lista y escribirla en el archivo
-                            for tupla in quadruples:
-                                # Convertir la tupla en una cadena
-                                linea = " ".join(tupla)
-                                # Escribir la cadena en el archivo seguida de un salto de línea
-                                archivo.write(linea + "\n")
+                            archivo.write(codigo_intermedio)
+
+                        # # Abrir el archivo en modo escritura
+                        # with open("codigo_intermedio.txt", "w") as archivo:
+                        #     # Recorrer cada tupla en la lista y escribirla en el archivo
+                        #     for tupla in quadruples:
+                        #         # Convertir la tupla en una cadena
+                        #         linea = " ".join(tupla)
+                        #         # Escribir la cadena en el archivo seguida de un salto de línea
+                        #         archivo.write(linea + "\n")
 
                         with open("codigo_intermedio.txt", "r") as archivo:
                             tres_dir = archivo.read()
