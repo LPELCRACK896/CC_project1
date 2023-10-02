@@ -3,7 +3,7 @@ from collections import defaultdict
 from prettytable import PrettyTable
 from typing import List, Dict
 from anytree import Node
-
+from AnnotatedNode import AnnotatedNode
 from Symbol import Symbol
 from Scope import Scope
 from SemanticCommon import *
@@ -17,13 +17,11 @@ class SymbolTable:
         Args:
             root (anytree.Node): Nodo raiz del árbol de análisis sintáctico generado por anytree para la gramática. 
         """
-        self.content = defaultdict(
-            dict)  # {<scope_id>: {symbol_name: Symbol}} >>  Diccionario con clave el id_scope y valor un diccionario con simbolos (diccionario interno, identificador de simbolo como clave; Objeto Simbolo como valor)
+        self.content = defaultdict(dict)   # {<scope_id>: {symbol_name: Symbol}} >>  Diccionario con clave el id_scope y valor un diccionario con simbolos (diccionario interno, identificador de simbolo como clave; Objeto Simbolo como valor)
         self.construction_errors: Dict[str: List[SemanticError]] = {}
         self.global_scope = Scope(parent=None,
                                   scope_id="global")  # La tabla de simbolos de inicializa con un scope global en el que se almacenan simbolos que no esten debajo de otros scopes creados.
-        self.scopes = {
-            "global": self.global_scope}  # {<scope_id>: Scope} >> Scopes de la tabla almacenados en dicionarios que tiene por clave su identificador y su objeto por valor.
+        self.scopes = {"global": self.global_scope}  # {<scope_id>: Scope} >> Scopes de la tabla almacenados en dicionarios que tiene por clave su identificador y su objeto por valor.
         self.build_symbol_table(node=root, current_scope=self.global_scope,
                                 current_line=self.__build_basic_classes())  # Construye recursivamente la tabla de simbolos
 
@@ -265,11 +263,14 @@ class SymbolTable:
         return current_line
 
     def attribute_build_symbol(self, node, current_scope, current_line) -> int:
+
+        annoted_node = AnnotatedNode(node)
         children = node.children
         attr_name = children[0].name
         attr_type = children[2].children[0].name
         attr_value = children[-2] if len(children) > 4 else None
         default_value = None
+
 
         if attr_type == "Bool":
             default_value = "false"
