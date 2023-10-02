@@ -157,6 +157,7 @@ def main_program(input_data, gui_window=None):
 
     syntax_tree = SyntaxTree(input_data)
 
+    syntax_tree.print_tree()
 
     # Build the symbol table
     symbol_table = SymbolTable(syntax_tree.root_at)
