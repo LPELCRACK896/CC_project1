@@ -265,10 +265,14 @@ class SymbolTable:
     def attribute_build_symbol(self, node, current_scope, current_line) -> int:
 
         annoted_node = AnnotatedNode(node)
+        attribute_form = self.__verify_node_structure_attribute(node)
+        if attribute_form == -1:
+            print(f"WARNING: UNABLE TO CREATE ATTRIBUTE IN LINE {node.start_line}. INVALID FORM")
+            return current_line
         children = node.children
         attr_name = children[0].name
         attr_type = children[2].children[0].name
-        attr_value = children[-2] if len(children) > 4 else None
+        attr_value = children[-2] if attribute_form == 2 else None
         default_value = None
 
 
@@ -1216,3 +1220,56 @@ class SymbolTable:
                             parameter_parts.append(part.name)
                 parameters.append(tuple(parameter_parts))
         return parameters
+
+    def __verify_node_structure_attribute(self, attr_root: Node) -> int:
+        """
+        Ensure the attribute node contains all elements in one of the expected structures
+        VALID FORM 1 (unassigned):
+        └── attr
+            ├── radius
+            ├── :
+            ├── type
+            │    └── Int
+            └── ;
+        VALID FORM 2:
+         └── attr
+            ├── radius
+            ├── :
+            ├── type
+            │   └── Int
+            ├── <-
+            ├── expr
+            │   └── 10
+            └── ;
+
+        Children:
+        0 - Attribute name
+        1 - :
+        2 - <type>
+            0 - (String | Int | ... |)
+        3 - <-
+        4 - <expr>
+        :param attr_root: the attribute node
+        :return:The number of form or -1 in case of not having any of those
+        """
+        children = attr_root.children
+
+        if len(children) < 4:
+            return -1
+
+        if children[1].name != ":":
+            return -1
+
+        attr_type_node = children[2]
+
+        if len(attr_type_node.children) < 1:
+            return -1
+
+        if len(children) == 4:
+            return 1
+
+        if len(children) != 6:
+            return -1
+
+        expr_node = children[4]
+        return 2
