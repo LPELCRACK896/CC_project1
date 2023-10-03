@@ -707,7 +707,7 @@ def check_boolean_object_expression_type(symbol_table: SymbolTable) -> (bool, Se
                     if "if" in content_symbol.name or "while" in content_symbol.name:
                         if expression_node != "bool_value":
                             feedback.append(SemanticError(name="InvalidBooleanExpression",
-                                                          details=f"La expresión en la estructura de control '{expression_node.name}' en el método '{class_scope.scope_id}' debe tener un tipo de dato estático de tipo Bool.",
+                                                          details=f"La expresión en la estructura de control '{expression_node}' en el método '{class_scope.scope_id}' debe tener un tipo de dato estático de tipo Bool.",
                                                           symbol=content_symbol,
                                                           scope=class_scope,
                                                           line=content_symbol.start_line))

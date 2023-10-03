@@ -15,10 +15,10 @@ expr:
      ID '<-' expr
     | expr '@' (type | CLASS_ID) '.' ID '(' (expr (',' expr)* )?')'
     | ID '(' (expr (',' expr)* )? ')'
-    | 'if' bool_value  'then' expr 'else' expr 'fi'
-    | 'while' bool_value 'loop' expr 'pool'
+    | 'if' (bool_value | expr)  'then' expr 'else' expr 'fi'
+    | 'while' (bool_value | expr) 'loop' expr 'pool'
     | '{' expr (';' expr)* '}'
-    | 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
+    | 'let' (ID ':' type ('<-' expr))? (',' ID ':' type ('<-' expr)?)* 'in' '[' expr ']'
     | expr '.' ID '(' (expr (',' expr)* )? ')'
     | 'new' (CLASS_ID | type)
     | 'isvoid' expr
@@ -36,7 +36,7 @@ expr:
 func_return:
     'return' expr ';'
     ;
-comparation_operators:
+comparison_operators:
     | '<'
     | '>'
     | '<='
@@ -47,12 +47,13 @@ comparation_operators:
 bool_value: 
     | RW_FALSE
     | RW_TRUE
-    | comparation
+    | comparison
     ;
 
-comparation: 
-    | ID comparation_operators (INT|STRING)
-    | ID comparation_operators ID
+comparison:
+    | (INT|STRING) comparison_operators ID
+    | ID comparison_operators (INT|STRING)
+    | ID comparison_operators ID
     ;
 
 // Lexer rules

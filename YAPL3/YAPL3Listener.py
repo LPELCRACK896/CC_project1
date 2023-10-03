@@ -98,12 +98,12 @@ class YAPL3Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPL3Parser#comparation_operators.
-    def enterComparation_operators(self, ctx:YAPL3Parser.Comparation_operatorsContext):
+    # Enter a parse tree produced by YAPL3Parser#comparison_operators.
+    def enterComparison_operators(self, ctx:YAPL3Parser.Comparison_operatorsContext):
         pass
 
-    # Exit a parse tree produced by YAPL3Parser#comparation_operators.
-    def exitComparation_operators(self, ctx:YAPL3Parser.Comparation_operatorsContext):
+    # Exit a parse tree produced by YAPL3Parser#comparison_operators.
+    def exitComparison_operators(self, ctx:YAPL3Parser.Comparison_operatorsContext):
         pass
 
 
@@ -116,12 +116,12 @@ class YAPL3Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPL3Parser#comparation.
-    def enterComparation(self, ctx:YAPL3Parser.ComparationContext):
+    # Enter a parse tree produced by YAPL3Parser#comparison.
+    def enterComparison(self, ctx:YAPL3Parser.ComparisonContext):
         pass
 
-    # Exit a parse tree produced by YAPL3Parser#comparation.
-    def exitComparation(self, ctx:YAPL3Parser.ComparationContext):
+    # Exit a parse tree produced by YAPL3Parser#comparison.
+    def exitComparison(self, ctx:YAPL3Parser.ComparisonContext):
         pass
 
 

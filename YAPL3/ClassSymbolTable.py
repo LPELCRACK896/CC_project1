@@ -81,115 +81,64 @@ class SymbolTable:
                                                      current_line=current_line + 1)
             return current_line
         if node.name == "expr":
-            # If statment >>> 'if' bool_value  'then' expr 'else' expr 'fi'
-            if node.children:
-                if node.children[0].name == "if":
-                    current_line = self.if_expr_build_symbol(node=node, current_scope=current_scope,
-                                                             current_line=current_line + 1)
-                    return current_line
-                    # Attribute assignation >>> ID '<-' expr
-            if node.children:
-                if len(node.children) > 1:
-                    if node.children[1].name == "<-":
-                        current_line = self.attribute_assignation_build_expr_symbol(node=node,
-                                                                                    current_scope=current_scope,
-                                                                                    current_line=current_line + 1)
-                        return current_line
-            # Parent Class method >>> expr '@' type '.' ID '(' expr (',' expr)* ')'
-            if node.children:
-                if len(node.children) > 1:
-                    if node.children[1].name == "@":
-                        current_line = self.parent_method_call_expr_symbol(node=node, current_scope=current_scope,
-                                                                           current_line=current_line + 1)
-                        return current_line
-            # Local method call  >>> ID '(' expr (',' expr)* ')'
-            if node.children:
-                if len(node.children) > 1:
-                    if node.children[1].name == "(":
-                        current_line = self.local_method_call_expr_call(node=node, current_scope=current_scope,
-                                                                        current_line=current_line + 1)
-                        return current_line
-                        # While loop >>>'while' bool_value'loop' expr 'pool'
-            if node.children:
-                if node.children[0].name == "while":
-                    current_line = self.while_exp_build_symbol(node=node, current_scope=current_scope,
-                                                               current_line=current_line + 1)
-                    return current_line
-            # Key embedded  expr >>> '{' expr (';' expr)* '}'
-            if node.children:
-                if node.children[0].name == "{":
-                    for node_expr in node.children:
-                        if node.name != "{" and node.name != "}" and node.name != ";":
-                            current_line += self.build_symbol_table(node=node_expr, current_scope=current_scope,
-                                                                    current_line=current_line + 1)
+            result = ns.identify_expr(node)
+            if result == -1:
+                print("ERORR AL IDENTIFICAR EXPR")
+                return current_line
 
-                    return current_line
-                    # Let statement >>> 'let' ID ':' type ('<-' expr)? (',' ID ':' type ('<-' expr)?)* 'in' expr
-            if node.children:
-                if node.children[0].name == "let":
-                    current_line = self.let_expression_build_symbol(node=node, current_scope=current_scope,
-                                                                    current_line=current_line + 1)
-                    return current_line
-                elif node.children[0].children:
-                    if node.children[0].children[0].name == "let":
-                        current_line = self.let_expression_build_symbol(node=node.children[0],
-                                                                        current_scope=current_scope,
-                                                                        current_line=current_line + 1)
-                        return current_line
-                        # External method call >>> expr '.' ID '(' expr (',' expr)* ')'
-            if node.children:
-                if len(node.children) > 1:
-                    if node.children[1].name == ".":
-                        current_line = self.external_method_call_build_symbol(node=node, current_scope=current_scope,
-                                                                              current_line=current_line + 1)
-                        return current_line
-            # NEW Object >>> 'new' classDef
-            if node.children:
-                if node.children[0].name == "new":
-                    current_line = self.new_object_expression_build_symbol(node=node, current_scope=current_scope,
-                                                                           current_line=current_line + 1)
+            type_of_expr = ns.expressions[result]
 
-                    return current_line
-            # Is-void statement 'is-void' expr
-            if node.children:
-                if node.children[0].name == "isvoid":
-                    current_line = self.is_void_expression_build_symbol(node=node, current_scope=current_scope,
-                                                                        current_line=current_line)
-                    return current_line
-                    # '(' expr ')'
-            if node.children:
-                if node.children[0].name == "(":
-                    for node_expr in node.children:
-                        if node.name != "(" and node.name != ")":
-                            current_line += self.build_symbol_table(node=node_expr, current_scope=current_scope,
+            if type_of_expr == "conditional":
+                return self.if_expr_build_symbol(node=node, current_scope=current_scope,
+                                                 current_line=current_line + 1)
+            elif type_of_expr == "assignment":
+                return self.attribute_assignation_build_expr_symbol(node=node, current_scope=current_scope,
                                                                     current_line=current_line + 1)
-
-                    return current_line
-                    # 'not' expr
-            if node.children:
-                if node.children[0].name == "not":
-                    current_line = self.not_bool_build_symbol(node=node, current_scope=current_scope,
+            elif type_of_expr == "dynamic_dispatch":
+                return self.parent_method_call_expr_symbol(node=node, current_scope=current_scope,
+                                                           current_line=current_line + 1)
+            elif type_of_expr == "function_call":
+                return self.local_method_call_expr_call(node=node, current_scope=current_scope,
+                                                        current_line=current_line + 1)
+            elif type_of_expr == "loop":
+                return self.while_exp_build_symbol(node=node, current_scope=current_scope,
+                                                   current_line=current_line + 1)
+            elif type_of_expr == "block":
+                for node_expr in node.children:
+                    if node.name != "{" and node.name != "}" and node.name != ";":
+                        current_line += self.build_symbol_table(node=node_expr, current_scope=current_scope,
+                                                                current_line=current_line + 1)
+                return current_line
+            elif type_of_expr == "let_in":
+                return self.let_expression_build_symbol(node=node, current_scope=current_scope,
+                                                        current_line=current_line + 1)
+            elif type_of_expr == "static_dispatch":
+                return self.external_method_call_build_symbol(node=node, current_scope=current_scope,
                                                               current_line=current_line + 1)
-                    return current_line
-            # '~' expr
-            if node.children:
-                if node.children[0].name == "~":
-                    current_line = self.not_int_build_symbol(node=node, current_scope=current_scope,
-                                                             current_line=current_line + 1)
-                    return current_line
-            # op=OP expr  
-            if node.children:
-                if len(node.children) > 1:
-                    current_line = self.operation_expression_build_symbol(node=node, current_scope=current_scope,
-                                                                          current_line=current_line + 1)
-                    return current_line + 1
-            # ID | INT | STRING | RW_FALSE | RW_TRUE | 
-            if node.children:
-                if len(node.children) == 1:
-                    current_line = self.simple_expression_build_symbol(node=node, current_scope=current_scope,
-                                                                       current_line=current_line)
-                    return current_line
-
+            elif type_of_expr == "object_creation":
+                return self.new_object_expression_build_symbol(node=node, current_scope=current_scope,
+                                                               current_line=current_line + 1)
+            elif type_of_expr == "isvoid":
+                return self.is_void_expression_build_symbol(node=node, current_scope=current_scope,
+                                                            current_line=current_line)
+            elif type_of_expr == "parenthesized_expr":
+                for node_expr in node.children:
+                    if node.name != "(" and node.name != ")":
+                        current_line += self.build_symbol_table(node=node_expr, current_scope=current_scope,
+                                                                current_line=current_line + 1)
+                return current_line
+            elif type_of_expr == "not":
+                return self.not_bool_build_symbol(node=node, current_scope=current_scope,
+                                                  current_line=current_line + 1)
+            elif type_of_expr == "bitwise_not":
+                return self.not_int_build_symbol(node=node, current_scope=current_scope,
+                                                 current_line=current_line + 1)
+            elif type_of_expr == "arithmetic_or_comparison":
+                return self.operation_expression_build_symbol(node=node, current_scope=current_scope,
+                                                              current_line=current_line + 1) + 1
+            elif type_of_expr in ["identifier", "integer", "string", "boolean_true", "boolean_false"]:
+                return self.simple_expression_build_symbol(node=node, current_scope=current_scope,
+                                                           current_line=current_line)
             return current_line
         for child in node.children:
             current_line = self.build_symbol_table(child, current_scope, current_line=current_line + 1)
@@ -465,6 +414,7 @@ class SymbolTable:
         while not found_in:
 
             if item.name == "in":
+                let_content.pop(0)
                 let_value = let_content.pop(0)
                 found_in = True
                 current_line += 1
@@ -491,6 +441,8 @@ class SymbolTable:
                 item = let_content.pop(0)
             else:
                 item = let_content.pop(0)
+
+
 
         let_symbol = self.insert(
             name=self.get_expression_to_str(node),
@@ -1221,5 +1173,6 @@ class SymbolTable:
                         else:
                             parameter_parts.append(part.name)
                 parameters.append(tuple(parameter_parts))
-        return parameters
 
+        return parameters
+    
