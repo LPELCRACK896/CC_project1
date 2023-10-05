@@ -202,7 +202,7 @@ Un método se define de la siguietne forma:
 - El tipo del bloque es el tipo de la última expresión evaluada. 
 
 **Let**
-- Un expresión let tiene la forma let ``<id1> : <type1> [ <- <expr1> ], ..., <idn> : <typen> [ <- <exprn> ] in <expr>``
+- Un expresión let tiene la forma let ``<id1> : <type1> <- <expr1> , ..., <idn> : <typen> <- <exprn>  in [ <expr> ]``
 - Las expresiones opcionales son incializaciones. 
 - La expresión final es el cuerpo de la función expr. 
 - ``<expr1>`` se evalúa y se asigna a ``<id1>``, ``<expr2>`` se evalúa y se asigna a ``<id2>``, y así sucesivamente, luego se evalúa el cuerpo ``<expr>``

@@ -18,7 +18,7 @@ expr:
     | 'if' (bool_value | expr)  'then' expr 'else' expr 'fi'
     | 'while' (bool_value | expr) 'loop' expr 'pool'
     | '{' expr (';' expr)* '}'
-    | 'let' (ID ':' type ('<-' expr))? (',' ID ':' type ('<-' expr)?)* 'in' '[' expr ']'
+    | 'let' (ID ':' type ('<-' expr)?)? (',' ID ':' type ('<-' expr)?)* 'in' '[' expr ']'
     | expr '.' ID '(' (expr (',' expr)* )? ')'
     | 'new' (CLASS_ID | type)
     | 'isvoid' expr
