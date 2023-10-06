@@ -10,7 +10,7 @@ from anytree.exporter import UniqueDotExporter, DotExporter
 # import del escuchador de errores personalizado
 from CustomErrorListener import CustomErrorListener
 from antlr4.tree.Tree import TerminalNode
-from ClassSymbolTable import SymbolTable, Scope  # import de la symboltable
+from SymbolTable import SymbolTable, Scope  # import de la symboltable
 from SemanticProccess import check_semantic
 from SyntaxTree import SyntaxTree
 

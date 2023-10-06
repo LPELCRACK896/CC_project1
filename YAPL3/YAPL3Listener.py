@@ -71,11 +71,11 @@ class YAPL3Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPL3Parser#type.
+    # Enter a parse tree produced by YAPL3Parser#node_type.
     def enterType(self, ctx:YAPL3Parser.TypeContext):
         pass
 
-    # Exit a parse tree produced by YAPL3Parser#type.
+    # Exit a parse tree produced by YAPL3Parser#node_type.
     def exitType(self, ctx:YAPL3Parser.TypeContext):
         pass
 

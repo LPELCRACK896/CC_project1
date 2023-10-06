@@ -1,4 +1,4 @@
-from ClassSymbolTable import SymbolTable, Symbol, Scope
+from SymbolTable import SymbolTable, Symbol, Scope
 from SemanticCommon import SemanticError
 from SemanticRules import *
 import re

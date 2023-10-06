@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 from CustomErrorListener import CustomErrorListener
 from YAPL3Lexer import YAPL3Lexer
 from YAPL3Parser import YAPL3Parser
-from ClassSymbolTable import SymbolTable
+from SymbolTable import SymbolTable
 from SemanticProccess import check_semantic
 from antlr4 import *
 import os

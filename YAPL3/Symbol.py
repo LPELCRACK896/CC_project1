@@ -66,11 +66,11 @@ class Symbol:
     def get_formal_size(self):
         total_size = 0
 
-        # First add the necessary memory to the data according its type
+        # First add the necessary memory to the data according its node_type
         if self.data_type in br.basic_types_data_required:
             total_size += br.basic_types_data_required.get(self.data_type)
         else:
-            print(f"Unable to set memory size for formal {self.name}. Unidentified type: {self.data_type}")
+            print(f"Unable to set memory size for formal {self.name}. Unidentified node_type: {self.data_type}")
 
         # Add memory necessary for other meta-data
         # Pending code
@@ -79,11 +79,11 @@ class Symbol:
     def get_attr_size(self):
         total_size = 0
 
-        # First add the necessary memory to the data according its type
+        # First add the necessary memory to the data according its node_type
         if self.data_type in br.basic_types_data_required:
             total_size += br.basic_types_data_required.get(self.data_type)
         else:
-            print(f"Unable to set memory size for formal {self.name}. Unidentified type: {self.data_type}")
+            print(f"Unable to set memory size for formal {self.name}. Unidentified node_type: {self.data_type}")
 
         # Add memory necessary for other meta-data
         # Pending code
@@ -126,7 +126,7 @@ class Symbol:
 
         if self.data_type in br.basic_types_data_required:
             return br.basic_types_data_required.get(self.data_type)
-        print("Expected data with basic type")
+        print("Expected data with basic node_type")
         return None
 
     def simple_calculate_memory_size(self):

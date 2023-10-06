@@ -1,4 +1,4 @@
-from ClassSymbolTable import SymbolTable
+from SymbolTable import SymbolTable
 from IntermediateCode import *
 
 generative = {

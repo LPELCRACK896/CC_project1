@@ -1,4 +1,4 @@
-from ClassSymbolTable import SymbolTable, Symbol, Scope
+from SymbolTable import SymbolTable, Symbol, Scope
 from SemanticCommon import SemanticError
 
 
@@ -74,7 +74,7 @@ def check_inheritance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                 if son_return_type != parent_return_type:
                     feedback.append(SemanticError(
                         name="MissMatchFirmReturn",
-                        details=f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected to return {parent_return_type} type but got {son_return_type} instead.",
+                        details=f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected to return {parent_return_type} node_type but got {son_return_type} instead.",
                         symbol=class_method_symbol,
                         scope=class_method_symbol.scope,
                         line=class_method_symbol.start_line
@@ -133,7 +133,7 @@ def check_inheritance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                             if parent_parameter_i[1] != son_parameter_i[1]:
                                 feedback.append(SemanticError(
                                     name  = "MisMatchFirmTypeFormal",
-                                    details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the type \"{parent_parameter_i[1]}\" but got \"{son_parameter_i[1]}\"",
+                                    details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the node_type \"{parent_parameter_i[1]}\" but got \"{son_parameter_i[1]}\"",
                                     symbol= class_method_symbol,
                                     scope=class_method_symbol.scope,
                                     line= class_method_symbol.start_line
@@ -181,7 +181,11 @@ def check_method(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
             
     return all_passed, feedback
 
+def check_type_error(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
+    feedback = symbol_table.construction_errors["TYPE ERROR::"] if "TYPE ERROR::" in symbol_table.construction_errors else []
+    all_passed = not bool(len(feedback))
 
+    return all_passed, feedback
 
 
 

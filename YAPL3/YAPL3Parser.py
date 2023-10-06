@@ -167,7 +167,7 @@ class YAPL3Parser ( Parser ):
     RULE_comparison = 12
 
     ruleNames =  [ "program", "classDef", "feature", "attr", "method", "formals", 
-                   "formal", "type", "expr", "func_return", "comparison_operators", 
+                   "formal", "node_type", "expr", "func_return", "comparison_operators",
                    "bool_value", "comparison" ]
 
     EOF = Token.EOF
@@ -284,7 +284,7 @@ class YAPL3Parser ( Parser ):
 
         localctx = YAPL3Parser.ProgramContext(self, self._ctx, self.state)
         self.enterRule(localctx, 0, self.RULE_program)
-        self._la = 0 # Token type
+        self._la = 0 # Token node_type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 29
@@ -368,7 +368,7 @@ class YAPL3Parser ( Parser ):
 
         localctx = YAPL3Parser.ClassDefContext(self, self._ctx, self.state)
         self.enterRule(localctx, 2, self.RULE_classDef)
-        self._la = 0 # Token type
+        self._la = 0 # Token node_type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 42
@@ -515,7 +515,7 @@ class YAPL3Parser ( Parser ):
 
         localctx = YAPL3Parser.AttrContext(self, self._ctx, self.state)
         self.enterRule(localctx, 6, self.RULE_attr)
-        self._la = 0 # Token type
+        self._la = 0 # Token node_type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 64
@@ -592,7 +592,7 @@ class YAPL3Parser ( Parser ):
 
         localctx = YAPL3Parser.MethodContext(self, self._ctx, self.state)
         self.enterRule(localctx, 8, self.RULE_method)
-        self._la = 0 # Token type
+        self._la = 0 # Token node_type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 73
@@ -666,7 +666,7 @@ class YAPL3Parser ( Parser ):
 
         localctx = YAPL3Parser.FormalsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 10, self.RULE_formals)
-        self._la = 0 # Token type
+        self._la = 0 # Token node_type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 92
@@ -775,7 +775,7 @@ class YAPL3Parser ( Parser ):
 
         localctx = YAPL3Parser.TypeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 14, self.RULE_type)
-        self._la = 0 # Token type
+        self._la = 0 # Token node_type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 105
@@ -864,7 +864,7 @@ class YAPL3Parser ( Parser ):
         _prevctx = localctx
         _startState = 16
         self.enterRecursionRule(localctx, 16, self.RULE_expr, _p)
-        self._la = 0 # Token type
+        self._la = 0 # Token node_type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 203
@@ -1483,7 +1483,7 @@ class YAPL3Parser ( Parser ):
 
         localctx = YAPL3Parser.ComparisonContext(self, self._ctx, self.state)
         self.enterRule(localctx, 24, self.RULE_comparison)
-        self._la = 0 # Token type
+        self._la = 0 # Token node_type
         try:
             self.state = 280
             self._errHandler.sync(self)

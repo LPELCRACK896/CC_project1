@@ -12,5 +12,13 @@ class SemanticError:
     scope: Scope
     line: str
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.details == other.details and
+            self.symbol == other.symbol and
+            self.scope == other.scope and
+            self.line == other.line
+        )
 
 ActiveRulesType = Dict[str, Callable]
