@@ -132,7 +132,7 @@ def check_inheritance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
                                 
                             if parent_parameter_i[1] != son_parameter_i[1]:
                                 feedback.append(SemanticError(
-                                    name  = "MisMatchFirmTypeFormal",
+                                    name  = "MissMatchFirmTypeFormal",
                                     details= f"On method {class_method} of {i_class} class, the inherited method from {class_symbol.data_type}. Expected as {i+1} parameter the node_type \"{parent_parameter_i[1]}\" but got \"{son_parameter_i[1]}\"",
                                     symbol= class_method_symbol,
                                     scope=class_method_symbol.scope,

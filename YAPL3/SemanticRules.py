@@ -8,11 +8,11 @@ SemanticFeedBack = List[SemanticError]
 
 
 def not_implemented_true(symbol_table: SymbolTable = None) -> (bool, SemanticFeedBack):
-    return True, [SemanticError(name="Sin Implementar", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None, line="")]
+    return True, [SemanticError(name="Unimplemented", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None, line="")]
 
 
 def not_implemented_false(symbol_table: SymbolTable = None) -> (bool, SemanticFeedBack):
-    return False, [SemanticError(name="Sin Implementar", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None, line="")]
+    return False, [SemanticError(name="Unimplemented", details="Se debe implementar un método antes de usar esta función.", symbol=None, scope=None, line="")]
 
 
 def class_definition(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
@@ -348,7 +348,7 @@ def visibility_check(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
 
     return all_passed, feedback
 
-
+# Unused
 def check_inheritance_relations(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
@@ -371,7 +371,7 @@ def check_inheritance_relations(symbol_table: SymbolTable) -> (bool, SemanticFee
 
     return all_passed, feedback
 
-
+# Unused
 def check_inheritance_override_logic(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
