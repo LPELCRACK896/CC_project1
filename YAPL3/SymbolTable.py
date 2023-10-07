@@ -247,8 +247,8 @@ class SymbolTable:
             parameters=[],
             parameter_passing_method=None)
 
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
+        """noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        errors = noted_node.run_tests()"""
 
         if attr_value:
             current_line = self.build_symbol_table(node=attr_value, current_scope=current_scope,
@@ -334,13 +334,17 @@ class SymbolTable:
             is_function=None,
             parameters=None,
             parameter_passing_method=None,
-            node=node
+            node=node,
+            type_of_expression="assignation"
+
         )
+
+        """
         noted_node = create_noted_node(node, self.content, self.scopes, symbol)
         valor = noted_node.get_value()
         tipo_del_valor = noted_node.get_value_type()
         tipo = noted_node.get_type()
-        valid_types = noted_node.test_typing()
+        valid_types = noted_node.test_typing()"""
 
         current_line = self.build_symbol_table(node=node.children[2], current_scope=current_scope,
                                                current_line=current_line + 1)
@@ -348,7 +352,7 @@ class SymbolTable:
         return current_line
 
     def build_symbol_expr_parent_method_call(self, node: Node, current_scope: Scope, current_line: int) -> int:
-        self.insert(
+        symbol = self.insert(
             name=self.get_expression_to_str(node),
             data_type=None,
             semantic_type="expression",
@@ -365,6 +369,9 @@ class SymbolTable:
             node=node,
             type_of_expression="parent_call_method"
         )
+        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        noted_node.run_tests()
+
         return current_line
 
     def build_symbol_expr_local_method_call(self, node: Node, current_scope: Scope, current_line: int) -> int:
