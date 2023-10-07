@@ -59,6 +59,13 @@ InhertanceMissingFather: Missing parent class reference of class <parent_class>,
 
 ## TYPE ERROR::
 
+## Bad parameter::
+
+## Bad parameter type::
+
+## Undeclared variable::
+
+## Undeclared class::
 
 ## EmptyClass
 Reyes
