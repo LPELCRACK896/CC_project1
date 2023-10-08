@@ -49,13 +49,14 @@ class NotedNode:
     needs_context: bool
     need_scopes: bool
 
+
     scopes: Dict[AnyStr, Scope] | None = None
     symbol: Symbol | None = None
     context: Dict[AnyStr, Dict[AnyStr, Symbol]] | None = None
 
-    raised_errors: Dict[AnyStr, List[SemanticError]]
+    symbols_scope: Scope
 
-    # raised_warnings: Dict[AnyStr, List[SemanticError]]
+    raised_errors: Dict[AnyStr, List[SemanticError]]
 
     def __init__(self, node: Node):
         self.node = node
@@ -66,14 +67,20 @@ class NotedNode:
         self.needs_symbol = False
         self.raised_errors = {}
 
+    def __try_to_initialize_symbol_scope(self):
+        if self.scopes is not None and self.symbol is not None:
+            self.symbols_scope = self.scopes.get(self.symbol.scope)
+
     def add_context(self, context: Dict[AnyStr, Dict[AnyStr, Symbol]]):
         self.context = context
 
     def add_scopes(self, scopes: Dict[AnyStr, Scope]):
         self.scopes = scopes
+        self.__try_to_initialize_symbol_scope()
 
     def add_symbol(self, symbol):
         self.symbol = symbol
+        self.__try_to_initialize_symbol_scope()
 
     def get_symbol(self) -> Symbol | None:
         return self.symbol
@@ -99,7 +106,7 @@ class NotedNode:
             for error in errors:
                 self.add_error(error_type, error)
 
-    def _create_sub_noted_node(self, node: Node, symbol: Symbol, origin_operation: str):
+    def _create_sub_noted_node(self, node: Node, symbol: Symbol):
         symbols_scope = self.scopes.get(symbol.scope)
 
         nn_node = create_noted_node(node, self.context, self.scopes, symbol)
@@ -108,7 +115,7 @@ class NotedNode:
             self.add_error("Invalid expression::",
                            SemanticError(
                                name="Invalid expression::",
-                               details=f"f{origin_operation} was unable to get expression from {to_string_node(node)}",
+                               details=f"f{self.name} was unable to get expression from {to_string_node(node)}",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line
@@ -132,23 +139,6 @@ class NotedNode:
                 )
             )
         return valid_type
-
-    def _is_valid_type(self, type_alias):
-        symbols_scope = self.scopes.get(self.symbol.scope)
-        if not verify_existing_type(type_alias, self.scopes):
-            self.add_error(
-                "Invalid Type::",
-                SemanticError(
-                    name="Invalid type::",
-                    details=f"Type '{type_alias}' is not defined",
-                    symbol=self.symbol,
-                    scope=symbols_scope,
-                    line=self.symbol.start_line
-                )
-            )
-            return False
-
-        return True
 
     def get_default_value_from_typo(self):
         typo = self.get_type()
@@ -182,6 +172,21 @@ class NotedNode:
             return None
 
         return return_type
+
+    def _get_symbol_declaration(self, symbol_name):
+        symbol_declaration = search_symbol_by_name(self.symbols_scope, symbol_name)
+
+        if symbol_declaration is None:
+            self.add_error("Undeclared variable::",
+                           SemanticError(
+                               name="Undeclared variable::",
+                               details=f"{self.name} tried to use undeclared symbol {symbol_name}",
+                               symbol=self.symbol,
+                               scope=self.symbols_scope,
+                               line=self.symbol.start_line
+                           ))
+
+        return symbol_declaration
 
     @abstractmethod
     def get_alias(self):
@@ -281,29 +286,14 @@ class AssignationNotedNote(NotedNode):
         self.need_scopes = True
         self.name = "Assignation"
 
-    def get_previous_declaration(self, name: str):
-        symbols_scope = self.scopes.get(self.symbol.scope)
-
-        symbol_declaration = search_symbol_by_name(symbols_scope, name)
-
-        if symbol_declaration is None:
-            self.add_error("Undeclared variable::",
-                           SemanticError(
-                               name="Undeclared variable::",
-                               details=f"Assignation tried to use undeclared variable {name}",
-                               symbol=self.symbol,
-                               scope=symbols_scope,
-                               line=self.symbol.start_line
-                           ))
-
-        return symbol_declaration
+    def get_previous_declaration(self, symbol_name: str):
+        return self._get_symbol_declaration(symbol_name)
 
     def get_type(self) -> str | None:
         name = self.children[0].name
 
         symbol_declaration = self.get_previous_declaration(name)
         if symbol_declaration is None:
-            #   Error handled in get_previous_declaration()
             return None
 
         if symbol_declaration.semantic_type == "expression" and symbol_declaration.node is not None:
@@ -533,7 +523,7 @@ class NewObjectNotedNode(NotedNode):
                            ))
             return None
         global_scope = self.scopes.get("global")
-        return global_scope.get_all_classees().get(name)
+        return global_scope.get_all_classes().get(name)
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         ttype = self.get_type()
@@ -555,7 +545,7 @@ class ParenthesisNotedNode(NotedNode):
         return None
 
     def get_alias(self):
-        return " ".join([leave.name for leave in self.node.leaves])
+        return to_string_node(self.node)
 
     def __get_contained_nn(self):
         return create_noted_node(self.children[1], self.context, self.scopes, self.symbol)
@@ -575,13 +565,7 @@ class ParenthesisNotedNode(NotedNode):
         return nn_content_exp
 
     def get_value(self) -> str | None:
-        content = self.__get_contained_nn()
-        if content is None:
-            return None
-        self.extend_errors(content.run_tests())
-        content_value = content.get_value_type()
-
-        return content_value  # Might be null but error would be handled in the called noted node
+        return self.get_default_value_from_typo()
 
     def get_type(self) -> str | None:
         content = self.__get_contained_nn()
@@ -614,7 +598,7 @@ class IdentifierNotedNode(NotedNode):
     def get_previous_declaration(self, name: str):
         symbols_scope = self.scopes.get(self.symbol.scope)
         result = search_symbol_by_name(symbols_scope, name)
-        declaration = search_declaration(name, self.symbol, self.scopes)
+        declaration = search_declaration(name, self.symbol, self.scopes, "variable")
         if declaration is None:
             self.add_error(
                 "Undeclared variable::",
@@ -845,7 +829,7 @@ class DispatchNotedNode(NotedNode):
 
         for parameter_name, parameter_type in parameters:
             updated_parameter_type = parameter_type if parameter_type.upper() != "SELF_TYPE" else self_type
-            self._is_valid_type(updated_parameter_type)
+            self._type_verifier(updated_parameter_type)
             updated_parameters.append((parameter_name, updated_parameter_type))
 
         return updated_parameters
@@ -1522,20 +1506,78 @@ class NoContentNoTypeNoteNode(NotedNode):
     def get_value_type(self) -> str | None:
         return "void"
 
+    @abstractmethod
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        pass
+
+
+class ConditionNotedNode(NoContentNoTypeNoteNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def is_valid_condition(self, node: Node):
+        nn_condition = self._create_sub_noted_node(node, self.symbol)
+
+        if nn_condition is None:
+            return None
+
+        nn_condition_type = nn_condition.get_type()
+        if nn_condition_type is None:
+            return None
+
+        is_valid_condition = nn_condition_type == "Bool"
+
+        if not is_valid_condition:
+            self.add_error(
+                "Inappropriate expression as condition::",
+                SemanticError(
+                    name="Inappropriate expression as condition::",
+                    details=f"Condition ({self.name}) must have bool type. Cannot get bool from: {to_string_node(node)}.",
+                    symbol=self.symbol,
+                    scope=self.symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+
+        return is_valid_condition
+
+    @abstractmethod
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        pass
+
+class IfConditionalNotedNode(ConditionNotedNode):
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+        self.name = "if condition"
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        condition_node = self.children[1]
+        self.is_valid_condition(condition_node)
         return self.raised_errors
 
 
-class ConditionalNotedNode(NoContentNoTypeNoteNode):
-    pass
+class LoopNotedNode(ConditionNotedNode):
 
+    def __init__(self, node):
+        super().__init__(node)
+        self.name = "while loop"
 
-class LoopNotedNode(NoContentNoTypeNoteNode):
-    pass
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        condition_node = self.children[1]
+        self.is_valid_condition(condition_node)
+        return self.raised_errors
 
 
 class LetNotedNode(NoContentNoTypeNoteNode):
-    pass
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        return self.raised_errors
 
 
 class ArithmeticLogicNotedNode(NotedNode):
@@ -1720,7 +1762,6 @@ class ReturnStatementNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Return statement"
 
-
     def get_alias(self):
         return to_string_node(self.node)
 
@@ -1811,7 +1852,7 @@ class ReturnStatementNotedNode(NotedNode):
     def __get_value_and_type(self) -> Tuple[AnyStr, AnyStr] | Tuple[None, None]:
         return_exp = self.children[1]
 
-        nn_return_exp = self._create_sub_noted_node(return_exp, self.symbol, "Return")
+        nn_return_exp = self._create_sub_noted_node(return_exp, self.symbol)
 
         if nn_return_exp is None:
             return None, None
@@ -1976,7 +2017,7 @@ def create_noted_node(node: Node,
     elif type_of_expr == "function_call":  # 16
         noted_node = FunctionCallDispatchNotedNode(node)
     elif type_of_expr == "conditional":  # 17
-        noted_node = ConditionalNotedNode(node)
+        noted_node = IfConditionalNotedNode(node)
     elif type_of_expr == "loop":  # 18
         noted_node = LoopNotedNode(node)
     elif type_of_expr == "let_in":  # 19
@@ -2010,10 +2051,14 @@ AUXILIARY FUNCTIONS
 """
 
 
-def search_declaration(identifier: str, starting_point_symbol: Symbol, scopes: Dict[AnyStr, Scope]):
+def search_declaration(identifier: str,
+                       starting_point_symbol: Symbol,
+                       scopes: Dict[AnyStr, Scope],
+                       semantic_type_target: str = "variable"):
+
     symbols_scope = scopes.get(starting_point_symbol.scope)
     # Local results
-    variables = symbols_scope.get_all_declaration_symbols()
+    variables = symbols_scope.get_declarations(semantic_type_target)
 
     if identifier in variables:
         return variables[identifier]
@@ -2031,7 +2076,7 @@ def search_declaration(identifier: str, starting_point_symbol: Symbol, scopes: D
         scope_id = next_class.construct_scope_name()
         if scope_id in scopes:
             class_scope = scopes.get(scope_id)
-            class_attributes = class_scope.get_all_declaration_symbols()
+            class_attributes = class_scope.get_declarations(semantic_type_target)
             if identifier in class_attributes:
                 declaration = class_attributes[identifier]
             else:
@@ -2082,7 +2127,7 @@ def search_symbol_by_name(searching_scope: Scope, name: str) -> Symbol | None:
 
 def search_class_symbol(class_name, scopes):
     global_scope = scopes.get("global")
-    classes = global_scope.get_all_classees()
+    classes = global_scope.get_all_classes()
     if class_name in classes:
         return classes[class_name]
     return None
@@ -2094,7 +2139,7 @@ def verify_inheritance(parent_class: str, child_class: str, scopes: Dict[AnyStr,
 
 def verify_existing_class(class_name: str, scopes: Dict[AnyStr, Scope]):
     global_scope = scopes.get("global")
-    return class_name in global_scope.get_all_classees()
+    return class_name in global_scope.get_all_classes()
 
 
 def verify_existing_type(type_name: str, scopes: Dict[AnyStr, Scope]) -> bool:
@@ -2115,7 +2160,7 @@ def verify_matching_type(expected_type: str, received_type: str, scopes: Dict[An
         return False
 
     global_scope = scopes.get("global")
-    classes = global_scope.get_all_classees()
+    classes = global_scope.get_all_classes()
 
     current_class = received_type
     equivalent_classes = []
@@ -2133,7 +2178,7 @@ def verify_matching_type(expected_type: str, received_type: str, scopes: Dict[An
 
 def get_symbol_class(class_name, scopes: Dict[AnyStr, Scope]) -> Symbol | None:
     global_scope = scopes.get("global")
-    classes = global_scope.get_all_classees()
+    classes = global_scope.get_all_classes()
     if class_name not in classes:
         return None
 

@@ -251,8 +251,8 @@ class SymbolTable:
             parameters=[],
             parameter_passing_method=None)
 
-        """noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()"""
+        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        errors = noted_node.run_tests()
 
         if attr_value:
             current_line = self.build_symbol_table(node=attr_value, current_scope=current_scope,
@@ -276,6 +276,9 @@ class SymbolTable:
             is_function=True,
             type_of_expression="if"
         )
+
+        noted_node = create_noted_node(node, self.content, self.scopes, if_symbol)
+        errors = noted_node.run_tests()
 
         if_line = current_line
         if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}-IF({if_line}if)")
@@ -308,6 +311,8 @@ class SymbolTable:
             type_of_expression="while"
 
         )
+        noted_node = create_noted_node(node, self.content, self.scopes, while_symbol)
+        errors = noted_node.run_tests()
 
         while_line = current_line
 
@@ -343,12 +348,10 @@ class SymbolTable:
 
         )
 
-        """
         noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        noted_node.run_tests()
         valor = noted_node.get_value()
         tipo_del_valor = noted_node.get_value_type()
-        tipo = noted_node.get_type()
-        valid_types = noted_node.test_typing()"""
 
         current_line = self.build_symbol_table(node=node.children[2], current_scope=current_scope,
                                                current_line=current_line + 1)
@@ -432,51 +435,26 @@ class SymbolTable:
         let_scope = self.start_scope(parent_scope=current_scope,
                                      scope_id=f"{current_scope.scope_id}-let({current_line}let)")
         total_variables = ns.verify_node_structure_let(node)
+        if total_variables == -1:
+            # Error on let block structure
+            return current_line
+
         variables, expr_to_evaluate, error = ns.decompose_let_expr(node)
-        let_content = list(node.children)
-        found_in = False
-        item: Node = let_content.pop(0)
-        let_value = None
 
-        while not found_in:
+        if error:
+            # Error on getting let content
+            return current_line
 
-            if item.name == "in":
-                let_content.pop(0)
-                let_value = let_content.pop(0)
-                self.build_symbol_table(node=let_value, current_scope=let_scope, current_line=current_line)
-                found_in = True
-                current_line += 1
+        for let_variable in variables:
+            self.build_symbol_let_variable(node=let_variable.value, current_scope=let_scope, current_line=current_line, node_id=let_variable.var_id, tipo=let_variable.var_type)
 
-            elif item.name != "," and item.name != ":" and item.name != "<-" and item.name != "let":
-                valor = None
-                tipo = None
-
-                next_item = item
-                while let_content and next_item.name != "node_type":
-                    next_item = let_content.pop(0)
-
-                tipo = next_item.children[0]
-
-                next_item = let_content.pop(0)
-
-                if next_item.name == "<-":
-                    valor = let_content.pop(0)
-
-                current_line += 1
-                self.build_symbol_let_variable(node=valor, current_scope=let_scope, current_line=current_line, node_id=item.name,
-                                               tipo=tipo.name)
-
-                item = let_content.pop(0)
-            else:
-                item = let_content.pop(0)
-
-
+        self.build_symbol_table(node=expr_to_evaluate, current_scope=let_scope, current_line=current_line)
 
         let_symbol = self.insert(
             name=self.get_expression_to_str(node),
             data_type=None,
             semantic_type="expression",
-            value=let_value,
+            value=node,
             default_value=None,
             start_index=current_line,
             end_index=current_line,
@@ -509,6 +487,7 @@ class SymbolTable:
             node=node,
             type_of_expression="declaration_assignation"
         )
+
         return current_line
 
     def build_symbol_expr_new_object(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -1108,7 +1087,7 @@ class SymbolTable:
     SEMANTIC TESTS
     """
     def check_inheritance_chain(self, class_name) -> tuple:
-        classes = self.global_scope.get_all_classees()
+        classes = self.global_scope.get_all_classes()
         if class_name not in classes:
             msg = f"OutOfScope: {class_name} not defined in global scope"
             return msg, True, [class_name], class_name
