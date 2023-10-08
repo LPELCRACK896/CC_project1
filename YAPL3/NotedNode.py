@@ -777,7 +777,7 @@ class DispatchNotedNode(NotedNode):
                 "Invalid instance call::",
                 SemanticError(
                     name="Invalid instance call::",
-                    details=f"On method call, cannot find method referenced called {method_name} of {symbol_class.name}",
+                    details=f"On method call, can't find method referenced called {method_name} of {symbol_class.name}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -899,13 +899,12 @@ class DispatchNotedNode(NotedNode):
 
         return valid_param_type
     
-    def _deconstruct_given_parameter(self, position_open_parenthesis: int, position_closing_parenthesis: int):
+    def _deconstruct_given_parameters(self, position_open_parenthesis: int, position_closing_parenthesis: int):
         parenthesis_content = self.children[position_open_parenthesis+1:position_closing_parenthesis]
         return [item for item in parenthesis_content if item.name != ","]
 
     def get_alias(self):
         return to_string_node(self.node)
-        
 
     @abstractmethod
     def get_previous_declaration(self, name: str):
@@ -975,6 +974,7 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
                                line=self.symbol.start_line
                            ))
         return is_valid_inheritance
+
     def get_type(self) -> str | None:
         instance_expr = self.children[0]
         instance = self._get_instance(instance_expr)
@@ -1008,7 +1008,7 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         firm_return = self._get_method_return_type(symbol_parent_class, symbol_method)
         firm_params = self._get_method_parameters(symbol_parent_class, symbol_method)
 
-        params_used_in_call = self._deconstruct_given_parameter(5, -1)
+        params_used_in_call = self._deconstruct_given_parameters(5, -1)
 
         self._compare_parameters(firm_params, params_used_in_call)
 
@@ -1058,7 +1058,7 @@ class StaticDispatchNotedNode(DispatchNotedNode):
         firm_return = self._get_method_return_type(symbol_class, symbol_method)
         firm_params = self._get_method_parameters(symbol_class, symbol_method)
 
-        params_used_in_call = self._deconstruct_given_parameter(3, -1)
+        params_used_in_call = self._deconstruct_given_parameters(3, -1)
 
         self._compare_parameters(firm_params, params_used_in_call)
 
@@ -1066,6 +1066,81 @@ class StaticDispatchNotedNode(DispatchNotedNode):
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         self.get_type()
+        return self.raised_errors
+
+
+class FunctionCallDispatchNotedNode(DispatchNotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def get_previous_declaration(self, name: str):
+        return None
+
+    def __get_current_class_symbol(self):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        scope_id = symbols_scope.scope_id
+
+        scopes_name = scope_id.split("-")
+        scopes_name.reverse()
+
+        item_scope = ""
+        found_class_scope_id = False
+        while len(scopes_name) != 0 and not found_class_scope_id:
+            item_scope = scopes_name.pop(0)
+            found_class_scope_id = item_scope.endswith("(class)")
+
+        if not found_class_scope_id:
+            method_name = self.children[0].name
+            self.add_error(
+                "Local method call out any class::",
+                SemanticError(
+                    name="Local method call out any class::",
+                    details=f"Local method call {method_name} is being called from out of any class",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        class_name = item_scope.split(maxsplit=1, sep="(")[0]
+        symbol_class = get_symbol_class(class_name, self.scopes)
+
+        return symbol_class
+
+    def get_value(self) -> str | None:
+        return self.get_default_value_from_typo()
+
+    def get_type(self) -> str | None:
+
+        method_name = self.children[0].name
+
+        symbol_class = self.__get_current_class_symbol()
+
+        if symbol_class is None:
+            return None
+
+        symbol_method = self._get_symbol_method(symbol_class, method_name)
+
+        if symbol_method is None:
+            return None
+
+        firm_return = self._get_method_return_type(symbol_class, symbol_method)
+        firm_params = self._get_method_parameters(symbol_class, symbol_method)
+
+        params_used_in_call = self._deconstruct_given_parameters(1, -1)
+
+        self._compare_parameters(firm_params, params_used_in_call)
+
+        return firm_return
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.get_type()
+
         return self.raised_errors
 
 
@@ -1448,7 +1523,7 @@ def create_noted_node(node: Node,
     elif type_of_expr == "static_dispatch":  # 15
         noted_node = StaticDispatchNotedNode(node)
     elif type_of_expr == "function_call":  # 16
-        pass
+        noted_node = FunctionCallDispatchNotedNode(node)
     elif type_of_expr == "conditional":  # 17
         pass
     elif type_of_expr == "loop":  # 18
