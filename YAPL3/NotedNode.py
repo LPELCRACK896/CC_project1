@@ -833,9 +833,9 @@ class DispatchNotedNode(NotedNode):
                 "Bad parameter::",
                 SemanticError(
                     name="Bad parameter::",
-                    details=f"Method call cannot get proper parameter from ({parameter_position})"
+                    details=f"Method call cannot get proper parameter from ({parameter_position+1})"
                             f" from expression {to_string_node(received_parameter)}. Expected type {firm_param_type} "
-                            f"for param '{firm_param_name}' (No. {parameter_position})",
+                            f"for param '{firm_param_name}' (No. {parameter_position+1})",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -935,23 +935,93 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         self.need_scopes = True
         self.needs_context = True
 
+
     def get_alias(self):
-        pass
+        return to_string_node(self.node)
 
     def get_previous_declaration(self, name: str):
-        pass
+        return None
 
     def get_value(self) -> str | None:
-        pass
+        return self.get_default_value_from_typo()
 
+    def _exist_type(self, type_name):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        do_exist_type = verify_existing_type(type_name, self.scopes)
+        if not do_exist_type:
+            self.add_error(
+                "In-existing class::",
+                SemanticError(
+                    name="In-existing class::",
+                    details=f"On method call, references in-existing class: {type_name}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+        return do_exist_type
+
+    def verifies_inheritance(self, parent_name, child_name):
+        is_valid_inheritance = verify_inheritance(parent_name, child_name, self.scopes)
+        if not is_valid_inheritance:
+            symbols_scope = self.scopes.get(self.symbol.scope)
+            self.add_error("Invalid inheritance relation::",
+                           SemanticError(
+                               name="Invalid inheritance relation::",
+                               details=f"@ method call found no valid relation between {parent_name}, {child_name}."
+                                       f". {child_name} should inherits directly or indirectly from {parent_name}",
+                               symbol=self.symbol,
+                               scope=symbols_scope,
+                               line=self.symbol.start_line
+                           ))
+        return is_valid_inheritance
     def get_type(self) -> str | None:
-        pass
+        instance_expr = self.children[0]
+        instance = self._get_instance(instance_expr)
+
+        if instance is None:
+            return None
+
+        child_name_type = instance.get_type()
+        if child_name_type is None:
+            return None
+
+        parent_name_type = self.children[2].name
+
+        parent_ref_exist = self._exist_type(parent_name_type)
+        child_ref_exist = self._exist_type(child_name_type)
+        if not (parent_ref_exist and child_ref_exist):
+            return None
+
+        if not self.verifies_inheritance(parent_name_type, child_name_type):
+            return None
+
+        symbol_parent_class = get_symbol_class(parent_name_type, self.scopes)
+        if symbol_parent_class is None:
+            return None
+        method_name = self.children[4].name
+        symbol_method = self._get_symbol_method(symbol_parent_class, method_name)
+
+        if symbol_method is None:
+            return None
+
+        firm_return = self._get_method_return_type(symbol_parent_class, symbol_method)
+        firm_params = self._get_method_parameters(symbol_parent_class, symbol_method)
+
+        params_used_in_call = self._deconstruct_given_parameter(5, -1)
+
+        self._compare_parameters(firm_params, params_used_in_call)
+
+        return firm_return
+
+
 
     def get_value_type(self) -> str | None:
-        pass
+        return self.get_type()
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
-        pass
+        self.get_type()
+        return self.raised_errors
 
 
 class StaticDispatchNotedNode(DispatchNotedNode):
