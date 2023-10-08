@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from dataclasses import dataclass
 
 from anytree import Node
@@ -285,13 +285,13 @@ def verify_node_structure_let(node: Node):
             found_in = True
         else:
             number_of_local_variables += 1
-            variable_name = item
+            variable_name = item.name
             colon = let_content.pop(0)
             if colon.name != ":":
                 return -1
 
             item_type = let_content.pop(0)
-            if item_type.name != "node_type":
+            if not (item_type.name == "node_type" or item_type.name == "type"):
                 return -1
 
             either_coma_or_arrow = let_content.pop(0)
@@ -321,7 +321,7 @@ OTHER FUNCTIONS RELATED TO NODES
 """
 
 
-def decompose_let_expr(node: Node) -> (List[LetVariable] | None, Node | None, str):
+def decompose_let_expr(node: Node) -> Tuple[List[LetVariable] | None, Node | None, str]:
     """
     Decomposes the expression node that contains all elements related to while loop has a valis structure.
     VALID STRUCTURE No. 1 (bool_value as condition):
@@ -363,7 +363,7 @@ def decompose_let_expr(node: Node) -> (List[LetVariable] | None, Node | None, st
             let_item: LetVariable = LetVariable()
 
             number_of_local_variables += 1
-            variable_name = item
+            variable_name = item.name
 
             let_item.var_id = variable_name
 
@@ -374,8 +374,8 @@ def decompose_let_expr(node: Node) -> (List[LetVariable] | None, Node | None, st
 
             else:
                 item_type = let_content.pop(0)
-                let_item.var_type = item_type
-                if item_type.name != "node_type":
+                let_item.var_type = to_string_node(item_type)
+                if not (item_type.name == "node_type" or item_type.name== "type") :
                     error_on_structure = True
                     err_string = f"For variable {variable_name} couldn't found node_type after colon"
                 else:
@@ -429,3 +429,7 @@ def starts_with_number(string: str):
 
 def equals_ignore_case(string1: str, string2: str):
     return string1.lower() == string2.lower()
+
+
+def to_string_node(exp: Node) -> str:
+    return "".join([leave.name for leave in exp.leaves])
