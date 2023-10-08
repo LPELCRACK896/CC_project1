@@ -71,11 +71,11 @@ class YAPL3Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by YAPL3Parser#node_type.
+    # Enter a parse tree produced by YAPL3Parser#type.
     def enterType(self, ctx:YAPL3Parser.TypeContext):
         pass
 
-    # Exit a parse tree produced by YAPL3Parser#node_type.
+    # Exit a parse tree produced by YAPL3Parser#type.
     def exitType(self, ctx:YAPL3Parser.TypeContext):
         pass
 
@@ -104,24 +104,6 @@ class YAPL3Listener(ParseTreeListener):
 
     # Exit a parse tree produced by YAPL3Parser#comparison_operators.
     def exitComparison_operators(self, ctx:YAPL3Parser.Comparison_operatorsContext):
-        pass
-
-
-    # Enter a parse tree produced by YAPL3Parser#bool_value.
-    def enterBool_value(self, ctx:YAPL3Parser.Bool_valueContext):
-        pass
-
-    # Exit a parse tree produced by YAPL3Parser#bool_value.
-    def exitBool_value(self, ctx:YAPL3Parser.Bool_valueContext):
-        pass
-
-
-    # Enter a parse tree produced by YAPL3Parser#comparison.
-    def enterComparison(self, ctx:YAPL3Parser.ComparisonContext):
-        pass
-
-    # Exit a parse tree produced by YAPL3Parser#comparison.
-    def exitComparison(self, ctx:YAPL3Parser.ComparisonContext):
         pass
 
 

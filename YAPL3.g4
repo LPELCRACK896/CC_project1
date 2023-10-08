@@ -15,8 +15,8 @@ expr:
      ID '<-' expr
     | expr '@' (type | CLASS_ID) '.' ID '(' (expr (',' expr)* )?')'
     | ID '(' (expr (',' expr)* )? ')'
-    | 'if' (bool_value | expr)  'then' expr 'else' expr 'fi'
-    | 'while' (bool_value | expr) 'loop' expr 'pool'
+    | 'if' (expr)  'then' expr 'else' expr 'fi'
+    | 'while'  (expr) 'loop' expr 'pool'
     | '{' expr (';' expr)* '}'
     | 'let' (ID ':' type ('<-' expr)?)? (',' ID ':' type ('<-' expr)?)* 'in' '[' expr ']'
     | expr '.' ID '(' (expr (',' expr)* )? ')'
@@ -43,17 +43,6 @@ comparison_operators:
     | '>='
     | '=='
     | '!='
-    ;
-bool_value: 
-    | RW_FALSE
-    | RW_TRUE
-    | comparison
-    ;
-
-comparison:
-    | (INT|STRING) comparison_operators ID
-    | ID comparison_operators (INT|STRING)
-    | ID comparison_operators ID
     ;
 
 // Lexer rules

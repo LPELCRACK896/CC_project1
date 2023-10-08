@@ -1,3 +1,4 @@
+        return 1;
 class Shape {
     radius: Int;
     color: String;
