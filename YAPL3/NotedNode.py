@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, AnyStr, List
+from typing import Dict, AnyStr, List, Tuple
 
 from Symbol import Symbol
 from anytree import Node
@@ -17,6 +17,7 @@ Consider attributes
 - declaration
 - alias
 """
+
 
 class NotedNode:
     """
@@ -40,7 +41,7 @@ class NotedNode:
 
     """
     node_type: str
-    children: list
+    children: List[Node]
     node: Node
 
     needs_symbol: bool
@@ -52,6 +53,7 @@ class NotedNode:
     context: Dict[AnyStr, Dict[AnyStr, Symbol]] | None = None
 
     raised_errors: Dict[AnyStr, List[SemanticError]]
+
     # raised_warnings: Dict[AnyStr, List[SemanticError]]
 
     def __init__(self, node: Node):
@@ -95,6 +97,34 @@ class NotedNode:
         for error_type, errors in other_raised_errors.items():
             for error in errors:
                 self.add_error(error_type, error)
+
+    def _is_valid_type(self, type_alias):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        if not verify_existing_type(type_alias, self.scopes):
+            self.add_error(
+                "Invalid Type::",
+                SemanticError(
+                    name="Invalid type::",
+                    details=f"Type '{type_alias}' is not defined",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return False
+
+        return True
+
+    def get_default_value_from_typo(self):
+        typo = self.get_type()
+        if typo == "Int":
+            return "0"
+        elif typo == "Bool":
+            return "false"
+        elif typo == "String":
+            return ""
+
+        return None
 
     @abstractmethod
     def get_alias(self):
@@ -414,16 +444,19 @@ class NewObjectNotedNode(NotedNode):
         self.needs_symbol = True
 
     def get_value(self) -> str | None:
+        default_res = self.get_default_value_from_typo()
+        if default_res is not None:
+            return default_res
         return "new " + self.children[1].name
 
     def get_alias(self):
         return "new " + self.children[1].name
 
     def get_type(self) -> str | None:
-        return self.children[1].name
+        return to_string_node(self.children[1])
 
     def get_value_type(self) -> str | None:
-        return self.children[1].name
+        return to_string_node(self.children[1])
 
     def get_previous_declaration(self, name: str):
         if not verify_existing_type(name, self.scopes):
@@ -440,10 +473,10 @@ class NewObjectNotedNode(NotedNode):
         return global_scope.get_all_classees().get(name)
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
-        self.get_type()
+        ttype = self.get_type()
         self.get_value_type()
         self.get_value()
-        self.get_previous_declaration(self.children[1].name)
+        self.get_previous_declaration(to_string_node(self.children[1]))
         return self.raised_errors
 
 
@@ -460,39 +493,38 @@ class ParenthesisNotedNode(NotedNode):
     def get_alias(self):
         return " ".join([leave.name for leave in self.node.leaves])
 
-    def get_value(self) -> str | None:
-        nn_contained_exp = create_noted_node(self.children[1], self.context, self.scopes, self.symbol)
-        if nn_contained_exp is None:
+    def __get_contained_nn(self):
+        return create_noted_node(self.children[1], self.context, self.scopes, self.symbol)
+
+    def __validate_content(self):
+        nn_content_exp = self.__get_contained_nn()
+        if nn_content_exp is None:
             symbols_scope = self.scopes.get(self.symbol.scope)
-            self.add_error("Invalid parenthesis content::"
-                           , SemanticError(
-                                name="Invalid parenthesis content::",
-                                details=f"Parenthesis couldn't get value from {self.children[1].name}",
-                                symbol=self.symbol,
-                                scope=symbols_scope,
-                                line=self.symbol.start_line)
+            self.add_error("Invalid parenthesis content::",
+                           SemanticError(
+                               name="Invalid parenthesis content::",
+                               details=f"Parenthesis couldn't get value or type from {self.children[1].name}",
+                               symbol=self.symbol,
+                               scope=symbols_scope,
+                               line=self.symbol.start_line)
                            )
+        return nn_content_exp
+
+    def get_value(self) -> str | None:
+        content = self.__get_contained_nn()
+        if content is None:
             return None
-        self.extend_errors(nn_contained_exp.run_tests())
-        content_value = nn_contained_exp.get_value_type()
+        self.extend_errors(content.run_tests())
+        content_value = content.get_value_type()
 
         return content_value  # Might be null but error would be handled in the called noted node
 
     def get_type(self) -> str | None:
-        nn_contained_exp = create_noted_node(self.children[1], self.context, self.scopes, self.symbol)
-        if nn_contained_exp is None:
-            symbols_scope = self.scopes.get(self.symbol.scope)
-            self.add_error("Invalid parenthesis content::"
-                           , SemanticError(
-                                name="Invalid parenthesis content::",
-                                details=f"Parenthesis couldn't get type from {self.children[1].name}",
-                                symbol=self.symbol,
-                                scope=symbols_scope,
-                                line=self.symbol.start_line)
-                           )
+        content = self.__get_contained_nn()
+        if content is None:
             return None
-        self.extend_errors(nn_contained_exp.run_tests())
-        content_value = nn_contained_exp.get_type()
+        self.extend_errors(content.run_tests())
+        content_value = content.get_type()
 
         return content_value  # Might be null but error would be handled in the called noted node
 
@@ -508,6 +540,12 @@ class ParenthesisNotedNode(NotedNode):
 
 
 class IdentifierNotedNode(NotedNode):
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
     def get_previous_declaration(self, name: str):
         symbols_scope = self.scopes.get(self.symbol.scope)
         result = search_symbol_by_name(symbols_scope, name)
@@ -524,12 +562,12 @@ class IdentifierNotedNode(NotedNode):
             )
 
         if not (result.semantic_type == "attr"
-                or result.semantic_type == "expression" and result.type_of_expression =="declaration_assignation"):
+                or result.semantic_type == "expression" and result.type_of_expression == "declaration_assignation"):
             self.add_error(
                 "Invalid variable declaration::",
                 SemanticError(
                     name="Invalid variable declaration::",
-                    details=f"Variable '{name}' hasn't being declared either as attribute or in an accessible let block",
+                    details=f"Variable {name} hasn't being declared either as attribute or in an accessible let block",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -558,10 +596,28 @@ class IdentifierNotedNode(NotedNode):
             )
             return None
 
-        declaration_value = declaration.value
+        node_attr = declaration.node
+        nn_node_declaration = create_noted_node(node_attr, self.context, self.scopes, self.symbol)
+
+        if nn_node_declaration is None:
+            self.add_error(
+                "Inappropriate declaration::",
+                SemanticError(
+                    name="Inappropriate declaration::",
+                    details=f"Although variable seem doesnt correspond to any "
+                            f"recognized pattern from{to_string_node(node_attr)}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        self.extend_errors(nn_node_declaration.run_tests())
+        declaration_value = nn_node_declaration.get_value()
 
         if declaration_value is None:
-            # Add code to recognize path to this point and it was assigend
+            # Add code to recognize path to this point, and it was assigned
 
             self.add_error(
                 "WARNING No value found::",
@@ -634,13 +690,271 @@ class IdentifierNotedNode(NotedNode):
         return self.children[0].name
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
-        self.get_previous_declaration()
+        self.get_previous_declaration(self.get_alias())
 
         return self.raised_errors
 
 
-class DynamicDispatchNotedNode(NotedNode):
+class DispatchNotedNode(NotedNode):
 
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def _get_instance(self, instance_referenced: Node) -> NotedNode | None:
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        nn_instance_referenced = create_noted_node(instance_referenced, self.context, self.scopes, self.symbol)
+
+        if nn_instance_referenced is None:
+            self.add_error(
+                "Invalid instance call::",
+                SemanticError(
+                    name="Invalid instance call::",
+                    details=f"On method call, cannot get instance class from {to_string_node(instance_referenced)}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+
+        self.extend_errors(nn_instance_referenced.run_tests())
+        return nn_instance_referenced
+
+    def _get_symbol_class(self, instance_referenced: Node) -> Symbol | None:
+        nn_instance = self._get_instance(instance_referenced)
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        if nn_instance is None:
+            return None
+
+        class_referenced = nn_instance.get_type()
+
+        if class_referenced is None:
+            self.add_error(
+                "Invalid instance call::",
+                SemanticError(
+                    name="Invalid instance call::",
+                    details=f"On method call, cannot get instance type from {to_string_node(nn_instance.node)}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        symbol_class = search_class_symbol(class_referenced, self.scopes)
+
+        if symbol_class is None:
+            self.add_error(
+                "Invalid instance call class::",
+                SemanticError(
+                    name="Invalid instance call class::",
+                    details=f"On method call, cannot find class referenced called {class_referenced}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+
+        return symbol_class
+
+    def _get_symbol_method(self, symbol_class: Symbol, method_name: str) -> Symbol | None:
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        next_ancestor = symbol_class
+        symbol_method = None
+
+        while next_ancestor is not None and symbol_method is None:
+            symbol_method = get_symbol_method(method_name, next_ancestor, self.scopes)
+
+            if symbol_method is None:
+                next_ancestor = get_symbol_class(next_ancestor.data_type, self.scopes)
+
+        if symbol_method is None:
+            self.add_error(
+                "Invalid instance call::",
+                SemanticError(
+                    name="Invalid instance call::",
+                    details=f"On method call, cannot find method referenced called {method_name} of {symbol_class.name}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+        return symbol_method
+
+    def _get_method_return_type(self, symbol_class: Symbol, symbol_method: Symbol):
+        self_type = symbol_class.name
+
+        return_type = symbol_method.data_type
+
+        if return_type.upper() == "SELF_TYPE":
+            return self_type
+
+        if not verify_existing_type(return_type, self.scopes):
+            self.add_error(
+                "Undeclared class::",
+                SemanticError(
+                    name="Undeclared class::",
+                    details=f"Method call found invalid firm with return type {return_type}",
+                    symbol=self.symbol,
+                    scope=self.scopes.get("global"),
+                    line=self.symbol.start_line
+                ))
+            return None
+
+        return return_type
+
+    def _get_method_parameters(self, symbol_class: Symbol, symbol_method: Symbol):
+        self_type = symbol_class.name
+
+        parameters = symbol_method.parameters
+
+        updated_parameters = []
+
+        for parameter_name, parameter_type in parameters:
+            updated_parameter_type = parameter_type if parameter_type.upper() != "SELF_TYPE" else self_type
+            self._is_valid_type(updated_parameter_type)
+            updated_parameters.append((parameter_name, updated_parameter_type))
+
+        return updated_parameters
+
+    def _compare_parameter(self, firm_parameter: tuple, received_parameter: Node, parameter_position: int):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        firm_param_name = firm_parameter[0]
+        firm_param_type = firm_parameter[1]
+
+        nn_expr_parameter = create_noted_node(received_parameter, self.context, self.scopes, self.symbol)
+        if nn_expr_parameter is None:
+            self.add_error(
+                "Bad parameter::",
+                SemanticError(
+                    name="Bad parameter::",
+                    details=f"Method call cannot get proper parameter from ({parameter_position})"
+                            f" from expression {to_string_node(received_parameter)}. Expected type {firm_param_type} "
+                            f"for param '{firm_param_name}' (No. {parameter_position})",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return False
+        self.extend_errors(nn_expr_parameter.run_tests())
+        received_param_type = nn_expr_parameter.get_type()
+
+        if received_param_type is None:
+            self.add_error(
+                "Bad parameter::",
+                SemanticError(
+                    name="Bad parameter::",
+                    details=f"Method call cannot get parameter type ({parameter_position})"
+                            f" from expression {to_string_node(received_parameter)}. Expected type {firm_param_type} "
+                            f"for param '{firm_param_name}' (No. {parameter_position})",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return False
+
+        types_match = verify_matching_type(firm_param_type, received_param_type, self.scopes)
+
+        if not types_match:
+            self.add_error(
+                "Bad Parameter type::",
+                SemanticError(
+                    name="Bad Parameter type::",
+                    details=f"Method call got {to_string_node(received_parameter)} with type {received_param_type}. "
+                            f"Expected {firm_param_type} type as parameter {firm_param_name} (No.{parameter_position})",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                ))
+
+        return types_match
+
+    def _compare_parameters(self, firm_parameters: List[Tuple], received_parameters: List[Node]):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        if len(firm_parameters) != len(received_parameters):
+            self.add_error(
+                "Unmatch count parameter firm::",
+                SemanticError(
+                    name="Unmatch count parameter firm::",
+                    details=f"On method call parameters count does not match. expected: {len(firm_parameters)})"
+                            f"  gotten ({len(received_parameters)})",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return False
+
+        valid_param_type = True
+        for num_parameter, (expr, firm_param) in enumerate(zip(received_parameters, firm_parameters)):
+            valid_param_type = self._compare_parameter(firm_param, expr, num_parameter) and valid_param_type
+
+        return valid_param_type
+    
+    def _deconstruct_given_parameter(self, position_open_parenthesis: int, position_closing_parenthesis: int):
+        parenthesis_content = self.children[position_open_parenthesis+1:position_closing_parenthesis]
+        return [item for item in parenthesis_content if item.name != ","]
+
+    def get_alias(self):
+        return to_string_node(self.node)
+        
+
+    @abstractmethod
+    def get_previous_declaration(self, name: str):
+        pass
+
+    @abstractmethod
+    def get_value(self) -> str | None:
+        pass
+
+    @abstractmethod
+    def get_type(self) -> str | None:
+        pass
+
+    def get_value_type(self) -> str | None:
+        return self.get_type()
+
+    @abstractmethod
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        pass
+
+
+class DynamicDispatchNotedNode(DispatchNotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def get_alias(self):
+        pass
+
+    def get_previous_declaration(self, name: str):
+        pass
+
+    def get_value(self) -> str | None:
+        pass
+
+    def get_type(self) -> str | None:
+        pass
+
+    def get_value_type(self) -> str | None:
+        pass
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        pass
+
+
+class StaticDispatchNotedNode(DispatchNotedNode):
     def __init__(self, node):
         super().__init__(node)
         self.needs_symbol = True
@@ -650,153 +964,38 @@ class DynamicDispatchNotedNode(NotedNode):
     def get_previous_declaration(self, name: str):
         return None
 
-    def get_alias(self):
-        return " ".join([leave.name for leave in self.node.leaves])
-
     def get_value(self) -> str | None:
-        return self.get_alias()
+        return self.get_default_value_from_typo()
 
     def get_type(self) -> str | None:
-        instance_exp = self.children[0]  # expr
-        parent_class_name = self.children[2].name  # ID
-        called_method = self.children[4].name  # ID
-        content = [item_node for item_node in self.children[6:-1] if item_node.name == "expr"]  # List of expr
+        instance_expr = self.children[0]
+        instance = self._get_instance(instance_expr)
 
-        nn_instance_exp = create_noted_node(instance_exp, self.context, self.scopes, self.symbol)
-        errors_so_far = nn_instance_exp.run_tests()
-
-        if "Undeclared class::" in errors_so_far:
-            self.extend_errors(errors_so_far)
+        if instance is None:
             return None
 
-        if not verify_existing_type(parent_class_name, self.scopes):
-            self.add_error("Undeclared class::",
-                           SemanticError(
-                               name="Undeclared class::",
-                               details=f"@ calling method cannot find parent class {parent_class_name}",
-                               symbol=self.symbol,
-                               scope=self.scopes.get("global"),
-                               line=self.symbol.start_line
-                           ))
-            return None
-        instance_type = nn_instance_exp.get_type()
+        symbol_class = self._get_symbol_class(instance_expr)
 
-        valid_inheritance = verify_inheritance(parent_class_name, instance_type, self.scopes)
-
-        if not valid_inheritance:
-            self.add_error("Incompatible parent method call::",
-                           SemanticError(
-                               name="Incompatible method call::",
-                               details=f"@ calling method found no relation {parent_class_name} (expected as parent)"
-                                       f"and {instance_type} as child.",
-                               symbol=self.symbol,
-                               scope=self.scopes.get("global"),
-                               line=self.symbol.start_line
-                           ))
+        if symbol_class is None:
             return None
 
-        parent_class_symbol = get_symbol_class(parent_class_name, self.scopes)
+        method_name = self.children[2].name
+        symbol_method = self._get_symbol_method(symbol_class, method_name)
 
-        next_ancestor = parent_class_symbol
-        method_symbol = None
-
-        while next_ancestor is not None and method_symbol is None:
-
-            method_symbol = get_symbol_method(called_method, next_ancestor, self.scopes)
-
-            if method_symbol is None:
-                next_ancestor = get_symbol_class(next_ancestor.data_type, self.scopes)
-
-        if method_symbol is None:
-            self.add_error("Unfounded method on parent called method::",
-                           SemanticError(
-                               name="Unfounded method on parent called method::",
-                               details=f"@ calling method, could found method called {called_method} "
-                                       f"in {parent_class_name}(parent class) (not implemented on any ancestor either)",
-                               symbol=self.symbol,
-                               scope=self.scopes.get("global"),
-                               line=self.symbol.start_line
-                           ))
+        if symbol_method is None:
             return None
 
-        symbols_scope = self.scopes.get(self.symbol.scope)
-        actual_firm_parameters = method_symbol.parameters
+        firm_return = self._get_method_return_type(symbol_class, symbol_method)
+        firm_params = self._get_method_parameters(symbol_class, symbol_method)
 
-        if len(actual_firm_parameters) != len(content):
-            self.add_error(
-                "Unmatch count parameter firm::",
-                SemanticError(
-                    name="Unmatch count parameter firm::",
-                    details=f"On @ method parameters expected ({len(actual_firm_parameters)})"
-                            f" does not match gotten ({len(content)})",
-                    symbol=self.symbol,
-                    scope=symbols_scope,
-                    line=self.symbol.start_line
-                )
-            )
-            return None
+        params_used_in_call = self._deconstruct_given_parameter(3, -1)
 
-        for num_parameter, (expr, firm_param) in enumerate(zip(content, actual_firm_parameters)):
-            nn_expr_parameter = create_noted_node(expr, self.context, self.scopes, self.symbol)
-            expr_text = "".join(item.name for item in expr.leaves)
+        self._compare_parameters(firm_params, params_used_in_call)
 
-            expected_type = firm_param[1]
-            param_name = firm_param[0]
-
-            if nn_expr_parameter is None:
-                self.add_error(
-                    "Bad parameter::",
-                    SemanticError(
-                        name="Bad parameter::",
-                        details=f"On @ method call cannot get proper parameter ({num_parameter})"
-                                f" from expression {expr_text}. Expected type {expected_type} for param '{param_name}'"
-                                f" (No. {num_parameter})",
-                        symbol=self.symbol,
-                        scope=symbols_scope,
-                        line=self.symbol.start_line
-                    )
-                )
-
-            else:
-                self.extend_errors(nn_expr_parameter.run_tests())
-                param_type = nn_expr_parameter.get_type()
-
-                if param_type is None:
-                    self.add_error(
-                        "Unable to get type::",
-                        SemanticError(
-                            name="Unable to get type::",
-                            details=f"@ method call is unable to establish {expr_text} data type. "
-                                    f"Expected type {expected_type} for param '{param_name} (No. {num_parameter})",
-                            symbol=self.symbol,
-                            scope=symbols_scope,
-                            line=self.symbol.start_line
-                        )
-                    )
-                else:
-                    if not verify_matching_type(expected_type, param_type, self.scopes):
-                        self.add_error(
-                            "Bad Parameter type::",
-                            SemanticError(
-                                name="Bad Parameter type::",
-                                details=f"@ method call got {expr_text} with type {param_type}. "
-                                        f"Expected {expected_type} type as parameter {param_name} (No.{num_parameter})",
-                                symbol=self.symbol,
-                                scope=symbols_scope,
-                                line=self.symbol.start_line
-                            ))
-
-        returned_type = method_symbol.data_type
-
-        return returned_type
-
-    def get_value_type(self) -> str | None:
-        return self.get_type()
+        return firm_return
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         self.get_type()
-        self.get_value_type()
-
         return self.raised_errors
 
 
@@ -815,7 +1014,8 @@ class IsVoidNotedNode(NotedNode):
         return None
 
     def get_value(self) -> str | None:
-        return str(self.get_value_type() == "void").lower()
+        isvoid_value = self.get_value_type() == "void"
+        return (str(isvoid_value)).lower()
 
     def get_type(self) -> str | None:
         return "Bool"
@@ -845,6 +1045,294 @@ class IsVoidNotedNode(NotedNode):
         return self.raised_errors
 
 
+class NotOperatorNotedNode(NotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def get_alias(self):
+        return " ".join([leave.name for leave in self.node.leaves])
+
+    def get_previous_declaration(self, name: str):
+        return None
+
+    def get_value(self) -> str | None:
+
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        exp_to_deny = self.children[1]
+        nn_exp_to_deny = create_noted_node(exp_to_deny, self.context, self.scopes, self.symbol)
+        exp_type = self.get_value_type()
+
+        if exp_type != "Bool":
+            self.add_error(
+                "Unable to apply not operator::",
+                SemanticError(
+                    name="Unable to apply not operator::",
+                    details=f"not operator cannot be applied to type '{to_string_node(exp_to_deny)}'"
+                            f"only Bool",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        exp_value = nn_exp_to_deny.get_value()
+
+        if exp_value is None:
+            self.add_error(
+                "Unable to get value from expression::",
+                SemanticError(
+                    name="Unable to get value from expression::",
+                    details=f"not operator couldn't get any value from '{to_string_node(exp_to_deny)}'",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        if exp_value.lower() not in ["true", "false"]:
+            self.add_error(
+                "Unable to get value from expression::",
+                SemanticError(
+                    name="Unable to get value from expression::",
+                    details=f"not got unexpected value from '{to_string_node(exp_to_deny)}'"
+                            f"only Bool",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        current_value = exp_value.lower()
+
+        if current_value == "true":
+            return "false"
+        return "true"
+
+    def get_type(self) -> str | None:
+        return "Bool"
+
+    def get_value_type(self) -> str | None:
+        exp_to_deny = self.children[1]
+        nn_exp_to_deny = create_noted_node(exp_to_deny, self.context, self.scopes, self.symbol)
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        if nn_exp_to_deny is None:
+            self.add_error(
+                "Invalid expression::",
+                SemanticError(
+                    name="Invalid expression::",
+                    details=f"not operator couldn't get valid expression from {to_string_node(exp_to_deny)}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+
+            return None
+
+        exp_type = nn_exp_to_deny.get_type()
+        self.extend_errors(nn_exp_to_deny.run_tests())
+
+        if exp_type is None:
+            self.add_error(
+                "Unable to get expression type::",
+                SemanticError(
+                    name="Unable to get expression type::",
+                    details=f"not operator couldn't get type from expression: {to_string_node(exp_to_deny)}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        return exp_type
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.get_value()
+        return self.raised_errors
+
+
+class BlockNotedNode(NotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def get_alias(self):
+        return to_string_node(self.node)
+
+    def get_previous_declaration(self, name: str):
+        return None
+
+    def __get_last_item(self):
+        last_exp = self.children[-2]
+        nn_last_exp = create_noted_node(last_exp, self.context, self.scopes, self.symbol)
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        if nn_last_exp is None:
+            self.add_error(
+                "Invalid expression::",
+                SemanticError(
+                    name="Invalid expression::",
+                    details=f"On block cannot get proper value from last item {to_string_node(last_exp)}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+        return nn_last_exp
+
+    def get_value(self) -> str | None:
+        nn_last_exp = self.__get_last_item()
+        if nn_last_exp is None:
+            return None
+
+        self.extend_errors(nn_last_exp.run_tests())
+        return nn_last_exp.get_value()
+
+    def get_type(self) -> str | None:
+        nn_last_exp = self.__get_last_item()
+        if nn_last_exp is None:
+            return None
+        self.extend_errors(nn_last_exp.run_tests())
+        return nn_last_exp.get_type()
+
+    def get_value_type(self) -> str | None:
+        return self.get_type()
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.get_value()
+        self.get_type()
+
+        return self.raised_errors
+
+
+class BitWiseNotNotedNode(NotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def get_alias(self):
+        return to_string_node(self.node)
+
+    def get_previous_declaration(self, name: str):
+        return None
+
+    def __get_nn_value_to_revert(self):
+        value_to_revert = self.children[1]
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        nn_value_to_revert = create_noted_node(value_to_revert, self.context, self.scopes, self.symbol)
+        if nn_value_to_revert is None:
+            self.add_error(
+                "Invalid value to revert::",
+                SemanticError(
+                    name="Invalid value to revert::",
+                    details=f"Cannot revert value from expression: {to_string_node(value_to_revert)}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+        self.extend_errors(nn_value_to_revert.run_tests())
+        return nn_value_to_revert
+
+    def get_value(self) -> str | None:
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        n_type = self.get_type()
+
+        if n_type is None:
+            return None
+
+        nn_value_to_revert = self.__get_nn_value_to_revert()
+
+        if nn_value_to_revert is None:
+            return None
+
+        self.extend_errors(nn_value_to_revert.run_tests())
+        value = nn_value_to_revert.get_value()
+
+        if value is None:
+            self.add_error(
+                "Invalid value to revert::",
+                SemanticError(
+                    name="Invalid value to revert::",
+                    details=f"Cannot revert value from expression: {to_string_node(nn_value_to_revert.node)}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+        if value == "0":
+            return value
+
+        if value.startswith("-"):
+            return value[1:]
+        return f"-{value}"
+
+    def get_type(self) -> str | None:
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        value_to_revert_type = self.get_value_type()
+
+        if value_to_revert_type is None:
+            return None
+
+        if value_to_revert_type != "Int":
+            self.add_error(
+                "Invalid type to revert::",
+                SemanticError(
+                    name="Invalid value to revert bw::",
+                    details=f"Cannot revert ~ type: {value_to_revert_type}, only Int",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        return "Int"
+
+    def get_value_type(self) -> str | None:
+        symbols_scope = self.scopes.get(self.symbol.scope)
+        nn_value_to_revert = self.__get_nn_value_to_revert()
+
+        if nn_value_to_revert is None:
+            return None
+
+        value_to_revert_type = nn_value_to_revert.get_type()
+
+        if value_to_revert_type is None:
+            self.add_error(
+                "Invalid expression to revert bw::",
+                SemanticError(
+                    name="Invalid expression to revert bw::",
+                    details=f"Cannot revert value using ~ from expression: {to_string_node(nn_value_to_revert.node)}."
+                            f"Unidentified type.",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+
+        return value_to_revert_type
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.get_value()
+        return self.raised_errors
+
+
 def create_noted_node(node: Node,
                       context: Dict[AnyStr, Dict[AnyStr, Symbol]],
                       scopes: Dict[AnyStr, Scope],
@@ -855,7 +1343,7 @@ def create_noted_node(node: Node,
     noted_node: NotedNode | None = None
 
     if index_type_node == -1:
-        print("INTERNAL ERROR: ERROR AL IDENTIFICAR EXPR")
+        print("UNABLE TO IDENTIFY NODE AND CREATE NOTED NODE")
         return None
 
     type_of_expr = ns.expressions[index_type_node]
@@ -882,13 +1370,13 @@ def create_noted_node(node: Node,
     elif type_of_expr == "isvoid":  # 11
         noted_node = IsVoidNotedNode(node)
     elif type_of_expr == "not":  # 12
-        pass
-    elif type_of_expr == "bitwise_not":  # 13
-        pass
+        noted_node = NotOperatorNotedNode(node)
     elif type_of_expr == "block":  # 14
-        pass
+        noted_node = BlockNotedNode(node)
+    elif type_of_expr == "bitwise_not":  # 13
+        noted_node = BitWiseNotNotedNode(node)
     elif type_of_expr == "static_dispatch":  # 15
-        pass
+        noted_node = StaticDispatchNotedNode(node)
     elif type_of_expr == "function_call":  # 16
         pass
     elif type_of_expr == "conditional":  # 17
@@ -902,7 +1390,7 @@ def create_noted_node(node: Node,
         pass
 
     else:
-        print(f"Tipo de expresión no reconocido: {type_of_expr}")
+        print(f"Unrecognized expression: {type_of_expr}")
 
     if noted_node is not None:
         if noted_node.need_scopes:
@@ -923,7 +1411,6 @@ AUXILIARY FUNCTIONS
 
 
 def search_symbol_by_name(searching_scope: Scope, name: str) -> Symbol | None:
-
     result = searching_scope.search_content(name)
     not_found = result is None
 
@@ -936,6 +1423,12 @@ def search_symbol_by_name(searching_scope: Scope, name: str) -> Symbol | None:
 
     return result
 
+def search_class_symbol(class_name, scopes):
+    global_scope = scopes.get("global")
+    classes = global_scope.get_all_classees()
+    if class_name in classes:
+        return classes[class_name]
+    return None
 
 def verify_inheritance(parent_class: str, child_class: str, scopes: Dict[AnyStr, Scope]) -> bool:
     return verify_matching_type(parent_class, child_class, scopes)
@@ -947,7 +1440,6 @@ def verify_existing_class(class_name: str, scopes: Dict[AnyStr, Scope]):
 
 
 def verify_existing_type(type_name: str, scopes: Dict[AnyStr, Scope]) -> bool:
-
     basic_types = ["Int", "String", "Bool", "Object", "IO"]
 
     if type_name in basic_types:
@@ -958,11 +1450,10 @@ def verify_existing_type(type_name: str, scopes: Dict[AnyStr, Scope]) -> bool:
 
 
 def verify_matching_type(expected_type: str, received_type: str, scopes: Dict[AnyStr, Scope]) -> bool:
-
     if expected_type == received_type:
         return True
 
-    if not verify_existing_type(expected_type, scopes) or  not verify_existing_type(received_type, scopes):
+    if not verify_existing_type(expected_type, scopes) or not verify_existing_type(received_type, scopes):
         return False
 
     global_scope = scopes.get("global")
@@ -1008,7 +1499,7 @@ def get_symbol_method(method_name: str, class_symbol: Symbol, scopes: Dict[AnySt
 
 def add_error_to_local(local_errors: Dict[AnyStr, List[SemanticError]], error_type: str, error: SemanticError):
     if error_type in local_errors:
-        if not error in local_errors[error_type]:
+        if error not in local_errors[error_type]:
             local_errors[error_type].append(error)
     else:
         local_errors[error_type] = [error]
@@ -1016,9 +1507,16 @@ def add_error_to_local(local_errors: Dict[AnyStr, List[SemanticError]], error_ty
     return local_errors
 
 
-def merge_errors(local_errors: Dict[AnyStr, List[SemanticError]], other_errors: Dict[AnyStr, List[SemanticError]]) -> Dict[AnyStr, SemanticError]:
+def merge_errors(local_errors: Dict[AnyStr, List[SemanticError]], other_errors: Dict[AnyStr, List[SemanticError]]) -> \
+        Dict[AnyStr, SemanticError]:
     for err_type, errors in other_errors.items():
         for error in errors:
             local_errors = add_error_to_local(local_errors, err_type, error)
 
     return local_errors
+
+
+def to_string_node(exp: Node) -> str:
+    return "".join([leave.name for leave in exp.leaves])
+
+

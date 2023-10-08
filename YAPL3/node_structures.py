@@ -1,5 +1,5 @@
-from typing import Tuple, List
-from dataclasses import dataclass, field
+from typing import List
+from dataclasses import dataclass
 
 from anytree import Node
 

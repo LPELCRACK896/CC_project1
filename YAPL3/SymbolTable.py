@@ -395,7 +395,7 @@ class SymbolTable:
         return current_line
 
     def build_symbol_expr_obj_method_call(self, node: Node, current_scope: Scope, current_line: int) -> int:
-        self.insert(
+        symbol = self.insert(
             name=self.get_expression_to_str(node),
             data_type=None,
             semantic_type="expression",
@@ -412,6 +412,10 @@ class SymbolTable:
             node=node,
             type_of_expression="external_method_call"
         )
+        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        errors = noted_node.run_tests()
+        value = noted_node.get_value()
+        n_type = noted_node.get_type()
         return current_line
 
     def build_symbol_expr_let(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -634,7 +638,7 @@ class SymbolTable:
 
     def build_symbol_not_int(self, node: Node, current_scope: Scope, current_line: int) -> int:
         items = self.get_expression_to_list(node.children[1])
-        self.insert(
+        symbol = self.insert(
             name=f"({current_line}) ~ " + " ".join(items),
             data_type="Int",
             semantic_type="expression",
@@ -651,12 +655,16 @@ class SymbolTable:
             node=node,
             type_of_expression="unitary"
         )
+        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        errors = noted_node.run_tests()
+        value = noted_node.get_value()
+        n_type = noted_node.get_type()
 
         return current_line
 
     def build_symbol_not_bool(self, node: Node, current_scope: Scope, current_line: int) -> int:
         items = self.get_expression_to_list(node.children[1])
-        self.insert(
+        symbol = self.insert(
             name=f"({current_line})not " + " ".join(items),
             data_type="Bool",
             semantic_type="expression",
@@ -673,7 +681,9 @@ class SymbolTable:
             node=node,
             type_of_expression="unitary"
         )
-
+        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        errors = noted_node.run_tests()
+        val = noted_node.get_value()
         return current_line
     """
     INTERNAL PROCESS
