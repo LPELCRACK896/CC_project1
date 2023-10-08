@@ -98,6 +98,24 @@ class NotedNode:
             for error in errors:
                 self.add_error(error_type, error)
 
+    def _create_sub_noted_node(self, node: Node, symbol: Symbol, origin_operation: str):
+        symbols_scope = self.scopes.get(symbol.scope)
+
+        nn_node = create_noted_node(node, self.context, self.scopes, symbol)
+
+        if nn_node is None:
+            self.add_error("Invalid expression::",
+                           SemanticError(
+                               name="Invalid expression::",
+                               details=f"f{origin_operation} was unable to get expression from {to_string_node(node)}",
+                               symbol=self.symbol,
+                               scope=symbols_scope,
+                               line=self.symbol.start_line
+                           ))
+
+        self.extend_errors(nn_node.run_tests())
+        return nn_node
+
     def _is_valid_type(self, type_alias):
         symbols_scope = self.scopes.get(self.symbol.scope)
         if not verify_existing_type(type_alias, self.scopes):
@@ -125,6 +143,28 @@ class NotedNode:
             return ""
 
         return None
+
+    def _get_method_return_type(self, symbol_class: Symbol, symbol_method: Symbol):
+        self_type = symbol_class.name
+
+        return_type = symbol_method.data_type
+
+        if return_type.upper() == "SELF_TYPE":
+            return self_type
+
+        if not verify_existing_type(return_type, self.scopes):
+            self.add_error(
+                "Undeclared class::",
+                SemanticError(
+                    name="Undeclared class::",
+                    details=f"Method call found invalid firm with return type {return_type}",
+                    symbol=self.symbol,
+                    scope=self.scopes.get("global"),
+                    line=self.symbol.start_line
+                ))
+            return None
+
+        return return_type
 
     @abstractmethod
     def get_alias(self):
@@ -549,7 +589,8 @@ class IdentifierNotedNode(NotedNode):
     def get_previous_declaration(self, name: str):
         symbols_scope = self.scopes.get(self.symbol.scope)
         result = search_symbol_by_name(symbols_scope, name)
-        if result is None:
+        declaration = search_declaration(name, self.symbol, self.scopes)
+        if declaration is None:
             self.add_error(
                 "Undeclared variable::",
                 SemanticError(
@@ -561,22 +602,7 @@ class IdentifierNotedNode(NotedNode):
                 )
             )
 
-        if not (result.semantic_type == "attr"
-                or result.semantic_type == "expression" and result.type_of_expression == "declaration_assignation"):
-            self.add_error(
-                "Invalid variable declaration::",
-                SemanticError(
-                    name="Invalid variable declaration::",
-                    details=f"Variable {name} hasn't being declared either as attribute or in an accessible let block",
-                    symbol=self.symbol,
-                    scope=symbols_scope,
-                    line=self.symbol.start_line
-                )
-            )
-
-            return None
-
-        return result
+        return declaration
 
     def get_value(self) -> str | None:
         name = self.get_alias()
@@ -785,28 +811,6 @@ class DispatchNotedNode(NotedNode):
             )
         return symbol_method
 
-    def _get_method_return_type(self, symbol_class: Symbol, symbol_method: Symbol):
-        self_type = symbol_class.name
-
-        return_type = symbol_method.data_type
-
-        if return_type.upper() == "SELF_TYPE":
-            return self_type
-
-        if not verify_existing_type(return_type, self.scopes):
-            self.add_error(
-                "Undeclared class::",
-                SemanticError(
-                    name="Undeclared class::",
-                    details=f"Method call found invalid firm with return type {return_type}",
-                    symbol=self.symbol,
-                    scope=self.scopes.get("global"),
-                    line=self.symbol.start_line
-                ))
-            return None
-
-        return return_type
-
     def _get_method_parameters(self, symbol_class: Symbol, symbol_method: Symbol):
         self_type = symbol_class.name
 
@@ -833,9 +837,9 @@ class DispatchNotedNode(NotedNode):
                 "Bad parameter::",
                 SemanticError(
                     name="Bad parameter::",
-                    details=f"Method call cannot get proper parameter from ({parameter_position+1})"
+                    details=f"Method call cannot get proper parameter from ({parameter_position + 1})"
                             f" from expression {to_string_node(received_parameter)}. Expected type {firm_param_type} "
-                            f"for param '{firm_param_name}' (No. {parameter_position+1})",
+                            f"for param '{firm_param_name}' (No. {parameter_position + 1})",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -898,9 +902,9 @@ class DispatchNotedNode(NotedNode):
             valid_param_type = self._compare_parameter(firm_param, expr, num_parameter) and valid_param_type
 
         return valid_param_type
-    
+
     def _deconstruct_given_parameters(self, position_open_parenthesis: int, position_closing_parenthesis: int):
-        parenthesis_content = self.children[position_open_parenthesis+1:position_closing_parenthesis]
+        parenthesis_content = self.children[position_open_parenthesis + 1:position_closing_parenthesis]
         return [item for item in parenthesis_content if item.name != ","]
 
     def get_alias(self):
@@ -933,7 +937,6 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
-
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1014,8 +1017,6 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
 
         return firm_return
 
-
-
     def get_value_type(self) -> str | None:
         return self.get_type()
 
@@ -1082,18 +1083,10 @@ class FunctionCallDispatchNotedNode(DispatchNotedNode):
 
     def __get_current_class_symbol(self):
         symbols_scope = self.scopes.get(self.symbol.scope)
-        scope_id = symbols_scope.scope_id
 
-        scopes_name = scope_id.split("-")
-        scopes_name.reverse()
+        symbol_class = get_class_symbol(self.symbol, self.scopes)
 
-        item_scope = ""
-        found_class_scope_id = False
-        while len(scopes_name) != 0 and not found_class_scope_id:
-            item_scope = scopes_name.pop(0)
-            found_class_scope_id = item_scope.endswith("(class)")
-
-        if not found_class_scope_id:
+        if symbol_class is None:
             method_name = self.children[0].name
             self.add_error(
                 "Local method call out any class::",
@@ -1106,9 +1099,6 @@ class FunctionCallDispatchNotedNode(DispatchNotedNode):
                 )
             )
             return None
-
-        class_name = item_scope.split(maxsplit=1, sep="(")[0]
-        symbol_class = get_symbol_class(class_name, self.scopes)
 
         return symbol_class
 
@@ -1477,6 +1467,7 @@ class BitWiseNotNotedNode(NotedNode):
         self.get_value()
         return self.raised_errors
 
+
 class NoContentNoTypeNoteNode(NotedNode):
 
     def __init__(self, node):
@@ -1509,13 +1500,12 @@ class LoopNotedNode(NoContentNoTypeNoteNode):
     pass
 
 
-class LetinNotedNode(NoContentNoTypeNoteNode):
+class LetNotedNode(NoContentNoTypeNoteNode):
     pass
 
 
 class ArithmeticLogicNotedNode(NotedNode):
-
-    arithmetic_operators: list = ['+',  '-', '*', '/']
+    arithmetic_operators: list = ['+', '-', '*', '/']
     comparer_operators: list = ['<', '<=', '=', '>=', '>']
     type_of_operation: str
     operation: str
@@ -1682,9 +1672,163 @@ class ArithmeticLogicNotedNode(NotedNode):
     def get_value_type(self) -> str | None:
         return self.get_type()
 
-
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         self.get_value()
+        return self.raised_errors
+
+
+class ReturnStatementNotedNode(NotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def get_alias(self):
+        return to_string_node(self.node)
+
+    def __get_get_symbol_class(self):
+        scope_name = self.symbol.scope
+
+        symbols_scope = self.scopes.get(scope_name)
+
+        scope_parts = scope_name.split("-")
+        class_name = scope_parts[-2]
+
+        method_name = scope_parts[-1]
+
+        if not class_name.endswith("(class)"):
+            self.add_error(
+                "Method out of class::",
+                SemanticError(
+                    name="Method out of class::",
+                    details=f"Method {method_name} was found out of class scope, and found {class_name} instead",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        class_name = class_name.split(maxsplit=1, sep="(", )[0]
+        symbol_class = get_symbol_class(class_name, self.scopes)
+
+        if symbol_class is None:
+            self.add_error(
+                "Class unfounded::",
+                SemanticError(
+                    name="Class unfounded::",
+                    details=f"Class {class_name} wasn't reference can't be found",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+        return symbol_class
+
+    def __from_scope_gets_symbol_method(self):
+        scope_name = self.symbol.scope
+        symbols_scope = self.scopes.get(scope_name)
+
+        scope_parts = scope_name.split("-")
+
+        method_name = scope_parts[-1]
+        class_name = scope_parts[-2]
+
+        if not method_name.endswith("(method)"):
+            self.add_error(
+                "Return statement out of method::",
+                SemanticError(
+                    name="Return statement out of method::",
+                    details=f"Return statement {self.get_alias()} found out of method: {scope_name}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        method_name = method_name.split(maxsplit=1, sep="(", )[0]
+
+        symbol_class = self.__get_get_symbol_class()
+
+        if symbol_class is None:
+            return None
+
+        symbol_method = get_symbol_method(method_name, symbol_class, self.scopes)
+
+        if symbol_method is None:
+            self.add_error(
+                "Unfounded method::",
+                SemanticError(
+                    name="Unfounded method::",
+                    details=f"Method {method_name} couldn't be found in {class_name}.",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+
+        return symbol_method
+
+    def __get_value_and_type(self) -> Tuple[AnyStr, AnyStr] | Tuple[None, None]:
+        return_exp = self.children[1]
+
+        nn_return_exp = self._create_sub_noted_node(return_exp, self.symbol, "Return")
+
+        if nn_return_exp is None:
+            return None, None
+
+        return nn_return_exp.get_value(), nn_return_exp.get_type()
+
+    def verify_firm_return(self) -> None | bool:
+
+        symbol_class = self.__get_get_symbol_class()
+
+        if symbol_class is None:
+            return None
+
+        symbol_method = self.__from_scope_gets_symbol_method()
+
+        if symbol_method is None:
+            return None
+
+        firm_return_type = self._get_method_return_type(symbol_class, symbol_method)
+
+        if firm_return_type is None:
+            return None
+
+        return_type = self.__get_value_and_type()[1]
+
+        if return_type is None:
+            return None
+
+        is_valid = verify_matching_type(firm_return_type, return_type, self.scopes)
+
+        return is_valid
+
+    def get_previous_declaration(self, name: str):
+        return None
+
+    def get_value(self) -> str | None:
+        is_firm_verified = self.verify_firm_return()
+        if self.verify_firm_return() is None or not is_firm_verified:
+            return None
+        return self.get_value_type()[0]
+
+    def get_type(self) -> str | None:
+        is_firm_verified = self.verify_firm_return()
+        if self.verify_firm_return() is None or not is_firm_verified:
+            return None
+        return self.get_value_type()[1]
+
+    def get_value_type(self) -> str | None:
+        return self.get_type()
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.verify_firm_return()
+
         return self.raised_errors
 
 
@@ -1739,9 +1883,11 @@ def create_noted_node(node: Node,
     elif type_of_expr == "loop":  # 18
         noted_node = LoopNotedNode(node)
     elif type_of_expr == "let_in":  # 19
-        noted_node = LetinNotedNode(node)
+        noted_node = LetNotedNode(node)
     elif type_of_expr == "arithmetic_or_comparison":  # 20
         noted_node = ArithmeticLogicNotedNode(node)
+    elif type_of_expr == "func_return":
+        noted_node = ReturnStatementNotedNode(node)
 
     else:
         print(f"Unrecognized expression: {type_of_expr}")
@@ -1764,6 +1910,62 @@ AUXILIARY FUNCTIONS
 """
 
 
+def search_declaration(identifier: str, starting_point_symbol: Symbol, scopes: Dict[AnyStr, Scope]):
+    symbols_scope = scopes.get(starting_point_symbol.scope)
+    # Local results
+    variables = symbols_scope.get_all_declaration_symbols()
+
+    if identifier in variables:
+        return variables[identifier]
+
+    # Check parent attributes
+    symbol_class = get_class_symbol(starting_point_symbol, scopes)
+
+    if symbol_class is None:
+        return None
+
+    next_class = symbol_class
+    declaration = None
+
+    while next_class is not None and declaration is None:
+        scope_id = next_class.construct_scope_name()
+        if scope_id in scopes:
+            class_scope = scopes.get(scope_id)
+            class_attributes = class_scope.get_all_declaration_symbols()
+            if identifier in class_attributes:
+                declaration = class_attributes[identifier]
+            else:
+                next_class = next_class.data_type
+                if next_class is not None:
+                    next_class = get_symbol_class(next_class, scopes)
+        else:
+            next_class = None
+
+    return declaration
+
+
+def get_class_symbol(starting_point_symbol: Symbol, scopes: Dict[AnyStr, Scope]) -> Symbol | None:
+    symbols_scope = scopes.get(starting_point_symbol.scope)
+    scope_id = symbols_scope.scope_id
+
+    scopes_name = scope_id.split("-")
+    scopes_name.reverse()
+
+    item_scope = ""
+    found_class_scope_id = False
+    while len(scopes_name) != 0 and not found_class_scope_id:
+        item_scope = scopes_name.pop(0)
+        found_class_scope_id = item_scope.endswith("(class)")
+
+    if not found_class_scope_id:
+        return None
+
+    class_name = item_scope.split(maxsplit=1, sep="(")[0]
+    symbol_class = get_symbol_class(class_name, scopes)
+
+    return symbol_class
+
+
 def search_symbol_by_name(searching_scope: Scope, name: str) -> Symbol | None:
     result = searching_scope.search_content(name)
     not_found = result is None
@@ -1777,12 +1979,14 @@ def search_symbol_by_name(searching_scope: Scope, name: str) -> Symbol | None:
 
     return result
 
+
 def search_class_symbol(class_name, scopes):
     global_scope = scopes.get("global")
     classes = global_scope.get_all_classees()
     if class_name in classes:
         return classes[class_name]
     return None
+
 
 def verify_inheritance(parent_class: str, child_class: str, scopes: Dict[AnyStr, Scope]) -> bool:
     return verify_matching_type(parent_class, child_class, scopes)
@@ -1872,5 +2076,3 @@ def merge_errors(local_errors: Dict[AnyStr, List[SemanticError]], other_errors: 
 
 def to_string_node(exp: Node) -> str:
     return "".join([leave.name for leave in exp.leaves])
-
-

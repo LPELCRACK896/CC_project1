@@ -1,5 +1,4 @@
 from Symbol import Symbol
-from typing import List, Dict
 from dataclasses import dataclass
 from typing import Callable, Dict, List
 from collections import namedtuple
@@ -67,7 +66,32 @@ class Scope:
         if name in self.content:
             return self.content[name]
         return None
-    
+
+    @staticmethod
+    def search_symbol_in_content(symbol_name: str, content: Dict[str, Symbol]) -> Symbol | None:
+        if symbol_name in content:
+            return content[symbol_name]
+        return None
+
+    @staticmethod
+    def filter_symbols_expr_by_type_of_expression(type_of_expression, content: Dict[str, Symbol]) -> Dict[str, Symbol]:
+        return {symbol_alias: symbol for symbol_alias, symbol in content.items()
+                if symbol.semantic_type == "expression" and symbol.type_of_expression == type_of_expression}
+
+    @staticmethod
+    def filter_symbols_by_semantic_type(semantic_type, content: Dict[str, Symbol]) -> Dict[str, Symbol]:
+        return {symbol_alias: symbol for symbol_alias, symbol in content.items()
+                if symbol.semantic_type == semantic_type}
+
+    def get_all_declaration_symbols(self):
+        let_variables = self.filter_symbols_expr_by_type_of_expression("declaration_assignation", self.content)
+        method_formals = self.filter_symbols_by_semantic_type("formal", self.content)
+        class_attributes = self.filter_symbols_by_semantic_type("attr", self.content)
+
+        all_declarations = {**let_variables, **method_formals, **class_attributes}
+
+        return all_declarations
+
     def search_availabilty_of_content(self, name: str)-> (Symbol, str):
         """En base al nombre del símbolo, busca dentro del scope. Si no lo enceuntra lo busca en su padre (recursivo).
 

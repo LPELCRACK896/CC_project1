@@ -602,7 +602,7 @@ class SymbolTable:
     def build_symbol_return(self, node: Node, current_scope: Scope, current_line: int) -> int:
         items = self.get_expression_to_list(node.children[1])
         data_type = "Int"  # Hot fix must remove
-        self.insert(
+        symbol = self.insert(
             name=f"{current_line}return " + " ".join(items),
             data_type=data_type,
             semantic_type="func_return",
@@ -619,6 +619,12 @@ class SymbolTable:
             node=node,
             type_of_expression=None
         )
+
+        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        errors = noted_node.run_tests()
+        value = noted_node.get_value()
+        n_type = noted_node.get_type()
+
 
         return current_line
 
