@@ -472,7 +472,7 @@ class AttributeNotedNode(NotedNode):
         var_expected_type = self.get_type()
 
         if var_value_type is not None and var_expected_type is not None:
-            coherent_types = verify_matching_type(var_value_type, var_expected_type, self.scopes)
+            coherent_types = verify_matching_type( var_expected_type,var_value_type, self.scopes)
             if not coherent_types:
                 self.add_error("Incoherence types::",
                                SemanticError(
@@ -2156,19 +2156,22 @@ def verify_matching_type(expected_type: str, received_type: str, scopes: Dict[An
     if expected_type == received_type:
         return True
 
-    if not verify_existing_type(expected_type, scopes) or not verify_existing_type(received_type, scopes):
+    if not (verify_existing_type(expected_type, scopes) and verify_existing_type(received_type, scopes)):
         return False
 
     global_scope = scopes.get("global")
     classes = global_scope.get_all_classes()
 
     current_class = received_type
-    equivalent_classes = []
+    equivalent_classes = ["Object"]
 
     while current_class != "Object":
         equivalent_classes.append(current_class)
         current_class_symbol: Symbol = classes.get(current_class)
-        current_class = current_class_symbol.data_type
+        if current_class_symbol is None:
+            current_class = "Object"  # Jumps to object in case there is no valid parent
+        else:
+            current_class = current_class_symbol.data_type
 
     if expected_type in equivalent_classes:
         return True
