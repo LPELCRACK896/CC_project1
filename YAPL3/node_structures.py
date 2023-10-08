@@ -31,7 +31,9 @@ expressions = [
     "boolean_false",  # RW_FALSE
     #  NONE EXPRESSION NODES #####
     "attribute",
-    "func_return"
+    "func_return",
+    "method",
+    "formal"
 ]
 
 operators = [
@@ -61,6 +63,13 @@ def identify_node(node: Node):
 
     if node.name == "func_return":
         return expressions.index("func_return")
+
+    if node.name == "method":
+        return expressions.index("method")
+
+    if node.name == "formal":
+        return expressions.index("formal")
+
     # expr
     if not node.children:
         return -1

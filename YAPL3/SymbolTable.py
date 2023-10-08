@@ -206,6 +206,10 @@ class SymbolTable:
             parameter_passing_method="reference"
         )
 
+        noted_node = create_noted_node(node, self.content, self.scopes, method_symbol)
+        errors = noted_node.run_tests()
+        val = noted_node.get_value()
+
         for child in node.children:
             current_line = self.build_symbol_table(child, method_scope, current_line=current_line + 1)
         method_symbol.end_index = current_line
@@ -635,7 +639,7 @@ class SymbolTable:
                 current_line += 1
                 formal_id = formal.children[0]
                 formal_type = formal.children[2].children[0]
-                self.insert(
+                symbol = self.insert(
                     name=formal_id.name,
                     data_type=formal_type.name,
                     semantic_type="formal",
@@ -652,6 +656,12 @@ class SymbolTable:
                     node=formal,
                     type_of_expression=None
                 )
+
+                noted_node = create_noted_node(formal, self.content, self.scopes, symbol)
+                errors = noted_node.run_tests()
+                value = noted_node.get_value()
+                n_type = noted_node.get_type()
+
         return current_line
 
     def build_symbol_not_int(self, node: Node, current_scope: Scope, current_line: int) -> int:

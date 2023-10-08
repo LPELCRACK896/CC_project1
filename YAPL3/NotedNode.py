@@ -43,6 +43,7 @@ class NotedNode:
     node_type: str
     children: List[Node]
     node: Node
+    name: str
 
     needs_symbol: bool
     needs_context: bool
@@ -115,6 +116,22 @@ class NotedNode:
 
         self.extend_errors(nn_node.run_tests())
         return nn_node
+
+    def _type_verifier(self, typo_received):
+        valid_type = verify_existing_type(typo_received, self.scopes)
+        if not valid_type:
+            symbols_scope = self.scopes.get(self.symbol.scope)
+            self.add_error(
+                "Un-existing type::",
+                SemanticError(
+                    name="Un-existing type::",
+                    details=f"On {self.name} got un-existing type: {typo_received}",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+        return valid_type
 
     def _is_valid_type(self, type_alias):
         symbols_scope = self.scopes.get(self.symbol.scope)
@@ -221,6 +238,7 @@ class IntegerNotedNode(BasicNotedNode):
 
     def __init__(self, node: Node):
         super().__init__(node)
+        self.name = "Integer value"
 
     def get_type(self) -> str | None:
         return "Int"
@@ -233,6 +251,7 @@ class StringNotedNote(BasicNotedNode):
 
     def __init__(self, node: Node):
         super().__init__(node)
+        self.name = "String value"
 
     def get_type(self) -> str | None:
         return "String"
@@ -245,6 +264,7 @@ class BooleanNotedNode(BasicNotedNode):
 
     def __init__(self, node: Node):
         super().__init__(node)
+        self.name = "Boolean value"
 
     def get_type(self) -> str | None:
         return "Bool"
@@ -259,6 +279,7 @@ class AssignationNotedNote(NotedNode):
         self.needs_symbol = True
         self.needs_context = True
         self.need_scopes = True
+        self.name = "Assignation"
 
     def get_previous_declaration(self, name: str):
         symbols_scope = self.scopes.get(self.symbol.scope)
@@ -398,6 +419,7 @@ class AttributeNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Attribute"
 
     def get_previous_declaration(self, name: str):
         return self.symbol
@@ -482,6 +504,7 @@ class NewObjectNotedNode(NotedNode):
         self.need_scopes = True
         self.needs_context = True
         self.needs_symbol = True
+        self.name = "Object creation"
 
     def get_value(self) -> str | None:
         default_res = self.get_default_value_from_typo()
@@ -526,6 +549,7 @@ class ParenthesisNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Parenthesis expression"
 
     def get_previous_declaration(self, name: str):
         return None
@@ -585,6 +609,7 @@ class IdentifierNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Identifier"
 
     def get_previous_declaration(self, name: str):
         symbols_scope = self.scopes.get(self.symbol.scope)
@@ -910,6 +935,9 @@ class DispatchNotedNode(NotedNode):
     def get_alias(self):
         return to_string_node(self.node)
 
+    def get_value_type(self) -> str | None:
+        return self.get_type()
+
     @abstractmethod
     def get_previous_declaration(self, name: str):
         pass
@@ -921,9 +949,6 @@ class DispatchNotedNode(NotedNode):
     @abstractmethod
     def get_type(self) -> str | None:
         pass
-
-    def get_value_type(self) -> str | None:
-        return self.get_type()
 
     @abstractmethod
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
@@ -937,6 +962,7 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Parent call method"
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1031,6 +1057,7 @@ class StaticDispatchNotedNode(DispatchNotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Object call method"
 
     def get_previous_declaration(self, name: str):
         return None
@@ -1077,6 +1104,7 @@ class FunctionCallDispatchNotedNode(DispatchNotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Local method call"
 
     def get_previous_declaration(self, name: str):
         return None
@@ -1141,6 +1169,7 @@ class IsVoidNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "isvoid operation"
 
     def get_alias(self):
         return " ".join([leave.name for leave in self.node.leaves])
@@ -1187,6 +1216,9 @@ class NotOperatorNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+
+        self.name = "'not' operation"
+
 
     def get_alias(self):
         return " ".join([leave.name for leave in self.node.leaves])
@@ -1302,6 +1334,7 @@ class BlockNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Block"
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1358,6 +1391,7 @@ class BitWiseNotNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Bitwise operation (~)"
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1684,6 +1718,8 @@ class ReturnStatementNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+        self.name = "Return statement"
+
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1799,7 +1835,7 @@ class ReturnStatementNotedNode(NotedNode):
         if firm_return_type is None:
             return None
 
-        return_type = self.__get_value_and_type()[1]
+        return_type = self.get_type()
 
         if return_type is None:
             return None
@@ -1812,16 +1848,10 @@ class ReturnStatementNotedNode(NotedNode):
         return None
 
     def get_value(self) -> str | None:
-        is_firm_verified = self.verify_firm_return()
-        if self.verify_firm_return() is None or not is_firm_verified:
-            return None
-        return self.get_value_type()[0]
+        return self.__get_value_and_type()[0]
 
     def get_type(self) -> str | None:
-        is_firm_verified = self.verify_firm_return()
-        if self.verify_firm_return() is None or not is_firm_verified:
-            return None
-        return self.get_value_type()[1]
+        return self.__get_value_and_type()[1]
 
     def get_value_type(self) -> str | None:
         return self.get_type()
@@ -1829,6 +1859,73 @@ class ReturnStatementNotedNode(NotedNode):
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         self.verify_firm_return()
 
+        return self.raised_errors
+
+
+class MethodNotedNode(NotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+        self.name = "Method firm"
+
+    def get_alias(self):
+        return to_string_node(self.children[0])
+
+    def get_previous_declaration(self, name: str):
+        return None
+
+    def get_value(self) -> str | None:
+        return self.get_default_value_from_typo()
+
+    def get_type(self) -> str | None:
+        typo_received = to_string_node(self.children[5])
+
+        if not self._type_verifier(typo_received):
+            return None
+
+        return typo_received
+
+    def get_value_type(self) -> str | None:
+        return self.get_type()
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.get_type()
+        return self.raised_errors
+
+
+class FormalNotedNode(NotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def get_alias(self):
+        return to_string_node(self.children[0])
+
+    def get_previous_declaration(self, name: str):
+        return self.symbol
+
+    def get_value(self) -> str | None:
+        return self.get_default_value_from_typo()
+
+    def get_type(self) -> str | None:
+        typo_received = to_string_node(self.children[2])
+
+        if not self._type_verifier(typo_received):
+            return None
+
+        return typo_received
+
+    def get_value_type(self) -> str | None:
+        return self.get_type()
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.get_type()
         return self.raised_errors
 
 
@@ -1888,7 +1985,10 @@ def create_noted_node(node: Node,
         noted_node = ArithmeticLogicNotedNode(node)
     elif type_of_expr == "func_return":
         noted_node = ReturnStatementNotedNode(node)
-
+    elif type_of_expr == "method":
+        noted_node = MethodNotedNode(node)
+    elif type_of_expr == "formal":
+        noted_node = FormalNotedNode(node)
     else:
         print(f"Unrecognized expression: {type_of_expr}")
 
