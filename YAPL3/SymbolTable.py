@@ -439,6 +439,7 @@ class SymbolTable:
             if item.name == "in":
                 let_content.pop(0)
                 let_value = let_content.pop(0)
+                self.build_symbol_table(node=let_value, current_scope=let_scope, current_line=current_line)
                 found_in = True
                 current_line += 1
 
@@ -552,7 +553,7 @@ class SymbolTable:
         items = self.get_expression_to_list(node)
         data_type = "Int"  # Hot fix must remove
         # ^^ Assumes that all operations means arithmetic operation. FIX to identify bool operations!!
-        self.insert(
+        symbol = self.insert(
             name=" ".join(items),
             data_type=data_type,
             semantic_type="expression",
@@ -569,6 +570,10 @@ class SymbolTable:
             node=node,
             type_of_expression="operation"
         )
+        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+        errors = noted_node.run_tests()
+        value = noted_node.get_value()
+        n_type = noted_node.get_type()
         return current_line
 
     def build_symbol_simple_expression(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -591,6 +596,7 @@ class SymbolTable:
             node=node,
             type_of_expression="simple_item"
         )
+
         return current_line
 
     def build_symbol_return(self, node: Node, current_scope: Scope, current_line: int) -> int:

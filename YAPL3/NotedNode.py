@@ -1477,6 +1477,216 @@ class BitWiseNotNotedNode(NotedNode):
         self.get_value()
         return self.raised_errors
 
+class NoContentNoTypeNoteNode(NotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+
+    def get_alias(self):
+        to_string_node(self.node)
+
+    def get_previous_declaration(self, name: str):
+        return None
+
+    def get_value(self) -> str | None:
+        return None
+
+    def get_type(self) -> str | None:
+        return "void"
+
+    def get_value_type(self) -> str | None:
+        return "void"
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        return self.raised_errors
+
+
+class ConditionalNotedNode(NoContentNoTypeNoteNode):
+    pass
+
+
+class LoopNotedNode(NoContentNoTypeNoteNode):
+    pass
+
+
+class LetinNotedNode(NoContentNoTypeNoteNode):
+    pass
+
+
+class ArithmeticLogicNotedNode(NotedNode):
+
+    arithmetic_operators: list = ['+',  '-', '*', '/']
+    comparer_operators: list = ['<', '<=', '=', '>=', '>']
+    type_of_operation: str
+    operation: str
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+        self.operation = self.children[1].name
+
+        self.type_of_operation = "arithmetic" if self.operation in self.arithmetic_operators else "comparer"
+
+    def get_alias(self):
+        return to_string_node(self.node)
+
+    def get_previous_declaration(self, name: str):
+        return None
+
+    def create_item_node(self, item_node: Node):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        nn_item = create_noted_node(item_node, self.context, self.scopes, self.symbol)
+        if nn_item is None:
+            self.add_error(
+                "Unable to get valid expression::",
+                SemanticError(
+                    name="Unable to get valid expression::",
+                    details=f"Cannot get proper expr in arithmetic or logical operation from: {to_string_node(item_node)}.",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+        self.extend_errors(nn_item.run_tests())
+        return nn_item
+
+    def get_item_value(self, nn_item: NotedNode):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        item_type = self.get_item_type(nn_item)
+
+        if item_type is None:
+            return None
+
+        item_value = nn_item.get_value()
+        if item_value is None:
+            self.add_error(
+                "Unable to get value::",
+                SemanticError(
+                    name="Unable to get value::",
+                    details=f"Can't get value from: {to_string_node(nn_item.node)}.",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+
+        return item_value
+
+    def get_item_type(self, nn_item: NotedNode):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        item_type = nn_item.get_type()
+
+        if item_type is None:
+            self.add_error(
+                "Unable to get type::",
+                SemanticError(
+                    name="Unable to get type::",
+                    details=f"Can't get type from: {to_string_node(nn_item.node)}.",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        if item_type != "Int":
+            self.add_error(
+                "Invalid type in operations::",
+                SemanticError(
+                    name="Invalid type in operations::",
+                    details=f"Cannot use the operator {self.operation} with type: {item_type}. Only Int",
+                    symbol=self.symbol,
+                    scope=symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+            return None
+
+        return item_type
+
+    def operate(self, item_1_value, item_2_value):
+        symbols_scope = self.scopes.get(self.symbol.scope)
+
+        if self.type_of_operation == "arithmetic":
+            if self.operation == "+":
+                return str(int(item_1_value) + int(item_2_value))
+            elif self.operation == "*":
+                return str(int(int(item_1_value) * int(item_2_value)))
+            elif self.operation == "-":
+                return str(int(item_1_value) - int(item_2_value))
+            elif self.operation == "/":
+                divisor = int(item_2_value)
+                if divisor == 0:
+                    self.add_error(
+                        "Zero division::",
+                        SemanticError(
+                            name="Zero division::",
+                            details=f"Operation {item_1_value}/{item_2_value}, goes into a division by zero",
+                            symbol=self.symbol,
+                            scope=symbols_scope,
+                            line=self.symbol.start_line
+                        )
+                    )
+                    return None
+                return str(int(int(item_1_value) / int(item_2_value)))
+
+        #  Order
+        if self.operation == "=":
+            return (str(int(item_1_value) == int(item_2_value))).lower()
+        elif self.operation == "<=":
+            return (str(int(item_1_value) <= int(item_2_value))).lower()
+        elif self.operation == ">=":
+            return (str(int(item_1_value) >= int(item_2_value))).lower()
+        elif self.operation == ">":
+            return (str(int(item_1_value) > int(item_2_value))).lower()
+        elif self.operation == "<":
+            return (str(int(item_1_value) < int(item_2_value))).lower()
+
+    def get_value(self) -> str | None:
+        item_1 = self.children[0]
+        item_2 = self.children[-1]
+
+        nn_item_1 = self.create_item_node(item_1)
+        nn_item_2 = self.create_item_node(item_2)
+
+        if nn_item_1 is None or nn_item_2 is None:
+            return None
+
+        item_1_value = self.get_item_value(nn_item_1)
+        item_2_value = self.get_item_value(nn_item_2)
+
+        if item_1_value is None or item_2_value is None:
+            return None
+
+        result = self.operate(item_1_value, item_2_value)
+
+        return result
+
+    def get_type(self) -> str | None:
+        value = self.get_value()
+
+        if value is None:
+            return None
+
+        if self.type_of_operation == "comparer":
+            return "Bool"
+
+        return "Int"
+
+    def get_value_type(self) -> str | None:
+        return self.get_type()
+
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.get_value()
+        return self.raised_errors
+
 
 def create_noted_node(node: Node,
                       context: Dict[AnyStr, Dict[AnyStr, Symbol]],
@@ -1525,14 +1735,13 @@ def create_noted_node(node: Node,
     elif type_of_expr == "function_call":  # 16
         noted_node = FunctionCallDispatchNotedNode(node)
     elif type_of_expr == "conditional":  # 17
-        pass
+        noted_node = ConditionalNotedNode(node)
     elif type_of_expr == "loop":  # 18
-        pass
+        noted_node = LoopNotedNode(node)
     elif type_of_expr == "let_in":  # 19
-        pass
-
+        noted_node = LetinNotedNode(node)
     elif type_of_expr == "arithmetic_or_comparison":  # 20
-        pass
+        noted_node = ArithmeticLogicNotedNode(node)
 
     else:
         print(f"Unrecognized expression: {type_of_expr}")
