@@ -28,6 +28,7 @@ class SymbolTable:
         self.build_symbol_table(node=root, current_scope=self.global_scope,
                                 current_line=self.__build_basic_classes())  # Construye recursivamente la tabla de simbolos
 
+
     def __str__(self) -> str:
         """Crea una version bonita y para consola de la tabla. 
 
@@ -814,6 +815,18 @@ class SymbolTable:
     START 
     OPERATIONS
     """
+    def add_error(self, error_type: str, error: SemanticError):
+        if error_type in self.construction_errors:
+            if error not in self.construction_errors[error_type]:
+                self.construction_errors[error_type].append(error)
+        else:
+            self.construction_errors[error_type] = [error]
+
+    def extend_errors(self, other_raised_errors: Dict[AnyStr, List[SemanticError]]):
+        for error_type, errors in other_raised_errors.items():
+            for error in errors:
+                self.add_error(error_type, error)
+
     def get_symbol_scope(self, symbol: Symbol) -> Scope:
         name = symbol.construct_scope_name()
         if not name:
@@ -1013,7 +1026,7 @@ class SymbolTable:
                 parameter_parts = []
                 for part in child.children:
                     if part.name != ":":
-                        if part.name == "node_type":
+                        if part.name == "node_type" or part.name == "type":
                             parameter_type = part.children[0].name
                             parameter_parts.append(parameter_type)
                         else:
@@ -1117,3 +1130,20 @@ class SymbolTable:
             class_object = next_class_object
 
         return "", False, class_chain, None
+
+    def run_semantic_tests_using_noted_nodes(self):
+        for scope_name, scope_content in self.content.items():
+            for symbol_name, symbol in scope_content.items():
+                node = symbol.node
+                if node is not None:
+                    noted_node = create_noted_node(node, self.content, self.scopes, symbol)
+
+                    if noted_node is not None:
+                        self.extend_errors(noted_node.run_tests())
+
+        return self.construction_errors
+
+    def run_tests(self):
+        self.run_semantic_tests_using_noted_nodes()
+
+        return self.construction_errors

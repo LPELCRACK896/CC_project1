@@ -11,6 +11,7 @@ def compile_yapl(input_data, gui_window=None):
     symbol_table = SymbolTable(syntax_tree.root_at)
     print(symbol_table)
     semantic_verification, semantic_errors = sp.check_semantic(symbol_table)
+    construction_errors = symbol_table.run_semantic_tests_using_noted_nodes()
 
     if syntax_tree.has_errors():
         print("====SYNTAX ERRORS====")

@@ -17,16 +17,11 @@ active_rules: ActiveRulesType = {
     # Facil a priori: ya fijo
     "5_inheritance_relations": check_inheritance,
     # No se: necesita revision
-    "7_casting_int_bool": check_casting,  # EZ:
-    "8_assignation_expresions_type_on_each_side": check_assignment_types,  # Intermedio: si?
     # Compleja: talvez?
     "8_assignation_expresions_compatible_and_rule": check_type_compatibility,
-    "9_method_calls_and_return_values": check_method_calls_and_return_values,  # Complejo
-    "10_control_structures": check_boolean_object_expression_type,  # Facil a priori
     # Un poco más dificil, implica implementar guardar expresiones en tabla de simbolos o algo por el estilo.
-    "extra_unitary_check": check_unitary,
     "single_declaration_on_scope": single_declaration_identifier,
-    "method_availabilty": check_method
+    "method_availabilty": errors_detected_by_noted_nodes
 }
 
 

@@ -120,6 +120,7 @@ class NotedNode:
                                scope=symbols_scope,
                                line=self.symbol.start_line
                            ))
+            return None
 
         self.extend_errors(nn_node.run_tests())
         return nn_node
@@ -173,20 +174,35 @@ class NotedNode:
 
         return return_type
 
-    def _get_symbol_declaration(self, symbol_name):
-        symbol_declaration = search_symbol_by_name(self.symbols_scope, symbol_name)
+    def _get_variable_declaration(self, variable_name):
+        variable_declaration = search_declaration(variable_name, self.symbol, self.scopes, "variable")
 
-        if symbol_declaration is None:
+        if variable_declaration is None:
             self.add_error("Undeclared variable::",
                            SemanticError(
                                name="Undeclared variable::",
-                               details=f"{self.name} tried to use undeclared symbol {symbol_name}",
+                               details=f"{self.name} tried to use undeclared variable {variable_name}",
                                symbol=self.symbol,
                                scope=self.symbols_scope,
                                line=self.symbol.start_line
                            ))
 
-        return symbol_declaration
+        return variable_declaration
+
+    def _get_method_declaration(self, method_name) -> Symbol | None:
+        method_declaration = search_declaration(method_name, self.symbol, self.scopes, "method")
+
+        if method_declaration is None:
+            self.add_error("Undeclared method::",
+                           SemanticError(
+                               name="Undeclared variable::",
+                               details=f"{self.name} tried to use inaccessible method {method_name}",
+                               symbol=self.symbol,
+                               scope=self.symbols_scope,
+                               line=self.symbol.start_line
+                           ))
+
+        return method_declaration
 
     @abstractmethod
     def get_alias(self):
@@ -287,22 +303,23 @@ class AssignationNotedNote(NotedNode):
         self.name = "Assignation"
 
     def get_previous_declaration(self, symbol_name: str):
-        return self._get_symbol_declaration(symbol_name)
+        return self._get_variable_declaration(symbol_name)
 
     def get_type(self) -> str | None:
-        name = self.children[0].name
 
-        symbol_declaration = self.get_previous_declaration(name)
+        attr_name = self.get_alias()
+
+        symbol_declaration = self._get_variable_declaration(attr_name)
+
         if symbol_declaration is None:
             return None
 
-        if symbol_declaration.semantic_type == "expression" and symbol_declaration.node is not None:
-            nn_declaration = create_noted_node(symbol_declaration.node, self.context, self.scopes, symbol_declaration)
-            nn_type = nn_declaration.get_type()
-            self.extend_errors(nn_declaration.run_tests())
-            return nn_type
+        nn_declaration = self._create_sub_noted_node(symbol_declaration.node, symbol_declaration)
 
-        return symbol_declaration.data_type
+        if nn_declaration is None:
+            return None
+
+        return nn_declaration.get_type()
 
     def get_value(self) -> str | None:
         symbols_scope = self.scopes.get(self.symbol.scope)
@@ -333,7 +350,7 @@ class AssignationNotedNote(NotedNode):
         return nn_value.get_type()
 
     def get_alias(self):
-        pass
+        return self.children[0].name
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         symbols_scope = self.scopes.get(self.symbol.scope)
@@ -472,7 +489,7 @@ class AttributeNotedNode(NotedNode):
         var_expected_type = self.get_type()
 
         if var_value_type is not None and var_expected_type is not None:
-            coherent_types = verify_matching_type( var_expected_type,var_value_type, self.scopes)
+            coherent_types = verify_matching_type(var_expected_type, var_value_type, self.scopes)
             if not coherent_types:
                 self.add_error("Incoherence types::",
                                SemanticError(
@@ -1980,7 +1997,6 @@ def create_noted_node(node: Node,
     noted_node: NotedNode | None = None
 
     if index_type_node == -1:
-        print("UNABLE TO IDENTIFY NODE AND CREATE NOTED NODE")
         return None
 
     type_of_expr = ns.expressions[index_type_node]
@@ -2153,7 +2169,7 @@ def verify_existing_type(type_name: str, scopes: Dict[AnyStr, Scope]) -> bool:
 
 
 def verify_matching_type(expected_type: str, received_type: str, scopes: Dict[AnyStr, Scope]) -> bool:
-    if expected_type == received_type:
+    if expected_type == received_type or expected_type=="Object":
         return True
 
     if not (verify_existing_type(expected_type, scopes) and verify_existing_type(received_type, scopes)):
