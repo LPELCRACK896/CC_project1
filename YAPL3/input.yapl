@@ -1,35 +1,68 @@
+class Main {
+    rectangulo: Object <- 1;
+    circulo: Object <- new Circle;
+
+    figura3: Bool <- false;
+
+    main():Int{
+
+
         return 1;
+    }
+}
 class Shape {
     radius: Int;
     color: String;
+    ancho: Int;
 
-    getArea (diameter:Int): Int {
+    hasCorners: Bool <- true;
+
+    isCool (radius:Int): Bool {
+        let a: Int <- 1, b: Int <- 2 in [ a + b ];
         return 1;
     }
+    getArea (diameter:Int): Int {
+
+
+
+        return 1;
+    }
+
+    getPerimeter (height: Int, width: Int): Int {
+
+        return (2 * height) +  (2 * width);
+
+    }
+
 }
 
 class Circle inherits Shape {
     radius: Int <- 10;
     color: String <- "Red";
 
-    castbol: Bool <- 1;
-    castinnt: Int <- true;
+    castbol: Bool <- false;
+    castinnt: Int <- 1;
 
-    hasCorners: Bool <- true;
+
     sumbol: Int <- 1;
-    rescasted: Int <- hasCorners + sumbol;
+    rescasted: Int <- 4 + sumbol;
 
     diameter: Int <- radius + radius;
 
     getArea(diameter:Int): Int {
 
-        let
-            id: Int <- 1
+        (new Circle)@Shape.getPerimeter(2, ancho);
 
-         in id+3;
+        (new Int).copy();
+        not hasCorners;
+        ~ ~ ~  sumbol;
+        castinnt <- 2;
+
+        let id: Int <- 1, other: String <- "1", next: Bool <- false in [ id+3 ];
+
         new Main;
         not true;
-        not false;
+        not isvoid 1;
         ~ 1;
 
         if true then
@@ -38,7 +71,7 @@ class Circle inherits Shape {
             radius <- 4
         fi;
 
-        (new Shape)@Shape.copy();
+        (new Circle)@Shape.getPerimeter(2, 1);
 
         isvoid radius;
         1+1;
@@ -51,6 +84,7 @@ class Circle inherits Shape {
 
 
     getColor(): String {
+        copy();
         getColor();
         return color;
     }
@@ -61,21 +95,13 @@ class Rectangle inherits Shape {
     width: Int <- 10;
 
     getArea(diameter:Int): Int {
-        while (length<-5) loop {
+        while (hasCorners) loop {
             length <- length + 1
         } pool;
         return length * width;
     }
 }
 
-class Main {
-    rectangulo: Object <- new Rectangle;
-    circulo: Object <- new Circle;
 
-    figura3: Bool <- rectangulo = rectangulo;
 
-    main():Int{
-        return 1;
-    }
-}
 (new Main).main();

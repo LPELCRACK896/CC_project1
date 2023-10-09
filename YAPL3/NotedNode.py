@@ -6,6 +6,11 @@ from anytree import Node
 from Scope import Scope
 from SemanticCommon import SemanticError
 
+from IThreeDirectionsCode import IThreeDirectionsCode
+from Direction import Direction
+from Register import Register
+from Operation import Operation
+
 import node_structures as ns
 
 """
@@ -48,7 +53,6 @@ class NotedNode:
     needs_symbol: bool
     needs_context: bool
     need_scopes: bool
-
 
     scopes: Dict[AnyStr, Scope] | None = None
     symbol: Symbol | None = None
@@ -205,7 +209,7 @@ class NotedNode:
         return method_declaration
 
     @abstractmethod
-    def get_three_direction_code(self):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
         pass
 
     @abstractmethod
@@ -1064,7 +1068,7 @@ class StaticDispatchNotedNode(DispatchNotedNode):
         self.needs_context = True
         self.name = "Object call method"
 
-    def get_three_direction_code(self):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
         pass
 
     def get_previous_declaration(self, name: str):
@@ -1936,7 +1940,7 @@ class MethodNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Method firm"
 
-    def get_three_direction_code(self):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
         pass
 
     def get_alias(self):
@@ -1972,7 +1976,7 @@ class FormalNotedNode(NotedNode):
         self.need_scopes = True
         self.needs_context = True
 
-    def get_three_direction_code(self):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
         pass
 
     def get_alias(self):

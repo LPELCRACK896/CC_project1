@@ -15,6 +15,8 @@ from NotedNode import create_noted_node
 
 
 class SymbolTable:
+
+
     def __init__(self, root):
         """Método constructor
 
@@ -1153,9 +1155,11 @@ class SymbolTable:
     def get_main_method_symbol(self):
         pass
 
-    def generate_three_directions_code(self):
-        # Creates
-        three_directions_code = ThreeDirectionsCode(self.scopes)
+    def get_three_directions_code(self):
+        tdc = ThreeDirectionsCode(self.scopes, self.content)
+        tdc.build()
+        return tdc
+
 
 
 

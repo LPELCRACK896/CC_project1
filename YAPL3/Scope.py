@@ -17,7 +17,7 @@ class Scope:
             parent (Scope): Scope padre, poner none si este es un scope sin padre (como un scope global). Defaults to None.
             scope_id (str): Nombre que identifica al scope en este contexto, puede ser el nombre de la clase o metodo que inicio el scope. Defaults to "global".
         """
-        self.parent: Scope = parent
+        self.parent: Scope | None = parent
         self.scope_id = scope_id  # identificador de alcance
         self.content = {}
 
