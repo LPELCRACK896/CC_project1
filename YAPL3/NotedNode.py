@@ -2218,25 +2218,5 @@ def get_symbol_method(method_name: str, class_symbol: Symbol, scopes: Dict[AnySt
 
     return methods.get(method_name)
 
-
-def add_error_to_local(local_errors: Dict[AnyStr, List[SemanticError]], error_type: str, error: SemanticError):
-    if error_type in local_errors:
-        if error not in local_errors[error_type]:
-            local_errors[error_type].append(error)
-    else:
-        local_errors[error_type] = [error]
-
-    return local_errors
-
-
-def merge_errors(local_errors: Dict[AnyStr, List[SemanticError]], other_errors: Dict[AnyStr, List[SemanticError]]) -> \
-        Dict[AnyStr, SemanticError]:
-    for err_type, errors in other_errors.items():
-        for error in errors:
-            local_errors = add_error_to_local(local_errors, err_type, error)
-
-    return local_errors
-
-
 def to_string_node(exp: Node) -> str:
     return "".join([leave.name for leave in exp.leaves])
