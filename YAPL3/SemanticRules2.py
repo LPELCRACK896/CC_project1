@@ -1,6 +1,6 @@
 from SymbolTable import SymbolTable, Symbol, Scope
 from SemanticCommon import SemanticError
-
+from typing import Tuple
 
 from typing import List
 
@@ -12,7 +12,7 @@ def check_inheritance(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
 
-    all_classes_dict = symbol_table.global_scope.get_all_classees()
+    all_classes_dict = symbol_table.global_scope.get_all_classes()
     
     classes: set = set(all_classes_dict.keys())
 
@@ -153,7 +153,7 @@ def check_method(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
     feedback = []
     all_passed = True
 
-    classes = symbol_table.global_scope.get_all_classees()
+    classes = symbol_table.global_scope.get_all_classes()
     
     for _class, _class_symbol in classes.items(): 
         class_scope_name = f"global-{_class}(class)"
@@ -181,11 +181,13 @@ def check_method(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
             
     return all_passed, feedback
 
-def check_type_error(symbol_table: SymbolTable) -> (bool, SemanticFeedBack):
-    feedback = symbol_table.construction_errors["TYPE ERROR::"] if "TYPE ERROR::" in symbol_table.construction_errors else []
-    all_passed = not bool(len(feedback))
 
-    return all_passed, feedback
+def errors_detected_by_noted_nodes(symbol_table: SymbolTable) -> Tuple[bool, SemanticFeedBack]:
+    symbol_table.run_tests()
+
+    enlisted_errors = [error for err_type, errors in symbol_table.construction_errors.items() for error in errors]
+
+    return len(symbol_table.construction_errors) == 0, enlisted_errors
 
 
 
