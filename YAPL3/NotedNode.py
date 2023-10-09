@@ -205,6 +205,10 @@ class NotedNode:
         return method_declaration
 
     @abstractmethod
+    def get_three_direction_code(self):
+        pass
+
+    @abstractmethod
     def get_alias(self):
         pass
 
@@ -1059,6 +1063,9 @@ class StaticDispatchNotedNode(DispatchNotedNode):
         self.need_scopes = True
         self.needs_context = True
         self.name = "Object call method"
+
+    def get_three_direction_code(self):
+        pass
 
     def get_previous_declaration(self, name: str):
         return None
@@ -1929,6 +1936,9 @@ class MethodNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Method firm"
 
+    def get_three_direction_code(self):
+        pass
+
     def get_alias(self):
         return to_string_node(self.children[0])
 
@@ -1961,6 +1971,9 @@ class FormalNotedNode(NotedNode):
         self.needs_symbol = True
         self.need_scopes = True
         self.needs_context = True
+
+    def get_three_direction_code(self):
+        pass
 
     def get_alias(self):
         return to_string_node(self.children[0])
@@ -2217,6 +2230,7 @@ def get_symbol_method(method_name: str, class_symbol: Symbol, scopes: Dict[AnySt
         return None
 
     return methods.get(method_name)
+
 
 def to_string_node(exp: Node) -> str:
     return "".join([leave.name for leave in exp.leaves])

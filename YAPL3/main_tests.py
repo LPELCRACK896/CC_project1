@@ -21,7 +21,9 @@ def compile_yapl(input_data, gui_window=None):
         for error in semantic_errors:
             print("Error en linea " + str(error.line) + ": " + str(error.name) + " : " + str(error.details))
 
-
+    if not (syntax_tree.has_errors() or semantic_errors):
+        symbol_table.generate_three_directions_code()
+        print(1)
 if __name__ == "__main__":
     directory = os.path.dirname(os.path.realpath(__file__))  # Get the script's directory
     filename = "/input.yapl"

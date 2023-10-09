@@ -8,6 +8,7 @@ from Symbol import Symbol
 from Scope import Scope
 from SemanticCommon import *
 from typing import List, Dict
+from ThreeDirectionsCode import ThreeDirectionsCode, Register, Direction
 
 import node_structures as ns
 from NotedNode import create_noted_node
@@ -1147,3 +1148,14 @@ class SymbolTable:
         self.run_semantic_tests_using_noted_nodes()
 
         return self.construction_errors
+
+
+    def get_main_method_symbol(self):
+        pass
+
+    def generate_three_directions_code(self):
+        # Creates
+        three_directions_code = ThreeDirectionsCode(self.scopes)
+
+
+
