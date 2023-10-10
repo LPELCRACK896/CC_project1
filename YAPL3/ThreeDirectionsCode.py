@@ -24,7 +24,22 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         return super().__str__()
 
     def build(self):
+        current_scope  = ""
+        def is_forbidden_scope(scope_id: str):
+            return  (
+                scope_id == "global" or
+                scope_id.startswith("global-Object(class)") or
+                scope_id.startswith("global-IO(class)") or
+                scope_id.startswith("global-String(class)")
+            )
+
         for scope_id, symbols in self.content.items():
+
+            if is_forbidden_scope(scope_id):
+                continue # Saltamos
+
+            # Añadir registro inicio clase
+
             for symbol_name, symbol in symbols.items():
                 ast_node: Node = symbol.node
 
@@ -34,9 +49,14 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 noted_node = create_noted_node(ast_node, self.content, self.scopes, symbol)
 
                 if noted_node is None:
+
+                    """                    class_regis = Register()
+                    self.add_register(class_regis)"""
                     continue
 
                 noted_node.get_three_direction_code(self, 3)
+
+            # Añadir registro fin clase
 
     def write_file(self, filename: AnyStr = "three_directions_code.tdc"):
         directory = os.path.dirname(os.path.realpath(__file__))
