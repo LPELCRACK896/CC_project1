@@ -3,15 +3,13 @@ from CustomErrorListener import CustomErrorListener
 from YAPL3Lexer import YAPL3Lexer
 from YAPL3Parser import YAPL3Parser
 from SymbolTable import SymbolTable
-from SemanticProccess import check_semantic
+import SemanticProccess as sp
 from antlr4 import *
 import os
 from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter, DotExporter
-from tkinter import filedialog, Tk
 from SyntaxTree import SyntaxTree
-from IntermediateProccess import build_cuadruples
-from Tres_Dir import IntermediateCode
+from ThreeDirectionsCode import ThreeDirectionsCode
 
 app = Flask(__name__)
 
@@ -47,75 +45,33 @@ def index():
             if uploaded_file.filename != '':
                 input_data = uploaded_file.read().decode('utf-8')
 
-                s_tree = SyntaxTree(input_data)
+                syntax_tree = SyntaxTree(input_data)
+                syntax_tree.print_tree()
 
-                # Print errors if any
-                syntax_errors = s_tree.syntax_errors
+                symbol_table = SymbolTable(syntax_tree.root_at)
+                print(symbol_table)
+                semantic_verification, semantic_errors = sp.check_semantic(symbol_table)
 
-                if s_tree.has_errors():
-                    s_tree.print_errors()
-                    print(
-                        "----------------------------------------------------------------------------------")
-                    print(
-                        "\nYa que hay 1 o más errores no se armará el árbol sintáctico del archivo input.\n")
-                    print(
-                        "----------------------------------------------------------------------------------")
+                if syntax_tree.has_errors():
+                    print("#====SYNTAX ERRORS====#")
+                    syntax_tree.print_errors()
 
+                if semantic_errors:
+                    print("#====SEMANTIC ERRORS====#")
+                    for error in semantic_errors:
+                        print("Error en linea " + str(error.line) + ": " + str(error.name) + " : " + str(error.details))
+
+                if not (syntax_tree.has_errors() or semantic_errors):
+                    t_dir_code: ThreeDirectionsCode = symbol_table.get_three_directions_code()
+                    content = str(t_dir_code)
+                    print(content)
+                    t_dir_code.write_file("intermediate_code.tdc")
                 else:
-                    root = s_tree.root_at
-                    # Build the symbol table
-                    symbol_table = SymbolTable(root)
-                    symbol_table.estimate_symbol_table_memory_usage()
-                    print(symbol_table)
+                    with open("./YAPL3/intermediate_code.tdc", "w") as archivo:
+                        archivo.write("")
 
-                    # Proyecto # 1 Análisis Semántico
-                    print("\nInicio del Chequeo Semántico:\n")
-
-                    semantic_verification, semantic_errors = check_semantic(
-                        symbol_table)
-
-                    if semantic_verification:
-                        print("\nChequeo semántico exitoso!\n")
-
-                        print("\nInicio de Construcción de Código Intermedio!\n")
-                        # OPCION 1 PARA CODIGO INTERMEDIO
-                        quadruples = build_cuadruples(symbol_table)
-
-                        # OPCION 2 PARA CODIGO INTERMEDIO
-                        visitor = IntermediateCode()
-                        walker = ParseTreeWalker()
-                        walker.walk(visitor, s_tree.tree)
-
-                        codigo_intermedio = visitor.get_codigo_intermedio()
-
-                        # Abrir el archivo en modo escritura
-                        with open("codigo_intermedio.txt", "w") as archivo:
-                            archivo.write(codigo_intermedio)
-
-                        # # Abrir el archivo en modo escritura
-                        # with open("codigo_intermedio.txt", "w") as archivo:
-                        #     # Recorrer cada tupla en la lista y escribirla en el archivo
-                        #     for tupla in quadruples:
-                        #         # Convertir la tupla en una cadena
-                        #         linea = " ".join(tupla)
-                        #         # Escribir la cadena en el archivo seguida de un salto de línea
-                        #         archivo.write(linea + "\n")
-
-                        with open("codigo_intermedio.txt", "r") as archivo:
-                            tres_dir = archivo.read()
-
-                    else:
-                        print("\n")
-                        for error in semantic_errors:
-                            print("Error en linea " +
-                                  str(error.line) + ": " + str(error.name) +
-                                  " : " + str(error.details))
-                        print(
-                            "----------------------------------------------------------------------------------")
-                        print(
-                            "\nYa que hay 1 o más errores semánticos no se compilará el archivo input.\n")
-                        print(
-                            "----------------------------------------------------------------------------------")
+                with open("./YAPL3/intermediate_code.tdc", "r") as archivo:
+                    tres_dir = archivo.read()
 
                 # Renderiza una plantilla con los resultados
                 return render_template('/index.html', input_data=input_data, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir)
@@ -128,60 +84,33 @@ def index():
             if edited_code:
                 input_data = edited_code
 
-                s_tree = SyntaxTree(input_data)
+                syntax_tree = SyntaxTree(input_data)
+                syntax_tree.print_tree()
 
-                if s_tree.has_errors():
-                    s_tree.print_errors()
-                    print(
-                        "----------------------------------------------------------------------------------")
-                    print(
-                        "\nYa que hay 1 o más errores no se armará el árbol sintáctico del archivo input.\n")
-                    print(
-                        "----------------------------------------------------------------------------------")
+                symbol_table = SymbolTable(syntax_tree.root_at)
+                print(symbol_table)
+                semantic_verification, semantic_errors = sp.check_semantic(symbol_table)
 
+                if syntax_tree.has_errors():
+                    print("#====SYNTAX ERRORS====#")
+                    syntax_tree.print_errors()
+
+                if semantic_errors:
+                    print("#====SEMANTIC ERRORS====#")
+                    for error in semantic_errors:
+                        print("Error en linea " + str(error.line) + ": " + str(error.name) + " : " + str(error.details))
+
+                if not (syntax_tree.has_errors() or semantic_errors):
+                    t_dir_code: ThreeDirectionsCode = symbol_table.get_three_directions_code()
+                    content = str(t_dir_code)
+                    print(content)
+                    t_dir_code.write_file("intermediate_code.tdc")
                 else:
-                    root = s_tree.root_at
-                    # Build the symbol table
-                    symbol_table = SymbolTable(root)
-                    symbol_table.estimate_symbol_table_memory_usage()
-                    print(symbol_table)
+                    with open("./YAPL3/intermediate_code.tdc", "w") as archivo:
+                        archivo.write("")
 
-                    # Proyecto # 1 Análisis Semántico
-                    print("\nInicio del Chequeo Semántico:\n")
-
-                    semantic_verification, semantic_errors = check_semantic(
-                        symbol_table)
-
-                    if semantic_verification:
-                        print("\nChequeo semántico exitoso!\n")
-
-                        print("\nInicio de Construcción de Código Intermedio!\n")
-                        quadruples = build_cuadruples(symbol_table)
-
-                        # Abrir el archivo en modo escritura
-                        with open("codigo_intermedio.txt", "w") as archivo:
-                            # Recorrer cada tupla en la lista y escribirla en el archivo
-                            for tupla in quadruples:
-                                # Convertir la tupla en una cadena
-                                linea = " ".join(tupla)
-                                # Escribir la cadena en el archivo seguida de un salto de línea
-                                archivo.write(linea + "\n")
-
-                        with open("codigo_intermedio.txt", "r") as archivo:
-                            tres_dir = archivo.read()
-
-                    else:
-                        print("\n")
-                        for error in semantic_errors:
-                            print("Error en linea " +
-                                  str(error.line) + ": " + str(error.name) +
-                                  " : " + str(error.details))
-                        print(
-                            "----------------------------------------------------------------------------------")
-                        print(
-                            "\nYa que hay 1 o más errores semánticos no se compilará el archivo input.\n")
-                        print(
-                            "----------------------------------------------------------------------------------")
+                with open("./YAPL3/intermediate_code.tdc", "r") as archivo:
+                    tres_dir = archivo.read()
 
                 # Renderiza una plantilla con los resultados
                 return render_template('/index.html', input_data=edited_code, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir)

@@ -28,7 +28,6 @@ def compile_yapl(input_data, gui_window=None):
         content = str(t_dir_code)
         print(content)
         t_dir_code.write_file("intermediate_code.tdc")
-        print(1)
 
 if __name__ == "__main__":
     directory = os.path.dirname(os.path.realpath(__file__))  # Get the script's directory
