@@ -466,11 +466,13 @@ class SymbolTable:
         return current_line
 
     def build_symbol_let_variable(self, node: Node, current_scope: Scope, current_line: int, node_id: str,tipo: Node) -> int:
+        value = ns.to_string_node(node.children[2]) if len(node.children)>2 else None
+
         self.insert(
             name=node_id,
             data_type=ns.to_string_node(tipo),
             semantic_type="expression",
-            value=node,
+            value=value,
             default_value=None,
             start_index=current_line,
             end_index=current_line,
@@ -1130,10 +1132,6 @@ class SymbolTable:
 
     def get_three_directions_code(self):
         tdc = ThreeDirectionsCode(self.scopes, self.content, self.sequential_symbols)
-        #  tdc.build()
-        tdc.new_build()
+        tdc.build()
+        # tdc.new_build()
         return tdc
-
-
-
-

@@ -412,6 +412,7 @@ def decompose_let_expr(node: Node) -> Tuple[List[LetVariable] | None, Node | Non
                                 item = let_content.pop(0)
                             let_variables.append(let_item)
                     elif either_coma_or_arrow.name == ",":
+                        let_item.value = let_node
                         let_variables.append(let_item)
                         item = let_content.pop(0)
                     else:
