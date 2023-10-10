@@ -2175,6 +2175,8 @@ class LetVariableNotedNode(NotedNode):
         pass
 
     def get_value(self) -> str | None:
+        if len(self.children)<3:
+            return None
         value_node = self._create_sub_noted_node(self.children[2], self.symbol)
         if value_node is None:
             return None
@@ -2199,6 +2201,7 @@ class LetVariableNotedNode(NotedNode):
             return None
 
         return typo
+
     def test_type_coherence(self):
         if len(self.children)<3:
             return
@@ -2241,15 +2244,15 @@ def create_noted_node(node: Node,
 
     type_of_expr = ns.expressions[index_type_node]
     if type_of_expr == "assignment":  # 1
-        noted_node = AssignationNotedNote(node)  # TDC -> UNIMPLEMENTED
+        noted_node = AssignationNotedNote(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "integer":  # 2
-        noted_node = IntegerNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = IntegerNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "string":  # 3
-        noted_node = StringNotedNote(node)  # TDC -> UNIMPLEMENTED
+        noted_node = StringNotedNote(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "boolean_true":
-        noted_node = BooleanNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = BooleanNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "boolean_false":
-        noted_node = BooleanNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = BooleanNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "attribute":
         noted_node = AttributeNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "object_creation":
