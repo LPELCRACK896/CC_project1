@@ -2176,7 +2176,7 @@ class LetVariableNotedNode(NotedNode):
 
     def get_value(self) -> str | None:
         if len(self.children)<3:
-            return None
+            return self.get_default_value_from_typo()
         value_node = self._create_sub_noted_node(self.children[2], self.symbol)
         if value_node is None:
             return None
