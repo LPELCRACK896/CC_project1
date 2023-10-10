@@ -81,13 +81,11 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             self.opened_scopes.pop()
 
         try: 
-            print(last_scope_added.scope_id, "-", scope.scope_id)
             method1 = last_scope_added.scope_id.split("-")[2] 
             method2 = scope.scope_id.split("-")[2]
             if method1 != method2:
                 if last_scope_added.scope_id.split("-let"):
                     last_scope_added = self.opened_scopes.pop()
-                    print(method1, "-", method2)
                     self.create_scope_register(
                         action="END",
                         scope_label=self.__get_label_scope(last_scope_added),

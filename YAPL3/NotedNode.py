@@ -333,7 +333,7 @@ class AssignationNotedNote(NotedNode):
         assignation_sign = self.children[1]
         expr = self.children[2].children
 
-        # register = Register(name_local, )
+        #print(name_local)
 
     def get_previous_declaration(self, symbol_name: str):
         return self._get_variable_declaration(symbol_name)
