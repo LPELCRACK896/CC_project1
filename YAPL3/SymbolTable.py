@@ -1132,6 +1132,6 @@ class SymbolTable:
 
     def get_three_directions_code(self):
         tdc = ThreeDirectionsCode(self.scopes, self.content, self.sequential_symbols)
-        tdc.build()
-        # tdc.new_build()
+        # tdc.build()
+        tdc.new_build()
         return tdc

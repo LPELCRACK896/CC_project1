@@ -136,7 +136,6 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         elif scope.scope_id == "global": # en caso de ser clase y exista clase en el stack
             last_class_opened, last_class_name = self.opened_class_scopes.pop()
             if symbol_name != last_class_name:
-                print(self.opened_method_scopes)
                 if len(self.opened_method_scopes) != 0: # cerrar metodos pendientes
                     self.__close_opened_methods_scopes()
                 self.create_scope_register(
@@ -173,8 +172,6 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                     direction=Direction(f"{symbol_name}", self.scopes))
                 self.opened_method_scopes.append((scope, symbol_name, symbol_semantic_type))
                 return
-
-        print(scope.scope_id, "-", symbol_name, "-", symbol_semantic_type)
 
     def __close_opened_scopes(self):
         while self.opened_scopes:
