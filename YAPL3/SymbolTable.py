@@ -52,6 +52,18 @@ class SymbolTable:
                                symbol.start_line, symbol.end_line, symbol.type_of_expression])
         return str(table)
 
+    def to_string_sequential_symbols(self) -> str:
+        table = PrettyTable()
+        table.field_names = ["Scope", "Name", "Semantic Type", "Value", "Memory bytes", "Data node_type", "S.Index",
+                             "E.Index", "S.Line", "E.Line", "Exp. Type"]
+        for symbol in self.sequential_symbols:
+            table.add_row([symbol.scope, symbol.name, symbol.semantic_type,
+                           self.get_expression_to_str(symbol.value) if symbol.value else symbol.value,
+                           symbol.bytes_memory_size, symbol.data_type, symbol.start_index, symbol.end_index,
+                           symbol.start_line, symbol.end_line, symbol.type_of_expression])
+
+        return str(table)
+
     """
     START
     BUILDERS
@@ -1118,7 +1130,8 @@ class SymbolTable:
 
     def get_three_directions_code(self):
         tdc = ThreeDirectionsCode(self.scopes, self.content, self.sequential_symbols)
-        tdc.build()
+        #  tdc.build()
+        tdc.new_build()
         return tdc
 
 

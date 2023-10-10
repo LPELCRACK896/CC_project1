@@ -16,14 +16,16 @@ class IThreeDirectionsCode:
 
     scopes: Dict[AnyStr, Scope]
     content: Dict[AnyStr, Dict[AnyStr, Symbol]]
+    sequential_symbols: List[Symbol]
 
     label_class_counter: int
     label_method_counter: int
 
-    def __init__(self, scopes: Dict[AnyStr, Scope], content):
+    def __init__(self, scopes: Dict[AnyStr, Scope], content, sequential_symbols: List[Symbol]):
 
         self.scopes = scopes
         self.content = content
+        self.sequential_symbols = sequential_symbols
 
         self.temp_var_count = 0
 

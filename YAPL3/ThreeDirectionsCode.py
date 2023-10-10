@@ -19,8 +19,8 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
     opened_class_scopes: List[Scope]
     opened_scopes: List[Scope]
 
-    def __init__(self, scopes: Dict[AnyStr, Scope], content):
-        super().__init__(scopes, content)
+    def __init__(self, scopes: Dict[AnyStr, Scope], content, sequential_symbols: List[Symbol]):
+        super().__init__(scopes, content, sequential_symbols)
         self.opened_scopes = []
         self.opened_class_scopes = []
 
@@ -147,7 +147,8 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         return f"S{self.get_next_label_count()}"
 
     def build(self):
-        current_scope  = ""
+        self.code = []
+        current_scope = ""
         for scope_id, symbols in self.content.items():
 
             if self.__is_forbidden_scope(scope_id):
@@ -172,6 +173,30 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 noted_node.get_three_direction_code(self, 3)
 
         self.__close_opened_scopes()
+
+    def new_build(self):
+        self.code = []
+        for symbol in self.sequential_symbols:
+            scope_id = symbol.scope
+
+            if self.__is_forbidden_scope(scope_id):
+                continue
+
+            self.__open_scope(self.scopes.get(scope_id))
+            # Re - implement -> Opening scopes
+            ast_node: Node = symbol.node
+
+            if ast_node is None:
+                continue
+
+            noted_node = create_noted_node(ast_node, self.content, self.scopes, symbol)
+
+            if noted_node is None:
+                """                    class_regis = Register()
+                self.add_register(class_regis)"""
+                continue
+
+            noted_node.get_three_direction_code(self, 3)
 
     def write_file(self, filename: AnyStr = "three_directions_code.tdc"):
         directory = os.path.dirname(os.path.realpath(__file__))
