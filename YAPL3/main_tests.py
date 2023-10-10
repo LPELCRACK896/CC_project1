@@ -11,7 +11,8 @@ def compile_yapl(input_data, gui_window=None):
     syntax_tree.print_tree()
 
     symbol_table = SymbolTable(syntax_tree.root_at)
-    print(symbol_table.to_string_sequential_symbols())
+    symbol_table.estimate_symbol_table_memory_usage()
+    print(symbol_table)
     semantic_verification, semantic_errors = sp.check_semantic(symbol_table)
 
     if syntax_tree.has_errors():
