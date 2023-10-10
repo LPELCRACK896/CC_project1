@@ -21,7 +21,7 @@ class Shape {
     hasCorners: Bool <- true;
 
     isCool (radius:Int): Bool {
-        let a: Int <- 1, b: Int <- 2 in [ a + b ];
+        let a: Int, b: Int <- 2 in [ a + b ];
         return 1;
     }
     getArea (diameter:Int): Int {
@@ -50,7 +50,7 @@ class Circle inherits Shape {
     diameter: Int <- radius + radius;
 
     getArea(diameter:Int): Int {
-
+        sumbol <- (castinnt <- 2);
         (new Circle)@Shape.getPerimeter(2, ancho);
 
         (new Int).copy();
