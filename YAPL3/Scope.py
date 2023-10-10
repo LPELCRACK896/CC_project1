@@ -23,6 +23,9 @@ class Scope:
 
     def has_higher_hierarchy(self, other_scope):
         return not self.scope_id.startswith(other_scope.scope_id)
+    
+    def has_same_hierarchy(self, other_scope):
+        return self.parent == other_scope.parent
 
     def get_parent(self):
         """Devuelve el scope padre. None en caso no tenga. 

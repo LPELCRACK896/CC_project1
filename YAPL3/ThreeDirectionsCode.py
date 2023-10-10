@@ -16,11 +16,13 @@ from IThreeDirectionsCode import IThreeDirectionsCode
 
 class ThreeDirectionsCode(IThreeDirectionsCode):
 
+    opened_class_scopes: List[Scope]
     opened_scopes: List[Scope]
 
     def __init__(self, scopes: Dict[AnyStr, Scope], content):
         super().__init__(scopes, content)
         self.opened_scopes = []
+        self.opened_class_scopes = []
 
     def __str__(self):
         return super().__str__()
@@ -47,6 +49,9 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         pass
 
     def __open_scope(self, scope: Scope):
+        if scope.scope_id.endswith("(class)"):
+            self.opened_class_scopes.append(scope)
+
         if len(self.opened_scopes) == 0:
             self.create_scope_register(
                 action="START",
@@ -56,7 +61,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             return
 
         last_scope_added = self.opened_scopes[-1]
-        if scope.has_higher_hierarchy(last_scope_added):
+        if scope.has_higher_hierarchy(last_scope_added) or scope.has_same_hierarchy(last_scope_added):             
             self.create_scope_register(
                 action="END",
                 scope_label=self.__get_label_scope(last_scope_added),
@@ -64,13 +69,16 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
             self.opened_scopes.pop()
 
-        elif last_scope_added.parent == scope.parent:
-            self.create_scope_register(
-                action="END",
-                scope_label=self.__get_label_scope(last_scope_added),
-                direction=Direction(f"{last_scope_added.scope_id}", self.scopes))
-
-            self.opened_scopes.pop()
+        # if len(self.opened_class_scopes) != 0:
+        #     if scope.scope_id.endswith("(class)"):
+        #         last_class_scope_added = self.opened_class_scopes.pop()
+        #         if last_class_scope_added != scope:                
+        #             self.create_scope_register(
+        #                 action="END",
+        #                 scope_label=self.__get_label_scope(last_class_scope_added),
+        #                 direction=Direction(f"{last_class_scope_added.scope_id}", self.scopes))
+        #         else: 
+        #             self.opened_class_scopes.append(last_class_scope_added)
 
         self.create_scope_register(
                 action="START",
@@ -98,6 +106,8 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             return f"CL{self.get_next_class_label_count()}"
         elif scope_id.endswith("(method)"):
             return f"MT{self.get_next_method_label_count()}"
+        elif scope_id.endswith("blank"):
+            return f" "
 
         return f"S{self.get_next_label_count()}"
 

@@ -6,7 +6,10 @@ class Main {
 
     main():Int{
 
-
+        return 1;
+    }
+    main2():Int{
+        
         return 1;
     }
 }

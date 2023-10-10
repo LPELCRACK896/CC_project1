@@ -1,45 +1,25 @@
-Start  Main(class)
-End  Main(class)
-         
-Start  Main(class)-main(method)
-End  Main(class)-main(method)
-         
-Start  Shape(class)
-End  Shape(class)
-         
-Start  Shape(class)-isCool(method)
-End  Shape(class)-isCool(method)
-         
-Start  Shape(class)-isCool(method)-let(119let)
-End  Shape(class)-isCool(method)-let(119let)
-         
-Start  Shape(class)-getArea(method)
-End  Shape(class)-getArea(method)
-         
-Start  Shape(class)-getPerimeter(method)
-End  Shape(class)-getPerimeter(method)
-         
-Start  Circle(class)
-End  Circle(class)
-         
-Start  Circle(class)-getArea(method)
-End  Circle(class)-getArea(method)
-         
-Start  Circle(class)-getArea(method)-let(273let)
-End  Circle(class)-getArea(method)-let(273let)
-         
-Start  Circle(class)-getArea(method)-IF(293if)
-End  Circle(class)-getArea(method)-IF(293if)
-         
-Start  Circle(class)-getArea(method)-ELSE(293if)
-End  Circle(class)-getArea(method)-ELSE(293if)
-         
-Start  Circle(class)-getColor(method)
-End  Circle(class)-getColor(method)
-         
-Start  Rectangle(class)
-End  Rectangle(class)
-         
-Start  Rectangle(class)-getArea(method)
-End  Rectangle(class)-getArea(method)
-         
+CL1 START global-Main(class)
+MT1 START global-Main(class)-main(method)
+MT2 END global-Main(class)-main(method)
+MT3 START global-Main(class)-main2(method)
+MT4 END global-Main(class)-main2(method)
+CL2 START global-Shape(class)
+MT5 START global-Shape(class)-isCool(method)
+S1 START global-Shape(class)-isCool(method)-let(143let)
+S2 END global-Shape(class)-isCool(method)-let(143let)
+MT6 START global-Shape(class)-getArea(method)
+MT7 END global-Shape(class)-getArea(method)
+MT8 START global-Shape(class)-getPerimeter(method)
+MT9 END global-Shape(class)-getPerimeter(method)
+CL3 START global-Circle(class)
+MT10 START global-Circle(class)-getArea(method)
+S3 START global-Circle(class)-getArea(method)-let(297let)
+S4 END global-Circle(class)-getArea(method)-let(297let)
+S5 START global-Circle(class)-getArea(method)-IF(317if)
+S6 END global-Circle(class)-getArea(method)-IF(317if)
+S7 START global-Circle(class)-getArea(method)-ELSE(317if)
+S8 END global-Circle(class)-getArea(method)-ELSE(317if)
+MT11 START global-Circle(class)-getColor(method)
+MT12 END global-Circle(class)-getColor(method)
+CL4 START global-Rectangle(class)
+MT13 START global-Rectangle(class)-getArea(method)
