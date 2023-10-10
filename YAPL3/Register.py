@@ -20,10 +20,25 @@ class Register:
         self.first_direction = first_direction
         self.second_direction = None
         self.third_direction = None
+
+        self.first_operation: Operation = None
+        self.second_operation: Operation = None
         self.tag = tag
 
     def set_first_operation(self, operation: Operation):
         self.first_operation = operation
+
+    def set_second_operation(self, operation: Operation):
+        self.second_operation = operation
+
+    def set_first_direction(self, direction: Direction):
+        self.first_direction = direction
+
+    def set_second_direction(self, direction: Direction):
+        self.second_direction = direction
+
+    def set_third_direction(self, direction: Direction):
+        self.third_direction = direction
 
     def __str__(self):
         if self.first_direction and self.second_direction and self.third_direction:

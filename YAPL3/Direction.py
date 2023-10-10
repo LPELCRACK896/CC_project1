@@ -6,14 +6,15 @@ from Operation import Operation
 
 class Direction:
 
-    content: AnyStr | Symbol
+    content: AnyStr
     scopes: Dict[AnyStr, Scope]
 
-    def __init__(self, content: AnyStr | Symbol, scopes: Dict[AnyStr, Scope]):
+    def __init__(self, content: AnyStr, scopes: Dict[AnyStr, Scope]):
         self.content = content
         self.scopes = scopes
 
-    def __str__(self):
+    def __str__(self) -> str:
+
         return str(self.content)
 
     def update_real_tag(self, real_tag: str):
@@ -23,7 +24,7 @@ class Direction:
         self.content = new_tag
 
     def is_reference(self):
-        return isinstance(self.content, Symbol)
+        return self.content.startswith("<DIR>")
 
     def is_temporary_variable(self):
         return not self.is_reference()

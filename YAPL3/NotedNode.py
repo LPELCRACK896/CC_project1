@@ -209,7 +209,7 @@ class NotedNode:
         return method_declaration
 
     @abstractmethod
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
         pass
 
@@ -244,7 +244,7 @@ class BasicNotedNode(NotedNode):
         super().__init__(node)
         self.need_scopes = True
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
         if must_create_register:
             next_tag = f"L{tdc.get_next_label_count()}"
@@ -256,7 +256,7 @@ class BasicNotedNode(NotedNode):
             register.set_first_operation(operation)
 
             tdc.add_register(register)
-
+        value = self.get_value()
         return self.get_value()
 
     def get_value(self) -> str | None:
@@ -327,12 +327,69 @@ class AssignationNotedNote(NotedNode):
         self.need_scopes = True
         self.name = "Assignation"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
-                                 must_create_register=True):
-        name_local = self.children[0]
-        assignation_sign = self.children[1]
-        expr = self.children[2].children
+    def tdc_create_sub_register(self, tdc: IThreeDirectionsCode, tag: AnyStr, symbol_direction: Direction,
+                                value_direction: Direction) -> AnyStr:
 
+        temp_var = tdc.get_next_temp_variable()
+
+        first_direction = Direction(temp_var, self.scopes)
+        first_operation = Operation("=")
+        second_direction = symbol_direction
+        second_operation = Operation("assign")
+        third_direction = value_direction
+
+        register = Register(tag, first_direction)
+
+        register.set_first_operation(first_operation)
+        register.set_second_direction(second_direction)
+
+        register.set_second_operation(second_operation)
+        register.set_third_direction(third_direction)
+
+        tdc.add_register(register)
+
+        return temp_var
+
+    @staticmethod
+    def tdc_create_main_register(tdc: IThreeDirectionsCode, tag: AnyStr, symbol_direction: Direction,
+                                 value_direction: Direction):
+        first_direction = symbol_direction
+        first_operation = Operation("assign")
+        second_direction = value_direction
+
+        register = Register(tag, first_direction)
+
+        register.set_first_operation(first_operation)
+        register.set_second_direction(second_direction)
+
+        tdc.add_register(register)
+
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
+                                 must_create_register=True):
+        symbol_declaration: Symbol = self.get_previous_declaration(self.get_alias())
+        symbol_direction_str: AnyStr = symbol_declaration.as_direction_stringify()
+
+        value_assigned: Node = self.children[2]
+        noted_node_value_assigned: NotedNode = self._create_sub_noted_node(value_assigned, self.symbol)
+
+        value_direction_str = noted_node_value_assigned.get_three_direction_code(tdc, 1, False)
+
+        tag = f"L{tdc.get_next_label_count()}"
+        symbol_direction = Direction(symbol_direction_str, self.scopes)
+        value_direction = Direction(value_direction_str, self.scopes)
+
+        if num_directions_available != 3:
+            temporary_var = self.tdc_create_sub_register(tdc, tag, symbol_direction, value_direction)
+            return temporary_var
+
+        self.tdc_create_main_register(tdc, tag, symbol_direction, value_direction)
+        return ""
+
+
+
+
+
+        pass
         #print(name_local)
 
     def get_previous_declaration(self, symbol_name: str):
@@ -461,9 +518,9 @@ class AttributeNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Attribute"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_previous_declaration(self, name: str):
         return self.symbol
@@ -566,9 +623,9 @@ class NewObjectNotedNode(NotedNode):
         self.needs_symbol = True
         self.name = "Object creation"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_value(self) -> str | None:
         default_res = self.get_default_value_from_typo()
@@ -615,9 +672,9 @@ class ParenthesisNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Parenthesis expression"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return self.__get_contained_nn().get_three_direction_code(tdc, num_directions_available, must_create_register)
 
     def get_previous_declaration(self, name: str):
         return None
@@ -673,9 +730,9 @@ class IdentifierNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Identifier"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_previous_declaration(self, name: str):
         symbols_scope = self.scopes.get(self.symbol.scope)
@@ -1030,9 +1087,9 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         self.needs_context = True
         self.name = "Parent call method"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1129,9 +1186,9 @@ class StaticDispatchNotedNode(DispatchNotedNode):
         self.needs_context = True
         self.name = "Object call method"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_previous_declaration(self, name: str):
         return None
@@ -1180,9 +1237,9 @@ class FunctionCallDispatchNotedNode(DispatchNotedNode):
         self.needs_context = True
         self.name = "Local method call"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_previous_declaration(self, name: str):
         return None
@@ -1249,9 +1306,9 @@ class IsVoidNotedNode(NotedNode):
         self.needs_context = True
         self.name = "isvoid operation"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_alias(self):
         return " ".join([leave.name for leave in self.node.leaves])
@@ -1301,10 +1358,9 @@ class NotOperatorNotedNode(NotedNode):
 
         self.name = "'not' operation"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
-
+        return "NI"
 
     def get_alias(self):
         return " ".join([leave.name for leave in self.node.leaves])
@@ -1422,9 +1478,9 @@ class BlockNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Block"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1483,9 +1539,9 @@ class BitWiseNotNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Bitwise operation (~)"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1668,10 +1724,9 @@ class IfConditionalNotedNode(ConditionNotedNode):
         self.needs_context = True
         self.name = "if condition"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-
-        pass
+        return "NI"
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         condition_node = self.children[1]
@@ -1881,9 +1936,9 @@ class ReturnStatementNotedNode(NotedNode):
     def get_alias(self):
         return to_string_node(self.node)
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def __get_get_symbol_class(self):
         scope_name = self.symbol.scope
@@ -2032,9 +2087,9 @@ class MethodNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Method firm"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_alias(self):
         return to_string_node(self.children[0])
@@ -2072,9 +2127,9 @@ class FormalNotedNode(NotedNode):
     """
     NO NEED IMPLEMENTATION
     """
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_alias(self):
         return to_string_node(self.children[0])
@@ -2109,9 +2164,9 @@ class LetVariableNotedNode(NotedNode):
         self.need_scopes = True
         self.needs_context = True
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        pass
+        return "NI"
 
     def get_alias(self):
         pass
