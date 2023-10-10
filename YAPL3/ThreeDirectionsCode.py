@@ -37,9 +37,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
             if is_forbidden_scope(scope_id):
                 continue # Saltamos
-
-            # Añadir registro inicio clase
-
+            
             for symbol_name, symbol in symbols.items():
                 ast_node: Node = symbol.node
 
@@ -55,8 +53,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                     continue
 
                 noted_node.get_three_direction_code(self, 3)
-
-            # Añadir registro fin clase
+            
 
     def write_file(self, filename: AnyStr = "three_directions_code.tdc"):
         directory = os.path.dirname(os.path.realpath(__file__))

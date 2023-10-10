@@ -320,7 +320,12 @@ class AssignationNotedNote(NotedNode):
         self.name = "Assignation"
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
-        pass
+        name_local = self.children[0]
+        assignation_sign = self.children[1]
+        expr = self.children[2].children
+
+        # register = Register(name_local, )
+
 
     def get_previous_declaration(self, symbol_name: str):
         return self._get_variable_declaration(symbol_name)
