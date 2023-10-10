@@ -258,9 +258,6 @@ class SymbolTable:
         noted_node = create_noted_node(node, self.content, self.scopes, symbol)
         errors = noted_node.run_tests()
 
-        if attr_value:
-            current_line = self.build_symbol_table(node=attr_value, current_scope=current_scope,
-                                                   current_line=current_line + 1)
         return current_line
 
     def build_symbol_expr_if(self, node: Node, current_scope: Scope, current_line: int) -> int:

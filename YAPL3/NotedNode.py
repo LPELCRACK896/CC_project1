@@ -209,7 +209,8 @@ class NotedNode:
         return method_declaration
 
     @abstractmethod
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     @abstractmethod
@@ -241,6 +242,22 @@ class BasicNotedNode(NotedNode):
 
     def __init__(self, node: Node):
         super().__init__(node)
+        self.need_scopes = True
+
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
+        if must_create_register:
+            next_tag = f"L{tdc.get_next_label_count()}"
+            direction = Direction(self.get_value(), self.scopes)
+
+            register = Register(next_tag, direction)
+
+            operation = Operation(None)
+            register.set_first_operation(operation)
+
+            tdc.add_register(register)
+
+        return self.get_value()
 
     def get_value(self) -> str | None:
         return self.children[0].name
@@ -269,9 +286,6 @@ class IntegerNotedNode(BasicNotedNode):
         super().__init__(node)
         self.name = "Integer value"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
-        pass
-
     def get_type(self) -> str | None:
         return "Int"
 
@@ -285,9 +299,6 @@ class StringNotedNote(BasicNotedNode):
         super().__init__(node)
         self.name = "String value"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
-        pass
-
     def get_type(self) -> str | None:
         return "String"
 
@@ -300,9 +311,6 @@ class BooleanNotedNode(BasicNotedNode):
     def __init__(self, node: Node):
         super().__init__(node)
         self.name = "Boolean value"
-
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
-        pass
 
     def get_type(self) -> str | None:
         return "Bool"
@@ -319,13 +327,13 @@ class AssignationNotedNote(NotedNode):
         self.need_scopes = True
         self.name = "Assignation"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         name_local = self.children[0]
         assignation_sign = self.children[1]
         expr = self.children[2].children
 
         # register = Register(name_local, )
-
 
     def get_previous_declaration(self, symbol_name: str):
         return self._get_variable_declaration(symbol_name)
@@ -453,7 +461,8 @@ class AttributeNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Attribute"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_previous_declaration(self, name: str):
@@ -541,7 +550,8 @@ class NewObjectNotedNode(NotedNode):
         self.needs_symbol = True
         self.name = "Object creation"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_value(self) -> str | None:
@@ -589,7 +599,8 @@ class ParenthesisNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Parenthesis expression"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_previous_declaration(self, name: str):
@@ -646,7 +657,8 @@ class IdentifierNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Identifier"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_previous_declaration(self, name: str):
@@ -1002,7 +1014,8 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         self.needs_context = True
         self.name = "Parent call method"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_alias(self):
@@ -1100,7 +1113,8 @@ class StaticDispatchNotedNode(DispatchNotedNode):
         self.needs_context = True
         self.name = "Object call method"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_previous_declaration(self, name: str):
@@ -1150,7 +1164,8 @@ class FunctionCallDispatchNotedNode(DispatchNotedNode):
         self.needs_context = True
         self.name = "Local method call"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_previous_declaration(self, name: str):
@@ -1218,7 +1233,8 @@ class IsVoidNotedNode(NotedNode):
         self.needs_context = True
         self.name = "isvoid operation"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_alias(self):
@@ -1269,7 +1285,8 @@ class NotOperatorNotedNode(NotedNode):
 
         self.name = "'not' operation"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
 
@@ -1389,7 +1406,8 @@ class BlockNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Block"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_alias(self):
@@ -1449,7 +1467,8 @@ class BitWiseNotNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Bitwise operation (~)"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_alias(self):
@@ -1633,7 +1652,8 @@ class IfConditionalNotedNode(ConditionNotedNode):
         self.needs_context = True
         self.name = "if condition"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
 
         pass
 
@@ -1845,7 +1865,8 @@ class ReturnStatementNotedNode(NotedNode):
     def get_alias(self):
         return to_string_node(self.node)
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def __get_get_symbol_class(self):
@@ -1995,7 +2016,8 @@ class MethodNotedNode(NotedNode):
         self.needs_context = True
         self.name = "Method firm"
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_alias(self):
@@ -2031,7 +2053,11 @@ class FormalNotedNode(NotedNode):
         self.need_scopes = True
         self.needs_context = True
 
-    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int):
+    """
+    NO NEED IMPLEMENTATION
+    """
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
         pass
 
     def get_alias(self):
@@ -2073,51 +2099,51 @@ def create_noted_node(node: Node,
 
     type_of_expr = ns.expressions[index_type_node]
     if type_of_expr == "assignment":  # 1
-        noted_node = AssignationNotedNote(node)
+        noted_node = AssignationNotedNote(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "integer":  # 2
-        noted_node = IntegerNotedNode(node)
+        noted_node = IntegerNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "string":  # 3
-        noted_node = StringNotedNote(node)
-    elif type_of_expr == "boolean_true":  # 4
-        noted_node = BooleanNotedNode(node)
-    elif type_of_expr == "boolean_false":  # 5
-        noted_node = BooleanNotedNode(node)
-    elif type_of_expr == "attribute":  # 6
-        noted_node = AttributeNotedNode(node)
-    elif type_of_expr == "object_creation":  # 7
-        noted_node = NewObjectNotedNode(node)
-    elif type_of_expr == "parenthesized_expr":  # 8
-        noted_node = ParenthesisNotedNode(node)
-    elif type_of_expr == "dynamic_dispatch":  # 9
-        noted_node = DynamicDispatchNotedNode(node)
-    elif type_of_expr == "identifier":  # 10
-        noted_node = IdentifierNotedNode(node)
-    elif type_of_expr == "isvoid":  # 11
-        noted_node = IsVoidNotedNode(node)
-    elif type_of_expr == "not":  # 12
-        noted_node = NotOperatorNotedNode(node)
-    elif type_of_expr == "block":  # 14
-        noted_node = BlockNotedNode(node)
-    elif type_of_expr == "bitwise_not":  # 13
-        noted_node = BitWiseNotNotedNode(node)
-    elif type_of_expr == "static_dispatch":  # 15
-        noted_node = StaticDispatchNotedNode(node)
-    elif type_of_expr == "function_call":  # 16
-        noted_node = FunctionCallDispatchNotedNode(node)
-    elif type_of_expr == "conditional":  # 17
-        noted_node = IfConditionalNotedNode(node)
-    elif type_of_expr == "loop":  # 18
-        noted_node = LoopNotedNode(node)
-    elif type_of_expr == "let_in":  # 19
-        noted_node = LetNotedNode(node)
-    elif type_of_expr == "arithmetic_or_comparison":  # 20
-        noted_node = ArithmeticLogicNotedNode(node)
+        noted_node = StringNotedNote(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "boolean_true":
+        noted_node = BooleanNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "boolean_false":
+        noted_node = BooleanNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "attribute":
+        noted_node = AttributeNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "object_creation":
+        noted_node = NewObjectNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "parenthesized_expr":
+        noted_node = ParenthesisNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "dynamic_dispatch":
+        noted_node = DynamicDispatchNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "identifier":
+        noted_node = IdentifierNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "isvoid":
+        noted_node = IsVoidNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "not":
+        noted_node = NotOperatorNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "block":
+        noted_node = BlockNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "bitwise_not":
+        noted_node = BitWiseNotNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "static_dispatch":
+        noted_node = StaticDispatchNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "function_call":
+        noted_node = FunctionCallDispatchNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "conditional":
+        noted_node = IfConditionalNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "loop":
+        noted_node = LoopNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "let_in":
+        noted_node = LetNotedNode(node)  # TDC -> UNIMPLEMENTED
+    elif type_of_expr == "arithmetic_or_comparison":
+        noted_node = ArithmeticLogicNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "func_return":
-        noted_node = ReturnStatementNotedNode(node)
+        noted_node = ReturnStatementNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "method":
-        noted_node = MethodNotedNode(node)
+        noted_node = MethodNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "formal":
-        noted_node = FormalNotedNode(node)
+        noted_node = FormalNotedNode(node)  # TDC -> DONE
     else:
         print(f"Unrecognized expression: {type_of_expr}")
 

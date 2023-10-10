@@ -59,6 +59,18 @@ class IThreeDirectionsCode:
     def relate_register_and_item_from_registers(self, index=-1):
         pass
 
+    @abstractmethod
+    def get_next_label_count(self):
+        pass
+
+    @abstractmethod
+    def get_next_class_label_count(self):
+        pass
+
+    @abstractmethod
+    def get_next_method_label_count(self):
+        pass
+
     def add_register(self, register: Register):
         self.code.append(register)
 
