@@ -522,21 +522,37 @@ class AttributeNotedNode(NotedNode):
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         symbols_scope = self.scopes.get(self.symbol.scope)
 
+        value = self.get_value()
         var_value_type = self.get_value_type()
         var_expected_type = self.get_type()
 
         if var_value_type is not None and var_expected_type is not None:
             coherent_types = verify_matching_type(var_expected_type, var_value_type, self.scopes)
             if not coherent_types:
-                self.add_error("Incoherence types::",
-                               SemanticError(
-                                   name="Incoherence types::",
-                                   details=f"On attribute assignation expected type {var_expected_type}"
-                                           f" does not match the received type {var_value_type}",
-                                   symbol=self.symbol,
-                                   scope=symbols_scope,
-                                   line=self.symbol.start_line
-                               ))
+                if var_value_type == "Int" and var_expected_type == "Bool":
+                    value = int(value)
+                    if value != 0 and value != 1:
+                        self.add_error("Incoherence types::",
+                                SemanticError(
+                                    name="Incoherence types::",
+                                    details=f"On attribute assignation expected type {var_expected_type}"
+                                            f" does not match the received type {var_value_type} and not posible to cast",
+                                    symbol=self.symbol,
+                                    scope=symbols_scope,
+                                    line=self.symbol.start_line
+                                ))    
+                else:
+                    self.add_error("Incoherence types::",
+                                SemanticError(
+                                    name="Incoherence types::",
+                                    details=f"On attribute assignation expected type {var_expected_type}"
+                                            f" does not match the received type {var_value_type}",
+                                    symbol=self.symbol,
+                                    scope=symbols_scope,
+                                    line=self.symbol.start_line
+                                ))
+
+
 
         return self.raised_errors
 
