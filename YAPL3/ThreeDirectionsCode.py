@@ -48,9 +48,20 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         self.add_register(register)
         pass
 
+    def create_blank_register(self):
+
+        register = Register(
+            tag=" ",
+            first_direction=Direction(" ", self.scopes)
+        )
+        register.set_first_operation(Operation(" "))
+        self.add_register(register)
+        pass
+
     def __open_scope(self, scope: Scope):
+
         if scope.scope_id.endswith("(class)"):
-            self.opened_class_scopes.append(scope)
+            self.opened_class_scopes.append(scope)    
 
         if len(self.opened_scopes) == 0:
             self.create_scope_register(
@@ -69,16 +80,17 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
             self.opened_scopes.pop()
 
-        # if len(self.opened_class_scopes) != 0:
-        #     if scope.scope_id.endswith("(class)"):
-        #         last_class_scope_added = self.opened_class_scopes.pop()
-        #         if last_class_scope_added != scope:                
-        #             self.create_scope_register(
-        #                 action="END",
-        #                 scope_label=self.__get_label_scope(last_class_scope_added),
-        #                 direction=Direction(f"{last_class_scope_added.scope_id}", self.scopes))
-        #         else: 
-        #             self.opened_class_scopes.append(last_class_scope_added)
+        if len(self.opened_class_scopes) != 0 and scope.scope_id.endswith("(class)"): # fin de clase
+            last_class_scope_added = self.opened_class_scopes.pop(0)
+            if last_class_scope_added.scope_id != scope.scope_id:
+                self.create_scope_register(
+                    action="END",
+                    scope_label=self.__get_label_scope(last_class_scope_added),
+                    direction=Direction(f"{last_class_scope_added.scope_id}", self.scopes))
+
+                self.create_blank_register()
+            else:
+                self.opened_class_scopes.append(last_class_scope_added)
 
         self.create_scope_register(
                 action="START",
@@ -86,6 +98,14 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 direction=Direction(f"{scope.scope_id}", self.scopes)
         )
         self.opened_scopes.append(scope)
+
+    def __close_opened_scopes(self):
+        while self.opened_scopes:
+            scope = self.opened_scopes.pop()
+            self.create_scope_register(
+                action="END",
+                scope_label=self.__get_label_scope(scope),
+                direction=Direction(f"{scope.scope_id}", self.scopes))
 
     def get_next_label_count(self):
         self.label_counter += 1
@@ -135,6 +155,8 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                     continue
 
                 noted_node.get_three_direction_code(self, 3)
+
+        self.__close_opened_scopes()
 
     def write_file(self, filename: AnyStr = "three_directions_code.tdc"):
         directory = os.path.dirname(os.path.realpath(__file__))
