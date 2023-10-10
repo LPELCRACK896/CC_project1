@@ -19,6 +19,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
     opened_class_scopes: List[Scope]
     opened_method_scopes: List[Scope]
     opened_let_scopes: List[Scope]
+    opened_if_scopes: List[Scope]
     opened_scopes: List[Scope]
 
     def __init__(self, scopes: Dict[AnyStr, Scope], content, sequential_symbols: List[Symbol]):
@@ -27,6 +28,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         self.opened_class_scopes = []
         self.opened_method_scopes = []
         self.opened_let_scopes = []
+        self.opened_if_scopes = []
 
     def __str__(self):
         return super().__str__()
@@ -193,6 +195,24 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 direction=Direction(f"{last_opened_scope.scope_id.split("-")[2].split("(")[0]}-{last_opened_scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
             self.opened_let_scopes.pop()
             return 
+        
+        if scope.scope_id.endswith("if)"): # para los ifs
+            self.create_scope_register(
+                action="START",
+                scope_label=self.__get_label_scope(scope),
+                direction=Direction(f"{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
+            self.opened_if_scopes.append((scope))
+            return 
+        elif len(self.opened_if_scopes) != 0: # para cerrar los ifs 
+            last_opened_scope = self.opened_if_scopes[-1]
+            if not scope.scope_id.endswith(last_opened_scope.scope_id.split("-")[3]):
+                self.create_scope_register(
+                action="END",
+                scope_label=self.__get_label_scope(last_opened_scope),
+                direction=Direction(f"{last_opened_scope.scope_id.split("-")[2].split("(")[0]}-{last_opened_scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
+            self.opened_if_scopes.pop()
+            return 
+
 
     def __close_opened_scopes(self):
         while self.opened_scopes:
