@@ -33,7 +33,8 @@ expressions = [
     "attribute",
     "func_return",
     "method",
-    "formal"
+    "formal",
+    "declaration_assignation"
 ]
 
 operators = [
@@ -69,6 +70,9 @@ def identify_node(node: Node):
 
     if node.name == "formal":
         return expressions.index("formal")
+
+    if node.name == 'declaration_assignation':
+        return expressions.index("declaration_assignation")
 
     # expr
     if not node.children:
@@ -290,9 +294,10 @@ def verify_node_structure_let(node: Node):
             if colon.name != ":":
                 return -1
 
-            item_type = let_content.pop(0)
+            item_type: Node = let_content.pop(0)
             if not (item_type.name == "node_type" or item_type.name == "type"):
                 return -1
+
 
             either_coma_or_arrow = let_content.pop(0)
             if either_coma_or_arrow.name == "<-":
@@ -357,6 +362,8 @@ def decompose_let_expr(node: Node) -> Tuple[List[LetVariable] | None, Node | Non
     err_string = ""
 
     while not (found_in and empty_stack) and not error_on_structure:
+        let_node = Node(name="declaration_assignation")
+
         if item.name == "in":
             found_in = True
         else:
@@ -366,6 +373,9 @@ def decompose_let_expr(node: Node) -> Tuple[List[LetVariable] | None, Node | Non
             variable_name = item.name
 
             let_item.var_id = variable_name
+            let_node.start_line = item.start_line
+            let_node.end_line = item.end_line
+            Node(name=variable_name, parent=let_node)
 
             colon = let_content.pop(0)
             if colon.name != ":":
@@ -374,16 +384,22 @@ def decompose_let_expr(node: Node) -> Tuple[List[LetVariable] | None, Node | Non
 
             else:
                 item_type = let_content.pop(0)
-                let_item.var_type = to_string_node(item_type)
-                if not (item_type.name == "node_type" or item_type.name== "type") :
+                let_item.var_type = item_type
+                if not (item_type.name == "node_type" or item_type.name=="type"):
                     error_on_structure = True
                     err_string = f"For variable {variable_name} couldn't found node_type after colon"
                 else:
+                    item_type.parent = let_node
                     either_coma_or_arrow = let_content.pop(0)
 
                     if either_coma_or_arrow.name == "<-":
-                        variable_value = let_content.pop(0)
-                        let_item.value = variable_value
+                        variable_value: Node = let_content.pop(0)
+                        let_node.end_line = variable_value.end_line
+
+                        variable_value.parent = let_node
+
+                        let_item.value = let_node
+
                         if variable_value.name != "expr":
                             error_on_structure = True
                             err_string = f"For variable {variable_name} couldn't find value after <- assignation operator"

@@ -16,7 +16,7 @@ from NotedNode import create_noted_node
 
 class SymbolTable:
 
-
+    sequential_symbols: List[Symbol]
     def __init__(self, root):
         """Método constructor
 
@@ -28,9 +28,12 @@ class SymbolTable:
         self.global_scope = Scope(parent=None,
                                   scope_id="global")  # La tabla de simbolos de inicializa con un scope global en el que se almacenan simbolos que no esten debajo de otros scopes creados.
         self.scopes = {"global": self.global_scope}  # {<scope_id>: Scope} >> Scopes de la tabla almacenados en dicionarios que tiene por clave su identificador y su objeto por valor.
+        self.sequential_symbols = []
+
         self.build_symbol_table(node=root, current_scope=self.global_scope,
                                 current_line=self.__build_basic_classes())  # Construye recursivamente la tabla de simbolos
 
+        pass
 
     def __str__(self) -> str:
         """Crea una version bonita y para consola de la tabla. 
@@ -210,10 +213,6 @@ class SymbolTable:
             parameter_passing_method="reference"
         )
 
-        noted_node = create_noted_node(node, self.content, self.scopes, method_symbol)
-        errors = noted_node.run_tests()
-        val = noted_node.get_value()
-
         for child in node.children:
             current_line = self.build_symbol_table(child, method_scope, current_line=current_line + 1)
         method_symbol.end_index = current_line
@@ -255,8 +254,6 @@ class SymbolTable:
             parameters=[],
             parameter_passing_method=None)
 
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
 
         return current_line
 
@@ -312,8 +309,6 @@ class SymbolTable:
             type_of_expression="while"
 
         )
-        noted_node = create_noted_node(node, self.content, self.scopes, while_symbol)
-        errors = noted_node.run_tests()
 
         while_line = current_line
 
@@ -354,9 +349,6 @@ class SymbolTable:
         valor = noted_node.get_value()
         tipo_del_valor = noted_node.get_value_type()
 
-        current_line = self.build_symbol_table(node=node.children[2], current_scope=current_scope,
-                                               current_line=current_line + 1)
-
         return current_line
 
     def build_symbol_expr_parent_method_call(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -377,8 +369,6 @@ class SymbolTable:
             node=node,
             type_of_expression="parent_call_method"
         )
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
 
         return current_line
 
@@ -401,10 +391,6 @@ class SymbolTable:
             type_of_expression="local_call_method"
         )
 
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
-        value = noted_node.get_value()
-        n_type = noted_node.get_type()
 
         return current_line
 
@@ -426,10 +412,7 @@ class SymbolTable:
             node=node,
             type_of_expression="external_method_call"
         )
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
-        value = noted_node.get_value()
-        n_type = noted_node.get_type()
+
         return current_line
 
     def build_symbol_expr_let(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -470,10 +453,10 @@ class SymbolTable:
         )
         return current_line
 
-    def build_symbol_let_variable(self, node: Node, current_scope: Scope, current_line: int, node_id: str,tipo: str) -> int:
+    def build_symbol_let_variable(self, node: Node, current_scope: Scope, current_line: int, node_id: str,tipo: Node) -> int:
         self.insert(
             name=node_id,
-            data_type=tipo,
+            data_type=ns.to_string_node(tipo),
             semantic_type="expression",
             value=node,
             default_value=None,
@@ -536,7 +519,6 @@ class SymbolTable:
     def build_symbol_expr_operation(self, node: Node, current_scope: Scope, current_line: int) -> int:
         items = self.get_expression_to_list(node)
         data_type = "Int"  # Hot fix must remove
-        # ^^ Assumes that all operations means arithmetic operation. FIX to identify bool operations!!
         symbol = self.insert(
             name=" ".join(items),
             data_type=data_type,
@@ -554,10 +536,7 @@ class SymbolTable:
             node=node,
             type_of_expression="operation"
         )
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
-        value = noted_node.get_value()
-        n_type = noted_node.get_type()
+
         return current_line
 
     def build_symbol_simple_expression(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -604,12 +583,6 @@ class SymbolTable:
             type_of_expression=None
         )
 
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
-        value = noted_node.get_value()
-        n_type = noted_node.get_type()
-
-
         return current_line
 
     def build_symbol_formals(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -637,10 +610,6 @@ class SymbolTable:
                     type_of_expression=None
                 )
 
-                noted_node = create_noted_node(formal, self.content, self.scopes, symbol)
-                errors = noted_node.run_tests()
-                value = noted_node.get_value()
-                n_type = noted_node.get_type()
 
         return current_line
 
@@ -663,10 +632,6 @@ class SymbolTable:
             node=node,
             type_of_expression="unitary"
         )
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
-        value = noted_node.get_value()
-        n_type = noted_node.get_type()
 
         return current_line
 
@@ -689,9 +654,7 @@ class SymbolTable:
             node=node,
             type_of_expression="unitary"
         )
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        errors = noted_node.run_tests()
-        val = noted_node.get_value()
+
         return current_line
     """
     INTERNAL PROCESS
@@ -899,6 +862,7 @@ class SymbolTable:
             else:
                 self.construction_errors[semanticErr.name] = [semanticErr]
         self.content[scope.scope_id][symbol.name] = symbol
+        self.sequential_symbols.append(symbol)
         return symbol
 
     def search(self, name, scope=None):
@@ -1153,7 +1117,7 @@ class SymbolTable:
         pass
 
     def get_three_directions_code(self):
-        tdc = ThreeDirectionsCode(self.scopes, self.content)
+        tdc = ThreeDirectionsCode(self.scopes, self.content, self.sequential_symbols)
         tdc.build()
         return tdc
 

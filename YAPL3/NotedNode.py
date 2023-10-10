@@ -2101,6 +2101,77 @@ class FormalNotedNode(NotedNode):
         return self.raised_errors
 
 
+class LetVariableNotedNode(NotedNode):
+
+    def __init__(self, node):
+        super().__init__(node)
+        self.needs_symbol = True
+        self.need_scopes = True
+        self.needs_context = True
+
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, nun_directions_available: int,
+                                 must_create_register=True):
+        pass
+
+    def get_alias(self):
+        pass
+
+    def get_previous_declaration(self, name: str):
+        pass
+
+    def get_value(self) -> str | None:
+        value_node = self._create_sub_noted_node(self.children[2], self.symbol)
+        if value_node is None:
+            return None
+        return value_node.get_value()
+
+    def get_type(self) -> str | None:
+        typo = to_string_node(self.children[1])
+        if not self._type_verifier(typo):
+            return None
+        return to_string_node(self.children[1])
+
+    def get_value_type(self) -> str | None:
+        if len(self.children)<3:
+            return self.get_type()
+
+        value_node = self._create_sub_noted_node(self.children[2], self.symbol)
+        if value_node is None:
+            return None
+
+        typo = value_node.get_type()
+        if not self._type_verifier(typo):
+            return None
+
+        return typo
+    def test_type_coherence(self):
+        if len(self.children)<3:
+            return
+        expected_type = self.get_type()
+        received_type = self.get_value_type()
+
+        if expected_type is None or received_type is None:
+            return
+
+        if not verify_matching_type(expected_type, received_type, self.scopes):
+            self.add_error(
+                "Un-matching types::",
+                SemanticError(
+                    name="Un-matching types::",
+                    details=f"Variable declaration was expecting {expected_type}(or equivalent)"
+                            f" but got {received_type} instead.",
+                    symbol=self.symbol,
+                    scope=self.symbols_scope,
+                    line=self.symbol.start_line
+                )
+            )
+        return
+
+    def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
+        self.test_type_coherence()
+        return self.raised_errors
+
+
 def create_noted_node(node: Node,
                       context: Dict[AnyStr, Dict[AnyStr, Symbol]],
                       scopes: Dict[AnyStr, Scope],
@@ -2160,6 +2231,8 @@ def create_noted_node(node: Node,
         noted_node = MethodNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "formal":
         noted_node = FormalNotedNode(node)  # TDC -> DONE
+    elif type_of_expr == "declaration_assignation":
+        noted_node = LetVariableNotedNode(node)
     else:
         print(f"Unrecognized expression: {type_of_expr}")
 
@@ -2269,7 +2342,8 @@ def verify_inheritance(parent_class: str, child_class: str, scopes: Dict[AnyStr,
 
 def verify_existing_class(class_name: str, scopes: Dict[AnyStr, Scope]):
     global_scope = scopes.get("global")
-    return class_name in global_scope.get_all_classes()
+    classes = global_scope.get_all_classes()
+    return class_name in classes
 
 
 def verify_existing_type(type_name: str, scopes: Dict[AnyStr, Scope]) -> bool:
