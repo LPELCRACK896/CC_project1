@@ -17,12 +17,14 @@ from IThreeDirectionsCode import IThreeDirectionsCode
 class ThreeDirectionsCode(IThreeDirectionsCode):
 
     opened_class_scopes: List[Scope]
+    opened_method_scopes: List[Scope]
     opened_scopes: List[Scope]
 
     def __init__(self, scopes: Dict[AnyStr, Scope], content, sequential_symbols: List[Symbol]):
         super().__init__(scopes, content, sequential_symbols)
         self.opened_scopes = []
         self.opened_class_scopes = []
+        self.opened_method_scopes = []
 
     def __str__(self):
         return super().__str__()
@@ -30,12 +32,20 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
     def is_higher_or_equal_scope_levels(self, reference_scope: Scope, scope_to_compare: Scope):
         pass
 
-    def __is_forbidden_scope(self, scope_id: str):
+    def __is_forbidden_scope(self, scope_id: str, scope_name: str):
         return (
-                scope_id == "global" or
                 scope_id.startswith("global-Object(class)") or
                 scope_id.startswith("global-IO(class)") or
-                scope_id.startswith("global-String(class)")
+                scope_id.startswith("global-IO(class)-out_string(method)") or
+                scope_id.startswith("global-IO(class)-out_int(method)") or 
+                scope_id.startswith("global-String(class)") or 
+                scope_id.startswith("global-String(class)-concat") or
+                scope_id.startswith("global-String(class)-substr") or 
+                (scope_id.startswith("global") and scope_name.startswith("Object")) or
+                (scope_id.startswith("global") and scope_name.startswith("IO")) or
+                (scope_id.startswith("global") and scope_name.startswith("Int")) or
+                (scope_id.startswith("global") and scope_name.startswith("String")) or
+                (scope_id.startswith("global") and scope_name.startswith("Bool"))
         )
 
     def create_scope_register(self, action: str, scope_label: str, direction: Direction):
@@ -114,6 +124,58 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         )
         self.opened_scopes.append(scope)
 
+    def __re_open_scope_(self, scope: Scope, symbol_name: str, symbol_semantic_type: str):
+        
+        if len(self.opened_class_scopes) == 0 and scope.scope_id == "global": # en caso de ser clase y no haya clase abierta
+            self.create_scope_register(
+                action="START",
+                scope_label=self.__get_label_scope(scope),
+                direction=Direction(f"{symbol_name}", self.scopes))
+            self.opened_class_scopes.append((scope, symbol_name))
+            return        
+        elif scope.scope_id == "global": # en caso de ser clase y exista clase en el stack
+            last_class_opened, last_class_name = self.opened_class_scopes.pop()
+            if symbol_name != last_class_name:
+                print(self.opened_method_scopes)
+                if len(self.opened_method_scopes) != 0: # cerrar metodos pendientes
+                    self.__close_opened_methods_scopes()
+                self.create_scope_register(
+                    action="END",
+                    scope_label=self.__get_label_scope(last_class_opened),
+                    direction=Direction(f"{last_class_name}", self.scopes))
+                self.create_blank_register()
+
+                self.create_scope_register(
+                    action="START",
+                    scope_label=self.__get_label_scope(scope),
+                    direction=Direction(f"{symbol_name}", self.scopes))
+                self.opened_class_scopes.append((scope, symbol_name))
+                return
+            
+        if len(self.opened_method_scopes) == 0 and symbol_semantic_type == "method": # para metodos y que aun no existan metodos en el stack
+            self.create_scope_register(
+                action="START",
+                scope_label=self.__get_label_method_scope(scope, symbol_semantic_type),
+                direction=Direction(f"{symbol_name}", self.scopes))
+            self.opened_method_scopes.append((scope, symbol_name, symbol_semantic_type))
+            return  
+        elif symbol_semantic_type == "method": # para metodos con un metodo anterior en el stack
+            last_class_opened, last_class_name, last_class_semantic_type = self.opened_method_scopes.pop()
+            if symbol_name != last_class_name:
+                self.create_scope_register(
+                    action="END",
+                    scope_label=self.__get_label_method_scope(last_class_opened, last_class_semantic_type),
+                    direction=Direction(f"{last_class_name}", self.scopes))
+
+                self.create_scope_register(
+                    action="START",
+                    scope_label=self.__get_label_method_scope(scope, symbol_semantic_type),
+                    direction=Direction(f"{symbol_name}", self.scopes))
+                self.opened_method_scopes.append((scope, symbol_name, symbol_semantic_type))
+                return
+
+        print(scope.scope_id, "-", symbol_name, "-", symbol_semantic_type)
+
     def __close_opened_scopes(self):
         while self.opened_scopes:
             scope = self.opened_scopes.pop()
@@ -121,6 +183,20 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 action="END",
                 scope_label=self.__get_label_scope(scope),
                 direction=Direction(f"{scope.scope_id}", self.scopes))
+            
+    def __close_opened_class_scopes(self):
+        scope, scope_name = self.opened_class_scopes.pop()
+        self.create_scope_register(
+            action="END",
+            scope_label=self.__get_label_scope(scope),
+            direction=Direction(f"{scope_name}", self.scopes))
+        
+    def __close_opened_methods_scopes(self):
+        scope, scope_name, semantic_type = self.opened_method_scopes.pop()
+        self.create_scope_register(
+            action="END",
+            scope_label=self.__get_label_method_scope(scope, semantic_type),
+            direction=Direction(f"{scope_name}", self.scopes))
 
     def get_next_label_count(self):
         self.label_counter += 1
@@ -137,9 +213,18 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
     def __get_label_scope(self, scope: Scope):
         scope_id = scope.scope_id
 
-        if scope_id.endswith("(class)"):
+        if scope_id.endswith("global"):
             return f"CL{self.get_next_class_label_count()}"
-        elif scope_id.endswith("(method)"):
+
+        elif scope_id.endswith("blank"):
+            return f" "
+
+        return f"S{self.get_next_label_count()}"
+    
+    def __get_label_method_scope(self, scope: Scope, semantic_type: str):
+        scope_id = scope.scope_id
+
+        if semantic_type == "method":
             return f"MT{self.get_next_method_label_count()}"
         elif scope_id.endswith("blank"):
             return f" "
@@ -176,13 +261,16 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
     def new_build(self):
         self.code = []
+        self.create_blank_register()
         for symbol in self.sequential_symbols:
             scope_id = symbol.scope
+            symbol_name = symbol.name
+            symbol_semantic_type = symbol.semantic_type
 
-            if self.__is_forbidden_scope(scope_id):
+            if self.__is_forbidden_scope(scope_id, symbol_name):
                 continue
 
-            self.__open_scope(self.scopes.get(scope_id))
+            self.__re_open_scope_(self.scopes.get(scope_id), symbol_name, symbol_semantic_type)
             # Re - implement -> Opening scopes
             ast_node: Node = symbol.node
 
@@ -197,6 +285,8 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 continue
 
             noted_node.get_three_direction_code(self, 3)
+
+        self.__close_opened_class_scopes()
 
     def write_file(self, filename: AnyStr = "three_directions_code.tdc"):
         directory = os.path.dirname(os.path.realpath(__file__))
