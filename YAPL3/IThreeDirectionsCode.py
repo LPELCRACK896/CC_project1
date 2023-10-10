@@ -73,6 +73,10 @@ class IThreeDirectionsCode:
     def get_next_method_label_count(self):
         pass
 
+    def get_next_temp_variable(self) -> AnyStr:
+        self.temp_var_count += 1
+        return f"t{self.temp_var_count}"
+
     def add_register(self, register: Register):
         self.code.append(register)
 

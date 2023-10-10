@@ -9,14 +9,14 @@ class Operation:
         self.type_of_operation = type_of_operation
         self.translation_operation_to_str = \
             {
-                "assign": "="
+                "assign": "ASS",
             }
 
     def __str__(self):
         if self.type_of_operation is None:
             return ""
 
-        if self.type_of_operation in self.translation_operation_to_str:
-            return f"{self.translation_operation_to_str[self.type_of_operation]}"
+        if len(self.type_of_operation) > 5:
+            return str(self.type_of_operation[:5]).upper()
 
         return f"{self.type_of_operation}"

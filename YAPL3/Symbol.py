@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field
 import anytree
-from typing import List
+from typing import List, Dict, AnyStr
 import bytes_required as br
-
 
 @dataclass
 class Symbol:
@@ -50,6 +49,9 @@ class Symbol:
         elif self.semantic_type == "attr":
             self.bytes_memory_size = self.get_attr_size()
         return self.bytes_memory_size
+
+    def as_direction_stringify(self) -> str:
+        return f"<DIR>.{self.semantic_type}.{self.name}"
 
     def get_class_size(self):
         # Default return
@@ -135,7 +137,6 @@ class Symbol:
             return self.mem_size__cost_based_on_basic_type()
         # Pending handle complex symbols
         return None
-
 
 
 def get_expression_to_str(expr_node: anytree.Node) -> str:
