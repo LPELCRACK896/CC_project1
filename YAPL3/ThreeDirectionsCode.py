@@ -80,17 +80,21 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
             self.opened_scopes.pop()
 
+
         if len(self.opened_class_scopes) != 0 and scope.scope_id.endswith("(class)"): # fin de clase
             last_class_scope_added = self.opened_class_scopes.pop(0)
             if last_class_scope_added.scope_id != scope.scope_id:
-                self.create_scope_register(
-                    action="END",
-                    scope_label=self.__get_label_scope(last_class_scope_added),
-                    direction=Direction(f"{last_class_scope_added.scope_id}", self.scopes))
+            #     self.create_scope_register(
+            #         action="END",
+            #         scope_label=self.__get_label_scope(last_class_scope_added),
+            #         direction=Direction(f"{last_class_scope_added.scope_id}", self.scopes))
 
+            #     self.create_blank_register()
+            # else:
+            #     self.opened_class_scopes.append(last_class_scope_added)
+            
+                self.__close_opened_scopes()
                 self.create_blank_register()
-            else:
-                self.opened_class_scopes.append(last_class_scope_added)
 
         self.create_scope_register(
                 action="START",
