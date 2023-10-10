@@ -18,6 +18,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
     opened_class_scopes: List[Scope]
     opened_method_scopes: List[Scope]
+    opened_let_scopes: List[Scope]
     opened_scopes: List[Scope]
 
     def __init__(self, scopes: Dict[AnyStr, Scope], content, sequential_symbols: List[Symbol]):
@@ -25,6 +26,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         self.opened_scopes = []
         self.opened_class_scopes = []
         self.opened_method_scopes = []
+        self.opened_let_scopes = []
 
     def __str__(self):
         return super().__str__()
@@ -172,6 +174,25 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                     direction=Direction(f"{symbol_name}", self.scopes))
                 self.opened_method_scopes.append((scope, symbol_name, symbol_semantic_type))
                 return
+            
+        if scope.scope_id.endswith("let)"): # para los lets 
+            last_register = self.code[-1].first_direction
+            if str(last_register) != str(f"{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}"):        
+                self.create_scope_register(
+                    action="START",
+                    scope_label=self.__get_label_scope(scope),
+                    direction=Direction(f"{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
+                self.opened_let_scopes.append((scope))
+                return 
+        elif len(self.opened_let_scopes) != 0: # para cerrar los lets y sin mas scopes abiertos
+            last_opened_scope = self.opened_let_scopes[-1]
+            if not scope.scope_id.endswith(last_opened_scope.scope_id.split("-")[3]):
+                self.create_scope_register(
+                action="END",
+                scope_label=self.__get_label_scope(last_opened_scope),
+                direction=Direction(f"{last_opened_scope.scope_id.split("-")[2].split("(")[0]}-{last_opened_scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
+            self.opened_let_scopes.pop()
+            return 
 
     def __close_opened_scopes(self):
         while self.opened_scopes:
@@ -247,9 +268,6 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 noted_node = create_noted_node(ast_node, self.content, self.scopes, symbol)
 
                 if noted_node is None:
-
-                    """                    class_regis = Register()
-                    self.add_register(class_regis)"""
                     continue
 
                 noted_node.get_three_direction_code(self, 3)
@@ -277,8 +295,6 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             noted_node = create_noted_node(ast_node, self.content, self.scopes, symbol)
 
             if noted_node is None:
-                """                    class_regis = Register()
-                self.add_register(class_regis)"""
                 continue
 
             noted_node.get_three_direction_code(self, 3)
