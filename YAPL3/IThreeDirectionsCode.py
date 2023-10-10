@@ -17,13 +17,21 @@ class IThreeDirectionsCode:
     scopes: Dict[AnyStr, Scope]
     content: Dict[AnyStr, Dict[AnyStr, Symbol]]
 
+    label_class_counter: int
+    label_method_counter: int
+
     def __init__(self, scopes: Dict[AnyStr, Scope], content):
 
         self.scopes = scopes
         self.content = content
 
-        self.temp_var_count = 1
-        self.label_counter = 1
+        self.temp_var_count = 0
+
+        self.label_counter = 0
+
+        self.label_class_counter = 0
+        self.label_method_counter = 0
+
         self.code = []
 
     def __str__(self):

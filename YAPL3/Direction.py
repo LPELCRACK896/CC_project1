@@ -1,6 +1,7 @@
 from typing import AnyStr, Dict
 from Symbol import Symbol
 from Scope import Scope
+from Operation import Operation
 
 
 class Direction:
@@ -11,6 +12,9 @@ class Direction:
     def __init__(self, content: AnyStr | Symbol, scopes: Dict[AnyStr, Scope]):
         self.content = content
         self.scopes = scopes
+
+    def __str__(self):
+        return str(self.content)
 
     def update_real_tag(self, real_tag: str):
         self.content = real_tag

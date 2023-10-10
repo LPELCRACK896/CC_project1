@@ -3,6 +3,7 @@ from Direction import Direction
 from Operation import Operation
 
 class Register:
+
     tag: AnyStr
     first_direction: Direction | None
     second_direction: Direction | None
@@ -15,25 +16,24 @@ class Register:
 
     temporary_tag_equivalences: Dict[AnyStr, AnyStr]  # Type of waiting instruction: Temporary
 
-    def __init__(self, first_direction, second_direction, third_direction, first_operation_alias: AnyStr, second_operation_alias: AnyStr):
+    def __init__(self, tag: str, first_direction: Direction):
         self.first_direction = first_direction
-        self.second_direction = second_direction
-        self.third_direction = third_direction
+        self.second_direction = None
+        self.third_direction = None
+        self.tag = tag
 
-        self.first_operation = Operation(first_operation_alias)
-        self.second_operation = Operation(second_operation_alias)
-
-        self.temporary_tag_equivalences = {}
-        self.temporary_tag_count = 1
+    def set_first_operation(self, operation: Operation):
+        self.first_operation = operation
 
     def __str__(self):
         if self.first_direction and self.second_direction and self.third_direction:
-            return f"{self.first_direction} {self.first_operation}" \
+            return f"{self.tag} {self.first_direction} {self.first_operation}" \
                    f" {self.second_direction} {self.second_operation} {self.third_direction}"
 
         elif self.first_direction and self.second_direction:
-            return f"{self.first_direction} {self.first_operation} {self.second_direction}"
+            return f"{self.tag} {self.first_direction} {self.first_operation} {self.second_direction}"
 
+        return f"{self.tag} {self.first_operation} {self.first_direction}"
         # Is possible any other variant???
 
     def create_temporary_tag(self, waiting_tag_reference):

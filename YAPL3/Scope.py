@@ -21,6 +21,9 @@ class Scope:
         self.scope_id = scope_id  # identificador de alcance
         self.content = {}
 
+    def has_higher_hierarchy(self, other_scope):
+        return not self.scope_id.startswith(other_scope.scope_id)
+
     def get_parent(self):
         """Devuelve el scope padre. None en caso no tenga. 
 
