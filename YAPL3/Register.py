@@ -42,13 +42,16 @@ class Register:
 
     def __str__(self):
         if self.first_direction and self.second_direction and self.third_direction:
-            return f"{self.tag} {self.first_direction} {self.first_operation}" \
+            return f"\t{self.tag} {self.first_direction} {self.first_operation}" \
                    f" {self.second_direction} {self.second_operation} {self.third_direction}"
 
         elif self.first_direction and self.second_direction:
-            return f"{self.tag} {self.first_direction} {self.first_operation} {self.second_direction}"
+            return f"\t{self.tag} {self.first_direction} {self.first_operation} {self.second_direction}"
 
-        return f"{self.tag} {self.first_operation} {self.first_direction}"
+        if self.tag.startswith("CL"):
+            return f"{self.tag} {self.first_operation} {self.first_direction}"
+        else:
+            return f"\t{self.tag} {self.first_operation} {self.first_direction}"
         # Is possible any other variant???
 
     def create_temporary_tag(self, waiting_tag_reference):
