@@ -432,10 +432,10 @@ class AssignationNotedNote(NotedNode):
         symbols_scope = self.scopes.get(self.symbol.scope)
         nn_value = create_noted_node(self.children[2], self.context, self.scopes, self.symbol)
         if nn_value is None:
-            self.add_error("Invalid expression::",
+            self.add_error("Expresión Inválida::",
                            SemanticError(
-                               name="Invalid expression::",
-                               details=f"Assignation tried to get value from {self.children[2]}",
+                               name="Expresión Inválida::",
+                               details=f"La asignación intentó obtener valor de {self.children[2]}",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line
@@ -466,20 +466,20 @@ class AssignationNotedNote(NotedNode):
         var_expected_type = self.get_type()
 
         if var_expected_type is None:
-            self.add_error("In-existing class referenced::",
+            self.add_error("Clase inexistente referenciada::",
                            SemanticError(
-                               name="In-existing class referenced::",
-                               details=f"Assignation got variable with in-existing type declared.",
+                               name="Clase inexistente referenciada::",
+                               details=f"La asignación obtuvo una variable con un tipo inexistente recibido.",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line
                            ))
 
         if var_value_type is None:
-            self.add_error("In-existing class referenced::",
+            self.add_error("Clase inexistente referenciada::",
                            SemanticError(
-                               name="In-existing class referenced::",
-                               details=f"Assignation got variable with in-existing type received.",
+                               name="Clase inexistente referenciada::",
+                               details=f"La asignación obtuvo una variable con un tipo inexistente recibido.",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line
@@ -491,21 +491,21 @@ class AssignationNotedNote(NotedNode):
             valid_value_type = verify_existing_type(var_value_type, self.scopes)
 
             if not valid_expected_type:
-                self.add_error("In-existing class referenced::",
+                self.add_error("Clase inexistente referenciada::",
                                SemanticError(
-                                   name="In-existing class referenced::",
-                                   details=f"Assignation got variable "
-                                           f"with in-existing type received {var_expected_type}",
+                                   name="Clase inexistente referenciada::",
+                                   details=f"La asignación obtuvo una variable "
+                                           f"con un tipo inexistente recibido {var_expected_type}",
                                    symbol=self.symbol,
                                    scope=symbols_scope,
                                    line=self.symbol.start_line
                                ))
 
             if not valid_value_type:
-                self.add_error("In-existing class referenced::",
+                self.add_error("Clase inexistente referenciada::",
                                SemanticError(
-                                   name="In-existing class referenced::",
-                                   details=f"Assignation got variable with in-existing type expected {var_value_type}.",
+                                   name="Clase inexistente referenciada::",
+                                   details=f"La asignación obtuvo una variable con un tipo inexistente recibido {var_value_type}.",
                                    symbol=self.symbol,
                                    scope=symbols_scope,
                                    line=self.symbol.start_line
@@ -513,11 +513,11 @@ class AssignationNotedNote(NotedNode):
 
             if valid_expected_type and valid_value_type:
                 if not verify_matching_type(var_expected_type, var_value_type, self.scopes):
-                    self.add_error("Incoherence types::",
+                    self.add_error("Tipos incoherentes::",
                                    SemanticError(
-                                       name="Incoherence types::",
-                                       details=f"On assignation expected type {var_expected_type}"
-                                               f" does not match the received type {var_value_type}",
+                                       name="Tipos incoherentes::",
+                                       details=f"En la asignación se esperaba tipo {var_expected_type}"
+                                               f" no coincide con el tipo recibido {var_value_type}",
                                        symbol=self.symbol,
                                        scope=symbols_scope,
                                        line=self.symbol.start_line
