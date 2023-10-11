@@ -349,8 +349,9 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
         self.__close_opened_class_scopes()
 
-        while self.code[-1].tag != " ":# quitar llamada de main
-            self.code.pop() 
+        for i, register in enumerate(self.code):
+            if str(register.first_direction).startswith("(newMain).main()"):
+                self.code.pop(i)
 
 
     def write_file(self, filename: AnyStr = "three_directions_code.tdc"):
