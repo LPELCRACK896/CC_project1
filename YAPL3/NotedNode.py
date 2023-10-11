@@ -247,7 +247,7 @@ class BasicNotedNode(NotedNode):
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
         if must_create_register:
-            next_tag = f"L{tdc.get_next_label_count()}"
+            next_tag = f""
             direction = Direction(self.get_value(), self.scopes)
 
             register = Register(next_tag, direction)
@@ -260,7 +260,7 @@ class BasicNotedNode(NotedNode):
         return self.get_value()
 
         """if not must_create_register and num_directions_available == 3:
-            next_tag = f"L{tdc.get_next_label_count()}"
+            next_tag = f""
             value_direction = Direction(self.get_value(), self.scopes)
             temporary_var = tdc.get_next_temp_variable()
             tempor_var_direction = Direction(temporary_var, self.scopes)
@@ -391,7 +391,7 @@ class AssignationNotedNote(NotedNode):
 
         value_direction_str = noted_node_value_assigned.get_three_direction_code(tdc, 1, False)
 
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         symbol_direction = Direction(symbol_direction_str, self.scopes)
         value_direction = Direction(value_direction_str, self.scopes)
 
@@ -543,7 +543,7 @@ class AttributeNotedNode(NotedNode):
         nn_value = create_noted_node(self.children[4], self.context, self.scopes, self.symbol) if len(self.children)>4 else None
 
         if nn_value is None:
-            tag = f"L{tdc.get_next_label_count()}"
+            tag = f""
             register: Register = Register(tag, symbol_direction)
             operation = Operation(None)
             register.set_first_operation(operation)
@@ -553,7 +553,7 @@ class AttributeNotedNode(NotedNode):
         first_operation = Operation("assign")
         value_direction = nn_value.get_three_direction_code(tdc, 1, False)
 
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         register: Register = Register(tag, symbol_direction)
 
         register.set_first_operation(first_operation)
@@ -667,7 +667,7 @@ class NewObjectNotedNode(NotedNode):
                                  must_create_register=True):
 
         instance = self.get_type()
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
 
         class_reference_direction = Direction(instance, self.scopes)
         create_operation = Operation("NEW")
@@ -803,7 +803,7 @@ class IdentifierNotedNode(NotedNode):
         symbol_direction = Direction(symbol_declaration.as_direction_stringify(), self.scopes)
 
         if must_create_register:
-            next_tag = f"L{tdc.get_next_label_count()}"
+            next_tag = f""
 
             register = Register(next_tag, symbol_direction)
 
@@ -1134,7 +1134,7 @@ class DispatchNotedNode(NotedNode):
         return [item for item in parenthesis_content if item.name != ","]
 
     def create_temp_on_param_value(self, tdc: IThreeDirectionsCode, param_value: str) -> str:
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         temporal_variable = tdc.get_next_temp_variable()
 
         temporal_variable_direction = Direction(temporal_variable, self.scopes)
@@ -1150,7 +1150,7 @@ class DispatchNotedNode(NotedNode):
         return temporal_variable
 
     def create_param_register_on_param(self, tdc: IThreeDirectionsCode, temporary_variable: AnyStr):
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         operation = Operation("PARAM")
         direction = Direction(temporary_variable, self.scopes)
         register = Register(tag, direction)
@@ -1200,7 +1200,7 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         method_symbol: Symbol = get_symbol_method(self.children[4].name, symbol_class, self.scopes)
         direction_method_symbol = method_symbol.as_direction_stringify()
 
-        tag_define_call = f"L{tdc.get_next_label_count()}"
+        tag_define_call = f""
         temporal_variable_define_call = tdc.get_next_temp_variable()
 
         on_operation = Operation("ON")
@@ -1231,7 +1231,7 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         call_operation = Operation("CALL")
         with_operation = Operation("WITH")
 
-        tag_call = f"L{tdc.get_next_label_count()}"
+        tag_call = f""
         temporary_make_call = tdc.get_next_temp_variable()
 
         register = Register(tag_call, temporary_make_call)
@@ -1361,7 +1361,7 @@ class StaticDispatchNotedNode(DispatchNotedNode):
 
         instance_temporal_variable = instance.get_three_direction_code(tdc, 1, False)
 
-        tag_define_call = f"L{tdc.get_next_label_count()}"
+        tag_define_call = f""
         temporal_variable_define_call = tdc.get_next_temp_variable()
         on_operation = Operation("ON")
         equal_operation = Operation("=")
@@ -1393,7 +1393,7 @@ class StaticDispatchNotedNode(DispatchNotedNode):
         call_operation = Operation("CALL")
         with_operation = Operation("WITH")
 
-        tag_call = f"L{tdc.get_next_label_count()}"
+        tag_call = f""
         temporary_make_call = tdc.get_next_temp_variable()
 
         register = Register(tag_call, temporary_make_call)
@@ -1471,7 +1471,7 @@ class FunctionCallDispatchNotedNode(DispatchNotedNode):
 
         direction_method_symbol = symbol_method.as_direction_stringify()
 
-        tag_define_call = f"L{tdc.get_next_label_count()}"
+        tag_define_call = f""
         temporal_variable_define_call = tdc.get_next_temp_variable()
         on_operation = Operation("ON")
         equal_operation = Operation("=")
@@ -1501,7 +1501,7 @@ class FunctionCallDispatchNotedNode(DispatchNotedNode):
         call_operation = Operation("CALL")
         with_operation = Operation("WITH")
 
-        tag_call = f"L{tdc.get_next_label_count()}"
+        tag_call = f""
         temporary_make_call = tdc.get_next_temp_variable()
 
         register = Register(tag_call, temporary_make_call)
@@ -1594,7 +1594,7 @@ class IsVoidNotedNode(NotedNode):
         exp_to_evaluate_dir = nn_expt_to_evaluate.get_three_direction_code(tdc, 1, False)
 
         isvoid_operation = Operation("ISVOID")
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         if not must_create_register:
             temp_variable = tdc.get_next_temp_variable()
             register = Register(tag, temp_variable)
@@ -1666,7 +1666,7 @@ class NotOperatorNotedNode(NotedNode):
         exp_to_evaluate_dir = nn_expt_to_evaluate.get_three_direction_code(tdc, 1, False)
 
         not_operation = Operation("NOT")
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         if not must_create_register:
             temp_variable = tdc.get_next_temp_variable()
             register = Register(tag, temp_variable)
@@ -1867,7 +1867,7 @@ class BitWiseNotNotedNode(NotedNode):
         exp_to_evaluate_dir = nn_expt_to_evaluate.get_three_direction_code(tdc, 1, False)
 
         not_operation = Operation("BWNOT")
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         if not must_create_register:
             temp_variable = tdc.get_next_temp_variable()
             register = Register(tag, temp_variable)
@@ -2080,7 +2080,7 @@ class IfConditionalNotedNode(ConditionNotedNode):
         goto = Operation("GOTO")
         ifnot = Operation("IFNOT")
 
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         register = Register(tag, condition_direction)
         register.set_first_operation(ifnot)
         register.set_second_operation(goto)
@@ -2164,7 +2164,7 @@ class ArithmeticLogicNotedNode(NotedNode):
         first_op_dir = nn_item_1.get_three_direction_code(tdc, 1, False)
         second_op_dir = nn_item_2.get_three_direction_code(tdc, 1, False)
 
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         ar_com_operator = Operation(self.operator_equivalences_tdc[to_string_node(self.children[1])])
 
         if not must_create_register:
@@ -2364,7 +2364,7 @@ class ReturnStatementNotedNode(NotedNode):
         return_operation = Operation("RETURN")
         returned_direction = Direction(dir_return_exp, self.scopes)
 
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         register = Register(tag, returned_direction)
         register.set_first_operation(return_operation)
 
@@ -2564,7 +2564,7 @@ class FormalNotedNode(NotedNode):
         symbol_direction = Direction(symbol_declaration.as_direction_stringify(), self.scopes)
         nn_value = create_noted_node(self.children[4], self.context, self.scopes, self.symbol) if len(self.children)>4 else None
 
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         register: Register = Register(tag, symbol_direction)
         operation = Operation(None)
         register.set_first_operation(operation)
@@ -2611,7 +2611,7 @@ class LetVariableNotedNode(NotedNode):
 
         symbol_direction = Direction(symbol_declaration.as_direction_stringify(), self.scopes)
         if len(self.children) < 3:
-            tag = f"L{tdc.get_next_label_count()}"
+            tag = f""
             register: Register = Register(tag, symbol_direction)
             operation = Operation(None)
             register.set_first_operation(operation)
@@ -2623,7 +2623,7 @@ class LetVariableNotedNode(NotedNode):
         first_operation = Operation("assign")
         value_direction = nn_value.get_three_direction_code(tdc, 1, False)
 
-        tag = f"L{tdc.get_next_label_count()}"
+        tag = f""
         register: Register = Register(tag, symbol_direction)
         register.set_first_operation(first_operation)
         register.set_second_direction(value_direction)

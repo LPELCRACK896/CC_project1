@@ -46,6 +46,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             if self.__is_forbidden_scope(scope_id, symbol_name):
                 continue
 
+            self.conditional_listener(symbol)
             self.__re_open_scope_(self.scopes.get(scope_id), symbol_name, symbol_semantic_type)
 
             ast_node: Node = symbol.node
@@ -58,7 +59,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             if noted_node is None:
                 continue
 
-            self.conditional_listener(symbol)
+
             noted_node.get_three_direction_code(self, 3)
 
         self.__close_opened_class_scopes()
