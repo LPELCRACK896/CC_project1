@@ -259,6 +259,23 @@ class BasicNotedNode(NotedNode):
 
         return self.get_value()
 
+        """if not must_create_register and num_directions_available == 3:
+            next_tag = f"L{tdc.get_next_label_count()}"
+            value_direction = Direction(self.get_value(), self.scopes)
+            temporary_var = tdc.get_next_temp_variable()
+            tempor_var_direction = Direction(temporary_var, self.scopes)
+            register = Register(next_tag, tempor_var_direction)
+
+            operation = Operation("=")
+            register.set_first_operation(operation)
+            register.set_second_direction(value_direction)
+
+            tdc.add_register(register)
+
+            return temporary_var"""
+
+        return self.get_value()
+
     def get_value(self) -> str | None:
         return self.children[0].name
 
@@ -1118,6 +1135,30 @@ class DispatchNotedNode(NotedNode):
         parenthesis_content = self.children[position_open_parenthesis + 1:position_closing_parenthesis]
         return [item for item in parenthesis_content if item.name != ","]
 
+    def create_temp_on_param_value(self, tdc: IThreeDirectionsCode, param_value: str) -> str:
+        tag = f"L{tdc.get_next_label_count()}"
+        temporal_variable = tdc.get_next_temp_variable()
+
+        temporal_variable_direction = Direction(temporal_variable, self.scopes)
+        value_direction = Direction(param_value, self.scopes)
+        operation = Operation("=")
+
+        register = Register(tag, temporal_variable_direction)
+        register.set_first_operation(operation)
+        register.set_second_direction(value_direction)
+
+        tdc.add_register(register)
+
+        return temporal_variable
+
+    def create_param_register_on_param(self, tdc: IThreeDirectionsCode, temporary_variable: AnyStr):
+        tag = f"L{tdc.get_next_label_count()}"
+        operation = Operation("PARAM")
+        direction = Direction(temporary_variable, self.scopes)
+        register = Register(tag, direction)
+        register.set_first_operation(operation)
+        tdc.add_register(register)
+
     def get_alias(self):
         return to_string_node(self.node)
 
@@ -1152,7 +1193,65 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        return "NI"
+
+        instance_expr = self.children[0]
+        instance: NotedNode = self._get_instance(instance_expr)
+        instance_temporal_variable = instance.get_three_direction_code(tdc, 1, False)
+
+        symbol_class = get_symbol_class(self.children[2].name, self.scopes)
+        method_symbol: Symbol = get_symbol_method(self.children[4].name, symbol_class, self.scopes)
+        direction_method_symbol = method_symbol.as_direction_stringify()
+
+        tag_define_call = f"L{tdc.get_next_label_count()}"
+        temporal_variable_define_call = tdc.get_next_temp_variable()
+
+        on_operation = Operation("ON")
+        equal_operation = Operation("=")
+        call_direction = Direction(direction_method_symbol, self.scopes)
+
+        register_def_call = Register(tag_define_call, temporal_variable_define_call)
+
+        register_def_call.set_second_direction(call_direction)
+        register_def_call.set_third_direction(instance_temporal_variable)
+
+        register_def_call.set_first_operation(equal_operation)
+        register_def_call.set_second_operation(on_operation)
+        tdc.add_register(register_def_call)
+
+        params = self._deconstruct_given_parameters(5, -1)
+        temporal_parameters = []
+
+        for param in params:
+            nn_node: NotedNode = self._create_sub_noted_node(param, self.symbol)
+            param_value = nn_node.get_three_direction_code(tdc, 3, False)
+            temporal_variable = self.create_temp_on_param_value(tdc, param_value)
+            temporal_parameters.append(temporal_variable)
+
+        for temporal_var in temporal_parameters:
+            self.create_param_register_on_param(tdc, temporal_var)
+
+        call_operation = Operation("CALL")
+        with_operation = Operation("WITH")
+
+        tag_call = f"L{tdc.get_next_label_count()}"
+        temporary_make_call = tdc.get_next_temp_variable()
+
+        register = Register(tag_call, temporary_make_call)
+
+        register.set_first_operation(equal_operation)
+        register.set_second_operation(call_operation)
+        register.set_third_operation(with_operation)
+
+        register.set_second_direction(temporal_variable_define_call)
+
+        direction_num_params = Direction(str(len(temporal_parameters)), self.scopes)
+        register.set_third_direction(direction_num_params)
+
+        tdc.add_register(register)
+
+        if must_create_register: # wants temp_var
+            return ""
+        return temporary_make_call
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -2318,7 +2417,7 @@ def create_noted_node(node: Node,
     elif type_of_expr == "boolean_false":
         noted_node = BooleanNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "attribute":
-        noted_node = AttributeNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = AttributeNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "object_creation":
         noted_node = NewObjectNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "parenthesized_expr":
