@@ -46,8 +46,9 @@ class Register:
                    f" {self.second_direction} {self.second_operation} {self.third_direction}"
 
         elif self.first_direction and self.second_direction:
+            if self.second_operation:
+                return f"\t{self.tag} {self.first_direction} {self.first_operation} {self.second_direction} {self.second_operation}"
             return f"\t{self.tag} {self.first_direction} {self.first_operation} {self.second_direction}"
-
         if self.tag.startswith("CL"):
             return f"{self.tag} {self.first_operation} {self.first_direction}"
         else:

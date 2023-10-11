@@ -256,7 +256,7 @@ class BasicNotedNode(NotedNode):
             register.set_first_operation(operation)
 
             tdc.add_register(register)
-        value = self.get_value()
+
         return self.get_value()
 
     def get_value(self) -> str | None:
@@ -625,7 +625,33 @@ class NewObjectNotedNode(NotedNode):
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        return "NI"
+
+        instance = self.get_type()
+        tag = f"L{tdc.get_next_label_count()}"
+
+        class_reference_direction = Direction(instance, self.scopes)
+        create_operation = Operation("NEW")
+
+        if not must_create_register:  # Is being called from other, so it needs temporary_variable
+            temporary_variable = tdc.get_next_temp_variable()
+
+            temporary_variable_direction = Direction(temporary_variable, self.scopes)
+
+            first_operation = Operation("=")
+
+            register: Register = Register(tag, temporary_variable_direction)
+
+            register.set_first_operation(first_operation)
+            register.set_second_operation(create_operation)
+            register.set_second_direction(class_reference_direction)
+            tdc.add_register(register)
+
+            return temporary_variable
+
+        register: Register = Register(tag, class_reference_direction)
+        register.set_first_operation(create_operation)
+        tdc.add_register(register)
+        return ""
 
     def get_value(self) -> str | None:
         default_res = self.get_default_value_from_typo()
@@ -732,7 +758,21 @@ class IdentifierNotedNode(NotedNode):
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        return "NI"
+        symbol_declaration: Symbol = self.get_previous_declaration(self.get_alias())
+
+        symbol_direction = Direction(symbol_declaration.as_direction_stringify(), self.scopes)
+
+        if must_create_register:
+            next_tag = f"L{tdc.get_next_label_count()}"
+
+            register = Register(next_tag, symbol_direction)
+
+            operation = Operation(None)
+            register.set_first_operation(operation)
+
+            tdc.add_register(register)
+
+        return symbol_declaration.as_direction_stringify()
 
     def get_previous_declaration(self, name: str):
         symbols_scope = self.scopes.get(self.symbol.scope)
