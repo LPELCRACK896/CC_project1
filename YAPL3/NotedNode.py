@@ -1492,10 +1492,6 @@ class IsVoidNotedNode(NotedNode):
         tdc.add_register(register)
         return ""
 
-
-
-        return ""
-
     def get_alias(self):
         return " ".join([leave.name for leave in self.node.leaves])
 
@@ -1546,6 +1542,12 @@ class NotOperatorNotedNode(NotedNode):
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
+
+        nn_expt_to_evaluate = self._create_sub_noted_node(self.children[1], self.symbol)
+
+        exp_to_evaluate_dir = nn_expt_to_evaluate.get_three_direction_code(tdc, 1, False)
+
+
         return "NI"
 
     def get_alias(self):
@@ -1950,7 +1952,7 @@ class ArithmeticLogicNotedNode(NotedNode):
         self.need_scopes = True
         self.needs_context = True
 
-        self.operation = self.children[1].name
+        self.operation = self.children[1].children[0].name
 
         self.type_of_operation = "arithmetic" if self.operation in self.arithmetic_operators else "comparer"
 

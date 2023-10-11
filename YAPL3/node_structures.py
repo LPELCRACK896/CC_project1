@@ -118,7 +118,7 @@ def identify_node(node: Node):
 
     # Check for arithmetic or comparison expression
     if len(node.children) > 2:
-        if node.children[1].name in operators:
+        if node.children[1].name == "op":
             return expressions.index("arithmetic_or_comparison")
 
     if len(node.children) == 1:

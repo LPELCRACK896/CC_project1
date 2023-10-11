@@ -2,21 +2,20 @@ grammar YAPL3;
 
 program: classDef* (expr';')* EOF;
 
-
-
-classDef: RW_CLASS CLASS_ID (RW_INHERITS (CLASS_ID  | type))? '{' feature* '}';
+// Parser rules
+classDef: RW_CLASS CLASS_ID (RW_INHERITS (CLASS_ID | type))? '{' feature* '}';
 feature: attr | method;
 attr: ID ':' type ('<-' expr)? ';';
 method: ID '(' formals ')' ':' type '{' (expr ';')* func_return '}';
 formals: formal? (',' formal)*;
 formal: ID ':' type;
 type: ID | 'SELF_TYPE' | 'Int' | 'String' | 'Bool' | 'IO' | 'Object';
-expr: 
-     ID '<-' expr
+expr:
+      ID '<-' expr
     | expr '@' (type | CLASS_ID) '.' ID '(' (expr (',' expr)* )?')'
     | ID '(' (expr (',' expr)* )? ')'
-    | 'if' (expr)  'then' expr 'else' expr 'fi'
-    | 'while'  (expr) 'loop' expr 'pool'
+    | 'if' expr 'then' expr 'else' expr 'fi'
+    | 'while' expr 'loop' expr 'pool'
     | '{' expr (';' expr)* '}'
     | 'let' (ID ':' type ('<-' expr)?)? (',' ID ':' type ('<-' expr)?)* 'in' '[' expr ']'
     | expr '.' ID '(' (expr (',' expr)* )? ')'
@@ -24,7 +23,7 @@ expr:
     | 'isvoid' expr
     | 'not' expr
     | '~' expr
-    | expr op=OP expr
+    | expr op expr
     | '(' expr ')'
     | ID
     | INT
@@ -32,22 +31,11 @@ expr:
     | RW_FALSE
     | RW_TRUE
     ;
+func_return: 'return' expr ';';
 
-func_return:
-    'return' expr ';'
-    ;
-comparison_operators:
-    | '<'
-    | '>'
-    | '<='
-    | '>='
-    | '=='
-    | '!='
-    ;
+op: OP | LE | GE;
 
 // Lexer rules
-
-// Palabras reservadas - Case Insensitive
 RW_INHERITS: ('I'|'i')('N'|'n')('H'|'h')('E'|'e')('R'|'r')('I'|'i')('T'|'t')('S'|'s');
 RW_ISVOID: ('I'|'i')('S'|'s')('V'|'v')('O'|'o')('I'|'i')('D'|'d');
 RW_WHILE: ('W'|'w')('H'|'h')('I'|'i')('L'|'l')('E'|'e');
@@ -64,15 +52,14 @@ RW_IN: ('I'|'i')('N'|'n');
 RW_TRUE: 'true';
 RW_FALSE: 'false';
 
-//Otros
-
-
-
 ID: [a-z][a-zA-Z0-9]*;
 INT: [0-9]+;
 STRING: '"' (~["\r\n\\] | '\\' ["\\/bfnrt])* '"';
 WS : [ \t\r\n]+ -> skip;
 COMMENT: '(*' .*? '*)' -> skip;
 INLINE_COMMENT: '--' ~('\n')* -> skip;
-OP: ('+' | '-' | '*' | '/' | '<' | '<=' | '=' | '>=' | '>');
 CLASS_ID: [A-Z][a-zA-Z0-9]*;
+
+OP: '+' | '-' | '*' | '/' | '<' | '=' | '>';
+LE: '<=';
+GE: '>=';
