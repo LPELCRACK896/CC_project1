@@ -116,10 +116,10 @@ class NotedNode:
         nn_node = create_noted_node(node, self.context, self.scopes, symbol)
 
         if nn_node is None:
-            self.add_error("Invalid expression::",
+            self.add_error("Expresión Inválida::",
                            SemanticError(
-                               name="Invalid expression::",
-                               details=f"f{self.name} was unable to get expression from {to_string_node(node)}",
+                               name="Expresión Inválida::",
+                               details=f"f{self.name} fue incapaz de conseguir la expresión de {to_string_node(node)}",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line
@@ -134,10 +134,10 @@ class NotedNode:
         if not valid_type:
             symbols_scope = self.scopes.get(self.symbol.scope)
             self.add_error(
-                "Un-existing type::",
+                "Tipo inexistente::",
                 SemanticError(
-                    name="Un-existing type::",
-                    details=f"On {self.name} got un-existing type: {typo_received}",
+                    name="Tipo inexistente::",
+                    details=f"En {self.name} se obtuvo un tipo inexistente: {typo_received}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -166,10 +166,10 @@ class NotedNode:
 
         if not verify_existing_type(return_type, self.scopes):
             self.add_error(
-                "Undeclared class::",
+                "Clase sin declarar::",
                 SemanticError(
-                    name="Undeclared class::",
-                    details=f"Method call found invalid firm with return type {return_type}",
+                    name="Clase sin declarar::",
+                    details=f"La llamada al método encontró una firma no válida con un tipo de devolución {return_type}",
                     symbol=self.symbol,
                     scope=self.scopes.get("global"),
                     line=self.symbol.start_line
@@ -182,10 +182,10 @@ class NotedNode:
         variable_declaration = search_declaration(variable_name, self.symbol, self.scopes, "variable")
 
         if variable_declaration is None:
-            self.add_error("Undeclared variable::",
+            self.add_error("Variable sin declarar::",
                            SemanticError(
-                               name="Undeclared variable::",
-                               details=f"{self.name} tried to use undeclared variable {variable_name}",
+                               name="Variable sin declarar::",
+                               details=f"{self.name} trato de usar una variable sin declarar {variable_name}",
                                symbol=self.symbol,
                                scope=self.symbols_scope,
                                line=self.symbol.start_line
@@ -197,10 +197,10 @@ class NotedNode:
         method_declaration = search_declaration(method_name, self.symbol, self.scopes, "method")
 
         if method_declaration is None:
-            self.add_error("Undeclared method::",
+            self.add_error("Método sin declarar::",
                            SemanticError(
-                               name="Undeclared variable::",
-                               details=f"{self.name} tried to use inaccessible method {method_name}",
+                               name="Método sin declarar::",
+                               details=f"{self.name} trato de usar un método innacesible {method_name}",
                                symbol=self.symbol,
                                scope=self.symbols_scope,
                                line=self.symbol.start_line
@@ -575,10 +575,10 @@ class AttributeNotedNode(NotedNode):
             return None
         nn_value = create_noted_node(self.children[4], self.context, self.scopes, self.symbol)
         if nn_value is None:
-            self.add_error("Invalid expression::",
+            self.add_error("Expresión Inválida::",
                            SemanticError(
-                               name="Invalid expression::",
-                               details=f"Attribute assignation tried to get value from {self.children[4]}",
+                               name="Expresión Inválida::",
+                               details=f"La asignación de atributos intentó obtener valor de {self.children[4]}",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line
@@ -593,11 +593,11 @@ class AttributeNotedNode(NotedNode):
         symbols_scope = self.scopes.get(self.symbol.scope)
         if not verify_existing_type(attr_type, self.scopes):
             self.add_error(
-                "Invalid type declared on attribute::",
+                "Tipo no válido declarado en el atributo::",
                 SemanticError(
-                    name="Invalid type declared on attribute::",
-                    details=f"Variable declared (ln {self.symbol.start_line}) has invalid type '{attr_type}'"
-                            f"is not recognized in file. Make sure to either set primitive type or own class.",
+                    name="Tipo no válido declarado en el atributo::",
+                    details=f"Variable declarada (ln {self.symbol.start_line}) tiene un tipo inválido '{attr_type}'"
+                            f"no se reconoce en el archivo. Asegúrese de establecer un tipo primitivo o una clase propia.",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -629,21 +629,21 @@ class AttributeNotedNode(NotedNode):
                 if var_value_type == "Int" and var_expected_type == "Bool":
                     value = int(value)
                     if value != 0 and value != 1:
-                        self.add_error("Incoherence types::",
+                        self.add_error("Tipos incoherentes::",
                                 SemanticError(
-                                    name="Incoherence types::",
-                                    details=f"On attribute assignation expected type {var_expected_type}"
-                                            f" does not match the received type {var_value_type} and not posible to cast",
+                                    name="Tipos incoherentes::",
+                                    details=f"En la asignación se esperaba tipo {var_expected_type}"
+                                            f" no coincide con el tipo recibido {var_value_type} y no es posible castear implícitamente",
                                     symbol=self.symbol,
                                     scope=symbols_scope,
                                     line=self.symbol.start_line
                                 ))    
                 else:
-                    self.add_error("Incoherence types::",
+                    self.add_error("Tipos incoherentes::",
                                 SemanticError(
-                                    name="Incoherence types::",
-                                    details=f"On attribute assignation expected type {var_expected_type}"
-                                            f" does not match the received type {var_value_type}",
+                                    name="Tipos incoherentes::",
+                                    details=f"En la asignación se esperaba tipo {var_expected_type}"
+                                            f" no coincide con el tipo recibido {var_value_type}",
                                     symbol=self.symbol,
                                     scope=symbols_scope,
                                     line=self.symbol.start_line
@@ -710,10 +710,10 @@ class NewObjectNotedNode(NotedNode):
 
     def get_previous_declaration(self, name: str):
         if not verify_existing_type(name, self.scopes):
-            self.add_error("Undeclared class::",
+            self.add_error("Clase sin declarar::",
                            SemanticError(
-                               name="Undeclared class::",
-                               details=f"new operator tried to create object from undefined {name}",
+                               name="Clase sin declarar::",
+                               details=f"Operador nuevo trato de crear un objeto de infefinido {name}",
                                symbol=self.symbol,
                                scope=self.scopes.get("global"),
                                line=self.symbol.start_line
@@ -755,10 +755,10 @@ class ParenthesisNotedNode(NotedNode):
         nn_content_exp = self.__get_contained_nn()
         if nn_content_exp is None:
             symbols_scope = self.scopes.get(self.symbol.scope)
-            self.add_error("Invalid parenthesis content::",
+            self.add_error("Contenido de paréntesis inválido::",
                            SemanticError(
-                               name="Invalid parenthesis content::",
-                               details=f"Parenthesis couldn't get value or type from {self.children[1].name}",
+                               name="Contenido de paréntesis inválido::",
+                               details=f"Parentesis no pudo obtener valor o tipo de {self.children[1].name}",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line)
@@ -820,10 +820,10 @@ class IdentifierNotedNode(NotedNode):
         declaration = search_declaration(name, self.symbol, self.scopes, "variable")
         if declaration is None:
             self.add_error(
-                "Undeclared variable::",
+                "Variable sin declarar::",
                 SemanticError(
-                    name="Undeclared variable::",
-                    details=f"Variable '{name}' hasn't being declared",
+                    name="Variable sin declarar::",
+                    details=f"Variable '{name}' no ha sido declarada",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -839,10 +839,10 @@ class IdentifierNotedNode(NotedNode):
 
         if declaration is None:
             self.add_error(
-                "Undeclared variable value::",
+                "Valor de variable sin declarar::",
                 SemanticError(
-                    name="Undeclared variable value::",
-                    details=f"Cannot get value from invalid or in-existing declaration from variable {name}",
+                    name="Valor de variable sin declarar::",
+                    details=f"No se puede obtener el valor de una declaración de variable inválida o inexistente: {name}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -855,11 +855,10 @@ class IdentifierNotedNode(NotedNode):
 
         if nn_node_declaration is None:
             self.add_error(
-                "Inappropriate declaration::",
+                "Declaración inapropiada::",
                 SemanticError(
-                    name="Inappropriate declaration::",
-                    details=f"Although variable seem doesnt correspond to any "
-                            f"recognized pattern from{to_string_node(node_attr)}",
+                    name="Declaración inapropiada::",
+                    details=f"Aunque la variable parece no corresponder a ningún patrón reconocido por {to_string_node(node_attr)}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -874,10 +873,10 @@ class IdentifierNotedNode(NotedNode):
             # Add code to recognize path to this point, and it was assigned
 
             self.add_error(
-                "WARNING No value found::",
+                "WARNING No se encontro valor::",
                 SemanticError(
-                    name="WARNING No value found::",
-                    details=f"Although variable seem to be declared it doesn't seem to has value",
+                    name="WARNING No se encontro valor::",
+                    details=f"Aunque la variable parece estar declarada, no parece tener valor",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -894,10 +893,10 @@ class IdentifierNotedNode(NotedNode):
 
         if declaration_symbol is None:
             self.add_error(
-                "Undeclared variable type::",
+                "Tipo de variable sin declarar::",
                 SemanticError(
-                    name="Undeclared variable type::",
-                    details=f"Cannot get type from invalid or in-existing declaration from variable {name}",
+                    name="Tipo de variable sin declarar::",
+                    details=f"No se puede obtener el tipo de una declaración no válida o existente de la variable {name}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -909,11 +908,10 @@ class IdentifierNotedNode(NotedNode):
 
         if declared_type is None:
             self.add_error(
-                "No type found on declaration::",
+                "No se encontró el tipo en la declaración::",
                 SemanticError(
-                    name="No type found on declaration::",
-                    details=f"Although variable seem to be declared (ln {declaration_symbol.start_line})"
-                            f" it doesn't seem to have a type",
+                    name="No se encontró el tipo en la declaración::",
+                    details=f"Aunque la variable parece estar declarada (ln {declaration_symbol.start_line}) no parece tener un tipo",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -923,11 +921,11 @@ class IdentifierNotedNode(NotedNode):
 
         if not verify_existing_type(declared_type, self.scopes):
             self.add_error(
-                "Unable to use invalid type declared::",
+                "Incapaz de usar tipo inválido declarado::",
                 SemanticError(
-                    name="Unable to use invalid type declared::",
-                    details=f"Variable declared (ln {declaration_symbol.start_line}) has invalid type '{declared_type}'"
-                            f"is not recognized in file. Make sure to either set primitive type or own class.",
+                    name="Incapaz de usar tipo inválido declarado::",
+                    details=f"La variable declarada (ln {declaration_symbol.start_line}) tiene un tipo no válido '{declared_type}'"
+                            f"no se reconoce en el archivo. Asegúrese de establecer un tipo primitivo o una clase propia.",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -963,10 +961,10 @@ class DispatchNotedNode(NotedNode):
 
         if nn_instance_referenced is None:
             self.add_error(
-                "Invalid instance call::",
+                "Llamada de instancia no válida::",
                 SemanticError(
-                    name="Invalid instance call::",
-                    details=f"On method call, cannot get instance class from {to_string_node(instance_referenced)}",
+                    name="Llamada de instancia no válida::",
+                    details=f"Al llamar al método, no se puede obtener la clase de instancia de {to_string_node(instance_referenced)}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -987,10 +985,10 @@ class DispatchNotedNode(NotedNode):
 
         if class_referenced is None:
             self.add_error(
-                "Invalid instance call::",
+                "Llamada de instancia no válida::",
                 SemanticError(
-                    name="Invalid instance call::",
-                    details=f"On method call, cannot get instance type from {to_string_node(nn_instance.node)}",
+                    name="Llamada de instancia no válida::",
+                    details=f"Al llamar al método, no se puede obtener la clase de instancia de {to_string_node(nn_instance.node)}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1002,10 +1000,10 @@ class DispatchNotedNode(NotedNode):
 
         if symbol_class is None:
             self.add_error(
-                "Invalid instance call class::",
+                "Llamada de instancia no válida class::",
                 SemanticError(
-                    name="Invalid instance call class::",
-                    details=f"On method call, cannot find class referenced called {class_referenced}",
+                    name="Llamada de instancia no válida class::",
+                    details=f"Al llamar al método, no se puede obtener la clase de instancia de {class_referenced}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1028,10 +1026,10 @@ class DispatchNotedNode(NotedNode):
 
         if symbol_method is None:
             self.add_error(
-                "Invalid instance call::",
+                "Llamada de instancia no válida::",
                 SemanticError(
-                    name="Invalid instance call::",
-                    details=f"On method call, can't find method referenced called {method_name} of {symbol_class.name}",
+                    name="Llamada de instancia no válida::",
+                    details=f"Al llamar al método, no se puede obtener la clase de instancia de {method_name} de {symbol_class.name}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1062,12 +1060,12 @@ class DispatchNotedNode(NotedNode):
         nn_expr_parameter = create_noted_node(received_parameter, self.context, self.scopes, self.symbol)
         if nn_expr_parameter is None:
             self.add_error(
-                "Bad parameter::",
+                "Mal parámetro::",
                 SemanticError(
-                    name="Bad parameter::",
-                    details=f"Method call cannot get proper parameter from ({parameter_position + 1})"
-                            f" from expression {to_string_node(received_parameter)}. Expected type {firm_param_type} "
-                            f"for param '{firm_param_name}' (No. {parameter_position + 1})",
+                    name="Mal parámetro::",
+                    details=f"La llamada al método no puede obtener el parámetro adecuado de ({parameter_position + 1})"
+                            f" de la expresión {to_string_node(received_parameter)}. Tipo esperado {firm_param_type} "
+                            f"para el parámetro '{firm_param_name}' (No. {parameter_position + 1})",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1079,12 +1077,12 @@ class DispatchNotedNode(NotedNode):
 
         if received_param_type is None:
             self.add_error(
-                "Bad parameter::",
+                "Mal parámetro::",
                 SemanticError(
-                    name="Bad parameter::",
-                    details=f"Method call cannot get parameter type ({parameter_position})"
-                            f" from expression {to_string_node(received_parameter)}. Expected type {firm_param_type} "
-                            f"for param '{firm_param_name}' (No. {parameter_position})",
+                    name="Mal parámetro::",
+                    details=f"La llamada al método no puede obtener el tipo de parámetro ({parameter_position})"
+                            f" de la expresión {to_string_node(received_parameter)}. Tipo esperado {firm_param_type} "
+                            f"para el parámetro '{firm_param_name}' (No. {parameter_position})",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1096,11 +1094,11 @@ class DispatchNotedNode(NotedNode):
 
         if not types_match:
             self.add_error(
-                "Bad Parameter type::",
+                "Mal parámetro type::",
                 SemanticError(
-                    name="Bad Parameter type::",
-                    details=f"Method call got {to_string_node(received_parameter)} with type {received_param_type}. "
-                            f"Expected {firm_param_type} type as parameter {firm_param_name} (No.{parameter_position})",
+                    name="Mal parámetro type::",
+                    details=f"Llamada a método obtuvo {to_string_node(received_parameter)} con tipo {received_param_type}. "
+                            f"Se esperaba el tipo {firm_param_type} como parámetro {firm_param_name} (No.{parameter_position})",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1113,11 +1111,11 @@ class DispatchNotedNode(NotedNode):
 
         if len(firm_parameters) != len(received_parameters):
             self.add_error(
-                "Unmatch count parameter firm::",
+                "Firma de parámetros de recuento inigualable::",
                 SemanticError(
-                    name="Unmatch count parameter firm::",
-                    details=f"On method call parameters count does not match. expected: {len(firm_parameters)})"
-                            f"  gotten ({len(received_parameters)})",
+                    name="Firma de parámetros de recuento inigualable::",
+                    details=f"El recuento de parámetros de llamada al método no coincide. esperado: {len(firm_parameters)})"
+                            f"  recibido ({len(received_parameters)})",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1267,10 +1265,10 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         do_exist_type = verify_existing_type(type_name, self.scopes)
         if not do_exist_type:
             self.add_error(
-                "In-existing class::",
+                "Clase inexistente::",
                 SemanticError(
-                    name="In-existing class::",
-                    details=f"On method call, references in-existing class: {type_name}",
+                    name="Clase inexistente::",
+                    details=f"En la llamada al método, refiere a clase inexistente: {type_name}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1282,11 +1280,11 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         is_valid_inheritance = verify_inheritance(parent_name, child_name, self.scopes)
         if not is_valid_inheritance:
             symbols_scope = self.scopes.get(self.symbol.scope)
-            self.add_error("Invalid inheritance relation::",
+            self.add_error("Relación de herencia inválida::",
                            SemanticError(
-                               name="Invalid inheritance relation::",
-                               details=f"@ method call found no valid relation between {parent_name}, {child_name}."
-                                       f". {child_name} should inherits directly or indirectly from {parent_name}",
+                               name="Relación de herencia inválida::",
+                               details=f"@ la llamada al método no encontró una relación válida entre {parent_name}, {child_name}."
+                                       f". {child_name} debería heredar directa o indirectamente de {parent_name}",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line
@@ -1534,10 +1532,10 @@ class FunctionCallDispatchNotedNode(DispatchNotedNode):
         if symbol_class is None:
             method_name = self.children[0].name
             self.add_error(
-                "Local method call out any class::",
+                "El método local llama a cualquier clase.::",
                 SemanticError(
-                    name="Local method call out any class::",
-                    details=f"Local method call {method_name} is being called from out of any class",
+                    name="El método local llama a cualquier clase.::",
+                    details=f"El método local llama a {method_name} que esta siendo llamado fuera de cualquier clase",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1631,10 +1629,10 @@ class IsVoidNotedNode(NotedNode):
         symbols_scope = self.scopes.get(self.symbol.scope)
 
         if nn_expr_to_evaluate is None:
-            self.add_error("Invalid expression::",
+            self.add_error("Expresión Inválida::",
                            SemanticError(
-                               name="Invalid expression::",
-                               details=f"isvoid operator couldn't get value from {self.children[2]}",
+                               name="Expresión Inválida::",
+                               details=f"El operador isvoid no pudo obtener valor de {self.children[2]}",
                                symbol=self.symbol,
                                scope=symbols_scope,
                                line=self.symbol.start_line
@@ -1699,11 +1697,11 @@ class NotOperatorNotedNode(NotedNode):
 
         if exp_type != "Bool":
             self.add_error(
-                "Unable to apply not operator::",
+                "Incapaz de aplicar operador not::",
                 SemanticError(
-                    name="Unable to apply not operator::",
-                    details=f"not operator cannot be applied to type '{to_string_node(exp_to_deny)}'"
-                            f"only Bool",
+                    name="Incapaz de aplicar operador not::",
+                    details=f"operador not no se puede aplicar a tipo '{to_string_node(exp_to_deny)}'"
+                            f"solo Bool",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1715,10 +1713,10 @@ class NotOperatorNotedNode(NotedNode):
 
         if exp_value is None:
             self.add_error(
-                "Unable to get value from expression::",
+                "No se puede obtener valor de la expresión::",
                 SemanticError(
-                    name="Unable to get value from expression::",
-                    details=f"not operator couldn't get any value from '{to_string_node(exp_to_deny)}'",
+                    name="No se puede obtener valor de la expresión::",
+                    details=f"El operador not no pudo obtener ningún valor de '{to_string_node(exp_to_deny)}'",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1728,11 +1726,11 @@ class NotOperatorNotedNode(NotedNode):
 
         if exp_value.lower() not in ["true", "false"]:
             self.add_error(
-                "Unable to get value from expression::",
+                "No se puede obtener valor de la expresión::",
                 SemanticError(
-                    name="Unable to get value from expression::",
-                    details=f"not got unexpected value from '{to_string_node(exp_to_deny)}'"
-                            f"only Bool",
+                    name="No se puede obtener valor de la expresión::",
+                    details=f"not recibió un valor inesperado de '{to_string_node(exp_to_deny)}'"
+                            f"solo Bool",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1756,10 +1754,10 @@ class NotOperatorNotedNode(NotedNode):
 
         if nn_exp_to_deny is None:
             self.add_error(
-                "Invalid expression::",
+                "Expresión Inválida::",
                 SemanticError(
-                    name="Invalid expression::",
-                    details=f"not operator couldn't get valid expression from {to_string_node(exp_to_deny)}",
+                    name="Expresión Inválida::",
+                    details=f"operador not no pudo obtener una expresión válida de {to_string_node(exp_to_deny)}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1773,10 +1771,10 @@ class NotOperatorNotedNode(NotedNode):
 
         if exp_type is None:
             self.add_error(
-                "Unable to get expression type::",
+                "No es posible obtener el tipo de expresión::",
                 SemanticError(
-                    name="Unable to get expression type::",
-                    details=f"not operator couldn't get type from expression: {to_string_node(exp_to_deny)}",
+                    name="No es posible obtener el tipo de expresión::",
+                    details=f"operador not no pudo obtener el tipo de la expresión: {to_string_node(exp_to_deny)}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1817,10 +1815,10 @@ class BlockNotedNode(NotedNode):
         symbols_scope = self.scopes.get(self.symbol.scope)
         if nn_last_exp is None:
             self.add_error(
-                "Invalid expression::",
+                "Expresión Inválida::",
                 SemanticError(
-                    name="Invalid expression::",
-                    details=f"On block cannot get proper value from last item {to_string_node(last_exp)}",
+                    name="Expresión Inválida::",
+                    details=f"En el bloque no se puede obtener el valor adecuado del último elemento {to_string_node(last_exp)}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1897,10 +1895,10 @@ class BitWiseNotNotedNode(NotedNode):
         nn_value_to_revert = create_noted_node(value_to_revert, self.context, self.scopes, self.symbol)
         if nn_value_to_revert is None:
             self.add_error(
-                "Invalid value to revert::",
+                "Valor no válido para revertir::",
                 SemanticError(
-                    name="Invalid value to revert::",
-                    details=f"Cannot revert value from expression: {to_string_node(value_to_revert)}",
+                    name="Valor no válido para revertir::",
+                    details=f"No se puede revertir el valor de la expresión: {to_string_node(value_to_revert)}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1926,10 +1924,10 @@ class BitWiseNotNotedNode(NotedNode):
 
         if value is None:
             self.add_error(
-                "Invalid value to revert::",
+                "Valor no válido para revertir::",
                 SemanticError(
-                    name="Invalid value to revert::",
-                    details=f"Cannot revert value from expression: {to_string_node(nn_value_to_revert.node)}",
+                    name="Valor no válido para revertir::",
+                    details=f"No se puede revertir el valor de la expresión: {to_string_node(nn_value_to_revert.node)}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1952,10 +1950,10 @@ class BitWiseNotNotedNode(NotedNode):
 
         if value_to_revert_type != "Int":
             self.add_error(
-                "Invalid type to revert::",
+                "Tipo no válido para revertir::",
                 SemanticError(
-                    name="Invalid value to revert bw::",
-                    details=f"Cannot revert ~ type: {value_to_revert_type}, only Int",
+                    name="Tipo no válido para revertir bw::",
+                    details=f"No se puede revertir ~ tipo: {value_to_revert_type}, solo Int",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -1976,11 +1974,11 @@ class BitWiseNotNotedNode(NotedNode):
 
         if value_to_revert_type is None:
             self.add_error(
-                "Invalid expression to revert bw::",
+                "Expresión Inválida para revertir bw::",
                 SemanticError(
-                    name="Invalid expression to revert bw::",
-                    details=f"Cannot revert value using ~ from expression: {to_string_node(nn_value_to_revert.node)}."
-                            f"Unidentified type.",
+                    name="Expresión Inválida para revertir bw::",
+                    details=f"No se puede revertir el valor usando ~ de la expresión: {to_string_node(nn_value_to_revert.node)}."
+                            f"Tipo Indefinido.",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2041,10 +2039,10 @@ class ConditionNotedNode(NoContentNoTypeNoteNode):
 
         if not is_valid_condition:
             self.add_error(
-                "Inappropriate expression as condition::",
+                "Expresión inválida como condición::",
                 SemanticError(
-                    name="Inappropriate expression as condition::",
-                    details=f"Condition ({self.name}) must have bool type. Cannot get bool from: {to_string_node(node)}.",
+                    name="Expresión inválida como condición::",
+                    details=f"Condición ({self.name}) debe tener tipo Bool. No se puede obtener un Bool de: {to_string_node(node)}.",
                     symbol=self.symbol,
                     scope=self.symbols_scope,
                     line=self.symbol.start_line
@@ -2171,10 +2169,10 @@ class ArithmeticLogicNotedNode(NotedNode):
         nn_item = create_noted_node(item_node, self.context, self.scopes, self.symbol)
         if nn_item is None:
             self.add_error(
-                "Unable to get valid expression::",
+                "No es posible obtener expresión válida::",
                 SemanticError(
-                    name="Unable to get valid expression::",
-                    details=f"Cannot get proper expr in arithmetic or logical operation from: {to_string_node(item_node)}.",
+                    name="No es posible obtener expresión válida::",
+                    details=f"No fue posible obtener una expr adecuada en la operación aritmética o lógica de: {to_string_node(item_node)}.",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2194,10 +2192,10 @@ class ArithmeticLogicNotedNode(NotedNode):
         item_value = nn_item.get_value()
         if item_value is None:
             self.add_error(
-                "Unable to get value::",
+                "No es posible obtener valor::",
                 SemanticError(
-                    name="Unable to get value::",
-                    details=f"Can't get value from: {to_string_node(nn_item.node)}.",
+                    name="No es posible obtener valor::",
+                    details=f"No se pudo obtener valor de: {to_string_node(nn_item.node)}.",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2213,10 +2211,10 @@ class ArithmeticLogicNotedNode(NotedNode):
 
         if item_type is None:
             self.add_error(
-                "Unable to get type::",
+                "No es posible obtener tipo::",
                 SemanticError(
-                    name="Unable to get type::",
-                    details=f"Can't get type from: {to_string_node(nn_item.node)}.",
+                    name="No es posible obtener tipo::",
+                    details=f"No se pudo obtener tipo de: {to_string_node(nn_item.node)}.",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2226,10 +2224,10 @@ class ArithmeticLogicNotedNode(NotedNode):
 
         if item_type != "Int":
             self.add_error(
-                "Invalid type in operations::",
+                "Tipo inválido en operaciones::",
                 SemanticError(
-                    name="Invalid type in operations::",
-                    details=f"Cannot use the operator {self.operation} with type: {item_type}. Only Int",
+                    name="Tipo inválido en operaciones::",
+                    details=f"No se puede usar el operador {self.operation} con tipo: {item_type}. Solo Int",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2253,10 +2251,10 @@ class ArithmeticLogicNotedNode(NotedNode):
                 divisor = int(item_2_value)
                 if divisor == 0:
                     self.add_error(
-                        "Zero division::",
+                        "División por 0::",
                         SemanticError(
-                            name="Zero division::",
-                            details=f"Operation {item_1_value}/{item_2_value}, goes into a division by zero",
+                            name="División por 0::",
+                            details=f"Operación {item_1_value}/{item_2_value}, realiza una división por 0 cuando esto no es posible",
                             symbol=self.symbol,
                             scope=symbols_scope,
                             line=self.symbol.start_line
@@ -2357,10 +2355,10 @@ class ReturnStatementNotedNode(NotedNode):
 
         if not class_name.endswith("(class)"):
             self.add_error(
-                "Method out of class::",
+                "Método afuera de clase::",
                 SemanticError(
-                    name="Method out of class::",
-                    details=f"Method {method_name} was found out of class scope, and found {class_name} instead",
+                    name="Método afuera de clase::",
+                    details=f"Método {method_name} fue encontrado afuera del scope de la clase, y se encontró {class_name} en su lugar",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2373,10 +2371,10 @@ class ReturnStatementNotedNode(NotedNode):
 
         if symbol_class is None:
             self.add_error(
-                "Class unfounded::",
+                "Clase no enocntrada::",
                 SemanticError(
-                    name="Class unfounded::",
-                    details=f"Class {class_name} wasn't reference can't be found",
+                    name="Clase no enocntrada::",
+                    details=f"La referencia a la clase {class_name} no se pudo encontrar",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2395,10 +2393,10 @@ class ReturnStatementNotedNode(NotedNode):
 
         if not method_name.endswith("(method)"):
             self.add_error(
-                "Return statement out of method::",
+                "Return afuera de método::",
                 SemanticError(
-                    name="Return statement out of method::",
-                    details=f"Return statement {self.get_alias()} found out of method: {scope_name}",
+                    name="Return afuera de método::",
+                    details=f"Declaración del Return {self.get_alias()} encontrada fuera del método: {scope_name}",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2417,10 +2415,10 @@ class ReturnStatementNotedNode(NotedNode):
 
         if symbol_method is None:
             self.add_error(
-                "Unfounded method::",
+                "Método no encontrado::",
                 SemanticError(
-                    name="Unfounded method::",
-                    details=f"Method {method_name} couldn't be found in {class_name}.",
+                    name="Método no encontrado::",
+                    details=f"Método {method_name} no fue encontrado en {class_name}.",
                     symbol=self.symbol,
                     scope=symbols_scope,
                     line=self.symbol.start_line
@@ -2650,11 +2648,11 @@ class LetVariableNotedNode(NotedNode):
 
         if not verify_matching_type(expected_type, received_type, self.scopes):
             self.add_error(
-                "Un-matching types::",
+                "Tipos no coincidentes::",
                 SemanticError(
-                    name="Un-matching types::",
-                    details=f"Variable declaration was expecting {expected_type}(or equivalent)"
-                            f" but got {received_type} instead.",
+                    name="Tipos no coincidentes::",
+                    details=f"La declaración de variable esperaba {expected_type}(o equivalente)"
+                            f" pero obtuvo {received_type} en su lugar.",
                     symbol=self.symbol,
                     scope=self.symbols_scope,
                     line=self.symbol.start_line
