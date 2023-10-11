@@ -5,7 +5,7 @@ class Main {
     figura3: Bool <- false;
 
     main():Int{
-
+        rectangulo <- new Circle;
         return 1;
     }
     main2():Int{
@@ -46,13 +46,16 @@ class Circle inherits Shape {
 
     sumbol: Int <- 1;
     rescasted: Int <- 4 + sumbol;
+    num: Int <- 5;
+    isHigher: Bool;
 
     diameter: Int <- radius + radius;
 
     getArea(diameter:Int): Int {
+        castbol <- (isvoid sumbol);
         sumbol <- (castinnt <- 2);
         (new Circle)@Shape.getPerimeter(2, ancho);
-
+        rescasted;
         (new Int).copy();
         not hasCorners;
         ~ ~ ~  sumbol;
@@ -76,7 +79,15 @@ class Circle inherits Shape {
         isvoid radius;
         1+1;
         "hola";
-        while true loop 1 pool;
+        while true loop
+            1
+         pool;
+
+        isHigher <- (num<4) ;
+        while (num<4) loop {
+            num <- (num + 1)
+        } pool;
+
         return 3 * radius * radius;
     }
 
@@ -92,9 +103,10 @@ class Rectangle inherits Shape {
     width: Int <- 10;
 
     getArea(diameter:Int): Int {
-        while (hasCorners) loop {
-            length <- length + 1
+        while hasCorners loop {
+            length <- (length + 1)
         } pool;
+
         return length * width;
     }
 }
