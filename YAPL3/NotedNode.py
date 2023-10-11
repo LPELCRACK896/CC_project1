@@ -1470,7 +1470,31 @@ class IsVoidNotedNode(NotedNode):
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        return "NI"
+
+        nn_expt_to_evaluate = self._create_sub_noted_node(self.children[1], self.symbol)
+
+        exp_to_evaluate_dir = nn_expt_to_evaluate.get_three_direction_code(tdc, 1, False)
+
+        isvoid_operation = Operation("ISVOID")
+        tag = f"L{tdc.get_next_label_count()}"
+        if not must_create_register:
+            temp_variable = tdc.get_next_temp_variable()
+            register = Register(tag, temp_variable)
+            register.set_first_operation(Operation("="))
+
+            register.set_second_operation(isvoid_operation)
+            register.set_second_direction(exp_to_evaluate_dir)
+            tdc.add_register(register)
+            return temp_variable
+
+        register = Register(tag, exp_to_evaluate_dir)
+        register.set_first_operation(isvoid_operation)
+        tdc.add_register(register)
+        return ""
+
+
+
+        return ""
 
     def get_alias(self):
         return " ".join([leave.name for leave in self.node.leaves])
@@ -2423,11 +2447,11 @@ def create_noted_node(node: Node,
     elif type_of_expr == "parenthesized_expr":
         noted_node = ParenthesisNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "dynamic_dispatch":
-        noted_node = DynamicDispatchNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = DynamicDispatchNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "identifier":
         noted_node = IdentifierNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "isvoid":
-        noted_node = IsVoidNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = IsVoidNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "not":
         noted_node = NotOperatorNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "block":
@@ -2439,9 +2463,9 @@ def create_noted_node(node: Node,
     elif type_of_expr == "function_call":
         noted_node = FunctionCallDispatchNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "conditional":
-        noted_node = IfConditionalNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = IfConditionalNotedNode(node)  # TDC -> UNIMPLEMENTED ->
     elif type_of_expr == "loop":
-        noted_node = LoopNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = LoopNotedNode(node)  # TDC -> UNIMPLEMENTED -> F
     elif type_of_expr == "let_in":
         noted_node = LetNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "arithmetic_or_comparison":
