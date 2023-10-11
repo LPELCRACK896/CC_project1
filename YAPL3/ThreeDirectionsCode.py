@@ -59,7 +59,6 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             if noted_node is None:
                 continue
 
-
             noted_node.get_three_direction_code(self, 3)
 
         self.__close_opened_class_scopes()
@@ -295,11 +294,19 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
     def conditional_listener_else(self, symbol: Symbol):
         if not self.conditional_waiting_list:
             return
-        last_waiting: AnyStr = self.conditional_waiting_list[-1]
+        else_waiting: AnyStr = self.conditional_waiting_list[-1]
 
-        if f"ELSE({last_waiting})" in symbol.scope:
+        if f"ELSE({else_waiting})" in symbol.scope:
             return
-        pass
+
+        real_tag = f"L{self.get_next_label_count()}"
+        self.notify_subscribers(else_waiting, real_tag)
+
+        label_dir = Direction("LABEL", self.scopes)
+
+        real_register = Register(real_tag, label_dir)
+
+        self.add_register(real_register)
 
     def notify_subscribers(self, subscription_item: AnyStr, tag_replacement: AnyStr):
         if not (subscription_item in self.waiting_list_subscriptions
