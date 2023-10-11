@@ -2064,9 +2064,33 @@ class IfConditionalNotedNode(ConditionNotedNode):
         self.needs_context = True
         self.name = "if condition"
 
+    def get_temporal_tag(self):
+        return self.symbol.name
+
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        return "NI"
+
+        condition_exp = self.children[1]
+        nn_condition = self._create_sub_noted_node(condition_exp, self.symbol)
+
+        condition_direction_str = nn_condition.get_three_direction_code(tdc, 1, False)
+        condition_direction = Direction(condition_direction_str, self.scopes)
+        temp_tag = self.get_temporal_tag()
+        direction_temp_tag = Direction(temp_tag, self.scopes)
+        goto = Operation("GOTO")
+        ifnot = Operation("IFNOT")
+
+        tag = f"L{tdc.get_next_label_count()}"
+        register = Register(tag, condition_direction)
+        register.set_first_operation(ifnot)
+        register.set_second_operation(goto)
+
+        register.set_second_direction(direction_temp_tag)
+
+        tdc.add_register(register)
+
+        tdc.add_pending_and_subscribe(temp_tag, register)
+        return ""
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         condition_node = self.children[1]
@@ -2075,6 +2099,11 @@ class IfConditionalNotedNode(ConditionNotedNode):
 
 
 class LoopNotedNode(ConditionNotedNode):
+
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
+                                 must_create_register=True):
+
+        pass
 
     def __init__(self, node):
         super().__init__(node)

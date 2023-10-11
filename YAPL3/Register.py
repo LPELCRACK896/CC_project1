@@ -1,4 +1,4 @@
-from typing import AnyStr, Dict
+from typing import AnyStr, Dict, List
 from Direction import Direction
 from Operation import Operation
 
@@ -14,8 +14,6 @@ class Register:
     first_operation: Operation | None
     second_operation: Operation | None
     third_operation: Operation | None
-
-    temporary_tag_equivalences: Dict[AnyStr, AnyStr]  # Type of waiting instruction: Temporary
 
     def __init__(self, tag: str, first_direction: Direction):
         self.first_direction = first_direction
@@ -47,6 +45,12 @@ class Register:
 
     def __str__(self):
         prefix = "\t" if not self.tag.startswith("CL") else ""
+        # Special cases
+        if self.first_direction is not None:
+            if str(self.first_operation) == "IFNOT":
+                return f"{prefix}{self.tag} " \
+                       f"{self.first_operation} {self.first_direction} {self.second_operation} {self.second_direction}"
+
 
         if self.only_one_of_each():
             return f"{prefix}{self.tag} " \
@@ -63,20 +67,17 @@ class Register:
                f"{self.str_if_exist(self.second_direction)} {self.str_if_exist(self.second_operation)} " \
                f"{self.str_if_exist(self.third_direction)}"
 
-    def create_temporary_tag(self, waiting_tag_reference):
-        temporary_tag = f"TT{self.temporary_tag_count}"
-        self.temporary_tag_equivalences[waiting_tag_reference] = temporary_tag
-        self.temporary_tag_count += 1
 
-    def listen_outside_tag(self, tag_reference: str, real_tag: str):
-        if tag_reference in self.temporary_tag_equivalences:
-            self.try_to_update_directions_tags(tag_reference, real_tag)
-            self.temporary_tag_equivalences.pop(tag_reference)
+    def to_list_existing_directions(self) -> List[Direction]:
+        return [direction for direction in [self.first_direction, self.second_direction, self.third_direction]
+                if direction is not None]
 
-    def try_to_update_directions_tags(self, tag_reference: str, real_tag: str):
-        self.try_to_update_direction(self.first_direction, tag_reference, real_tag)
-        self.try_to_update_direction(self.second_direction, tag_reference, real_tag)
-        self.try_to_update_direction(self.third_direction, tag_reference, real_tag)
+    def update_directions_tag(self, old_tag: AnyStr, net_tag: AnyStr):
+
+        directions = self.to_list_existing_directions()
+        for direction in directions:
+            if direction.content == old_tag:
+                direction.content = net_tag
 
     def only_one_of_each(self):
         return (
@@ -99,6 +100,7 @@ class Register:
                 self.second_operation is not None and
                 self.third_operation is not None
         )
+
     @staticmethod
     def try_to_update_direction(direction: Direction, tag_reference: str, real_tag: str):
         if direction.content == tag_reference:

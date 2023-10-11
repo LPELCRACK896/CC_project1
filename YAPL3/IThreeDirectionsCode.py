@@ -21,6 +21,11 @@ class IThreeDirectionsCode:
     label_class_counter: int
     label_method_counter: int
 
+    conditional_waiting_list: List[Symbol]
+    waiting_list_subscriptions: Dict[AnyStr, List[Register]]
+
+    while_start_labels = Dict[AnyStr, AnyStr]
+
     def __init__(self, scopes: Dict[AnyStr, Scope], content, sequential_symbols: List[Symbol]):
 
         self.scopes = scopes
@@ -35,6 +40,11 @@ class IThreeDirectionsCode:
         self.label_method_counter = 0
 
         self.code = []
+
+        self.conditional_waiting_list = []
+        self.waiting_list_subscriptions = {}
+
+        self.while_start_labels = {}
 
     def __str__(self):
         string_code = ""
@@ -59,6 +69,10 @@ class IThreeDirectionsCode:
 
     @abstractmethod
     def relate_register_and_item_from_registers(self, index=-1):
+        pass
+
+    @abstractmethod
+    def add_pending_and_subscribe(self, temporal_tag: AnyStr, register: Register):
         pass
 
     @abstractmethod

@@ -547,10 +547,9 @@ class SymbolTable:
         return current_line
 
     def build_symbol_expr_operation(self, node: Node, current_scope: Scope, current_line: int) -> int:
-        items = self.get_expression_to_list(node)
         data_type = "Int"  # Hot fix must remove
         symbol = self.insert(
-            name=" ".join(items),
+            name=ns.to_string_node(node),
             data_type=data_type,
             semantic_type="expression",
             value=node,
