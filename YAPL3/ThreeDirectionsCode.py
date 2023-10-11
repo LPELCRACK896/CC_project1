@@ -179,11 +179,12 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             
         if scope.scope_id.endswith("let)"): # para los lets 
             last_register = self.code[-1].first_direction
-            if str(last_register) != str(f"{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}"):        
+            if str(last_register) != str(f"{scope.scope_id.split('-')[2].split('(')[0]}-{scope.scope_id.split('-')[3].split('(')[0]}"):
                 self.create_scope_register(
                     action="START",
                     scope_label=self.__get_label_scope(scope),
-                    direction=Direction(f"{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
+                    direction=Direction(f"{scope.scope_id.split('-')[2].split('(')[0]}-{scope.scope_id.split('-')[3].split('(')[0]}", self.scopes)
+                )
                 self.opened_let_scopes.append((scope))
                 return 
         elif len(self.opened_let_scopes) != 0: # para cerrar los lets y sin mas scopes abiertos
@@ -192,15 +193,20 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 self.create_scope_register(
                 action="END",
                 scope_label=self.__get_label_scope(last_opened_scope),
-                direction=Direction(f"{last_opened_scope.scope_id.split("-")[2].split("(")[0]}-{last_opened_scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
-            self.opened_let_scopes.pop()
+                    direction=Direction(
+                        f'{last_opened_scope.scope_id.split("-")[2].split("(")[0]}-{last_opened_scope.scope_id.split("-")[3].split("(")[0]}',
+                        self.scopes)
+                )
+                self.opened_let_scopes.pop()
             return 
         
         if scope.scope_id.endswith("if)"): # para los ifs
             self.create_scope_register(
                 action="START",
                 scope_label=self.__get_label_scope(scope),
-                direction=Direction(f"{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
+                direction=Direction(
+                    f'{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}',
+                    self.scopes))
             self.opened_if_scopes.append((scope))
             return 
         elif len(self.opened_if_scopes) != 0: # para cerrar los ifs 
@@ -209,8 +215,11 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
                 self.create_scope_register(
                 action="END",
                 scope_label=self.__get_label_scope(last_opened_scope),
-                direction=Direction(f"{last_opened_scope.scope_id.split("-")[2].split("(")[0]}-{last_opened_scope.scope_id.split("-")[3].split("(")[0]}", self.scopes))
-            self.opened_if_scopes.pop()
+                    direction=Direction(
+                        f'{last_opened_scope.scope_id.split("-")[2].split("(")[0]}-{last_opened_scope.scope_id.split("-")[3].split("(")[0]}',
+                        self.scopes)
+                )
+                self.opened_if_scopes.pop()
             return 
 
 
