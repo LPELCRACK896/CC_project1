@@ -325,7 +325,6 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
     def new_build(self):
         self.code = []
-        self.create_blank_register()
         for symbol in self.sequential_symbols:
             scope_id = symbol.scope
             symbol_name = symbol.name

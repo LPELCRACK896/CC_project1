@@ -64,3 +64,41 @@ h1, h2 {
 .cm-s-midnight.CodeMirror{
     height: 60vh!important;
 }
+
+/* .cm-s-midnight span.cm-variable{
+    color: green!important;
+} */
+
+.cm-keyword-red{
+    color: #E83737!important; /* Cambia el color a tu preferencia */
+    font-weight: bold; /* Otras propiedades de estilo, si es necesario */
+}
+
+.cm-keyword-green{
+    color: #1DC116!important; /* Cambia el color a tu preferencia */
+    font-weight: bold; /* Otras propiedades de estilo, si es necesario */
+}
+
+.cm-keyword-bool{
+    color: #AE81FF!important;
+}
+
+.cm-keyword-string{
+    color: #E364E2!important;
+}
+
+.cm-keyword-int{
+    color: #E36496!important;
+}
+
+.cm-custom-base{
+    color: #FFAA3E!important;
+}
+
+.cm-custom-tag{
+    color: #4DD!important;
+}
+
+.cm-custom-temp{
+    color: #4593a5!important;
+}

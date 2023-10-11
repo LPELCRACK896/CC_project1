@@ -2334,7 +2334,7 @@ class ReturnStatementNotedNode(NotedNode):
         nn_return_exp = self._create_sub_noted_node(return_exp, self.symbol)
         dir_return_exp = nn_return_exp.get_three_direction_code(tdc, 1, False)
 
-        return_operation = Operation("RETRN")
+        return_operation = Operation("RETURN")
         returned_direction = Direction(dir_return_exp, self.scopes)
 
         tag = f"L{tdc.get_next_label_count()}"
