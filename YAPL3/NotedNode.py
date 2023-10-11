@@ -2075,6 +2075,7 @@ class IfConditionalNotedNode(ConditionNotedNode):
 
         condition_direction_str = nn_condition.get_three_direction_code(tdc, 1, False)
         condition_direction = Direction(condition_direction_str, self.scopes)
+
         temp_tag = self.get_temporal_tag()
         direction_temp_tag = Direction(temp_tag, self.scopes)
         goto = Operation("GOTO")
@@ -2100,10 +2101,33 @@ class IfConditionalNotedNode(ConditionNotedNode):
 
 class LoopNotedNode(ConditionNotedNode):
 
+    def get_temporal_tag(self):
+        return self.symbol.name
+
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
+        condition_exp = self.children[1]
+        nn_condition = self._create_sub_noted_node(condition_exp, self.symbol)
+        condition_direction_str = nn_condition.get_three_direction_code(tdc, 1, False)
+        condition_direction = Direction(condition_direction_str, self.scopes)
 
-        pass
+        while_name = self.get_temporal_tag()
+        while_temp_direction = Direction(while_name, self.scopes)
+        register_tag = f"L{tdc.get_next_label_count()}"
+        goto = Operation("GOTO")
+        ifnot = Operation("IFNOT")
+
+        tdc.add_while_label(while_name, register_tag)
+
+        register = Register(register_tag, condition_direction)
+        register.set_first_operation(ifnot)
+        register.set_second_operation(goto)
+
+        register.set_second_direction(while_temp_direction)
+
+        tdc.add_register(register)
+
+        tdc.add_pending_and_subscribe(while_name, register)
 
     def __init__(self, node):
         super().__init__(node)
@@ -2118,6 +2142,8 @@ class LoopNotedNode(ConditionNotedNode):
 class LetNotedNode(NoContentNoTypeNoteNode):
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
+
+
         return ""
 
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
@@ -2740,7 +2766,7 @@ def create_noted_node(node: Node,
     elif type_of_expr == "function_call":
         noted_node = FunctionCallDispatchNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "conditional":
-        noted_node = IfConditionalNotedNode(node)  # TDC -> UNIMPLEMENTED -> F
+        noted_node = IfConditionalNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "loop":
         noted_node = LoopNotedNode(node)  # TDC -> UNIMPLEMENTED -> F
     elif type_of_expr == "let_in":

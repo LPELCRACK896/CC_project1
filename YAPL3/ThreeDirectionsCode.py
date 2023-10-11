@@ -257,10 +257,26 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
     def conditional_listener_while(self, symbol: Symbol):
         if not self.conditional_waiting_list:
             return
-        last_waiting: AnyStr = self.conditional_waiting_list[-1]
-        if f"WHILE({last_waiting})" in symbol.scope:
+        while_waiting: AnyStr = self.conditional_waiting_list[-1]
+        if f"WHILE({while_waiting})" in symbol.scope:
             return
-        pass
+
+        go_back_direction = Direction(self.while_start_labels[while_waiting], self.scopes)
+        goto = Operation("GOTO")
+        go_back_register = Register("", go_back_direction)
+        go_back_register.set_first_operation(goto)
+        self.add_register(go_back_register)
+
+        del self.while_start_labels[while_waiting]
+
+
+        jump_label = f"L{self.get_next_label_count()}"
+        dir_label = Direction("", self.scopes)
+
+        real_register = Register(jump_label, dir_label)
+
+        self.notify_subscribers(while_waiting, jump_label)
+        self.add_register(real_register)
 
     def conditional_listener_if(self, symbol: Symbol):
         if not self.conditional_waiting_list:
@@ -282,8 +298,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         real_tag = f"L{self.get_next_label_count()}"
         self.notify_subscribers(if_waiting, real_tag)
 
-        if_goto_direction = Direction(real_tag, self.scopes)
-        label_dir = Direction("LABEL", self.scopes)
+        label_dir = Direction("", self.scopes)
 
         real_register = Register(real_tag, label_dir)
 
@@ -302,7 +317,7 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
         real_tag = f"L{self.get_next_label_count()}"
         self.notify_subscribers(else_waiting, real_tag)
 
-        label_dir = Direction("LABEL", self.scopes)
+        label_dir = Direction("", self.scopes)
 
         real_register = Register(real_tag, label_dir)
 
@@ -318,6 +333,10 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
 
         for register in registers_subscribed:
             register.update_directions_tag(temporal_tag, tag_replacement)
+
+        self.conditional_waiting_list.pop(-1)
+        del self.waiting_list_subscriptions[subscription_item]
+
 
     def add_pending_and_subscribe(self, temporal_tag: AnyStr, register: Register):
         if temporal_tag not in self.conditional_waiting_list:

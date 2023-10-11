@@ -44,25 +44,26 @@ class Register:
         self.third_direction = direction
 
     def __str__(self):
+        space_if_tag = " " if self.tag else ""
         prefix = "\t" if not self.tag.startswith("CL") else ""
         # Special cases
         if self.first_direction is not None:
             if str(self.first_operation) == "IFNOT":
-                return f"{prefix}{self.tag} " \
+                return f"{prefix}{self.tag}{space_if_tag}" \
                        f"{self.first_operation} {self.first_direction} {self.second_operation} {self.second_direction}"
 
 
         if self.only_one_of_each():
-            return f"{prefix}{self.tag} " \
+            return f"{prefix}{self.tag}{space_if_tag}" \
                    f"{self.first_operation} {self.first_direction} "
 
         if self.has_all():
-            return f"{prefix}{self.tag} " \
+            return f"{prefix}{self.tag}{space_if_tag}" \
                    f"{self.first_direction} {self.first_operation} " \
                    f"{self.second_operation} {self.second_direction} " \
                    f"{self.third_operation} {self.third_direction} "
 
-        return f"{prefix}{self.tag} " \
+        return f"{prefix}{self.tag}{space_if_tag}" \
                f"{self.str_if_exist(self.first_direction)} {self.str_if_exist(self.first_operation)} " \
                f"{self.str_if_exist(self.second_direction)} {self.str_if_exist(self.second_operation)} " \
                f"{self.str_if_exist(self.third_direction)}"
@@ -79,6 +80,11 @@ class Register:
             if direction.content == old_tag:
                 direction.content = net_tag
 
+    def only_tag_and_goto(self):
+        if self.first_operation is None:
+            return False
+        if str(self.first_operation) == "GOTO":
+            pass
     def only_one_of_each(self):
         return (
             self.first_direction is not None and

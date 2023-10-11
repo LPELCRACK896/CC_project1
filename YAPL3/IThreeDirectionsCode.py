@@ -54,6 +54,8 @@ class IThreeDirectionsCode:
 
         return string_code
 
+    def add_while_label(self, while_name: AnyStr, label_value: AnyStr):
+        self.while_start_labels[while_name] = label_value
 
     @abstractmethod
     def build(self):
