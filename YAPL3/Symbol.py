@@ -51,7 +51,12 @@ class Symbol:
         return self.bytes_memory_size
 
     def as_direction_stringify(self) -> str:
-        return f"<DIR>.{self.semantic_type}.{self.name}"
+
+        scope_classes = [scope_name for scope_name in self.scope.split("-") if scope_name.endswith("(class)")]
+        class_ref = "" if not scope_classes else scope_classes[0]
+        class_name = class_ref.split("(")[0] if class_ref else ""
+
+        return f"<DIR>.{class_name}.{self.semantic_type}.{self.name}"
 
     def get_class_size(self):
         # Default return
