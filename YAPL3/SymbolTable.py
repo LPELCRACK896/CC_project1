@@ -287,8 +287,6 @@ class SymbolTable:
             type_of_expression="if"
         )
 
-        noted_node = create_noted_node(node, self.content, self.scopes, if_symbol)
-        errors = noted_node.run_tests()
 
         if_line = current_line
         if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}-IF({if_line}if)")
@@ -297,6 +295,25 @@ class SymbolTable:
         current_line = self.build_symbol_table(if_content, if_scope, current_line=current_line + 1)
         else_scope = self.start_scope(parent_scope=current_scope.parent,
                                       scope_id=f"{current_scope.scope_id}-ELSE({if_line}if)")
+
+        # Else item
+        """else_node = node.children[4]
+        else_symbol = self.insert(
+            name=f"{current_line}else",
+            semantic_type="expression",
+            data_type="block",
+            node=node,
+            default_value=None,
+            value=else_node,
+            start_index=else_node,
+            start_line=else_node.start_line,
+            end_line=else_node.end_line,
+            scope=current_scope,
+            parameters=[],
+            is_function=True,
+            type_of_expression="else"
+        )"""
+        # Else content
         else_content = node.children[5]
         current_line = self.build_symbol_table(else_content, else_scope, current_line=current_line + 1)
 
@@ -323,12 +340,11 @@ class SymbolTable:
         )
 
         while_line = current_line
+        while_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}-WHILE({while_line}while)")
+        while_content = node.children[3]
+        current_line = self.build_symbol_table(while_content, while_scope, current_line=current_line + 1)
 
-        bool_node = node.children[1]
-        exp_node = node.children[3]
-        # Pendiende registrar en algun punto estos valores en la tabla
-
-        current_line += 2
+        current_line += 1
 
         while_symbol.end_index = current_line
 
