@@ -329,6 +329,8 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             noted_node.get_three_direction_code(self, 3)
 
         self.__close_opened_class_scopes()
+        self.code.pop() # quitar llamada de main START
+        self.code.pop() # quitar llamada de main END
 
     def write_file(self, filename: AnyStr = "three_directions_code.tdc"):
         directory = os.path.dirname(os.path.realpath(__file__))
