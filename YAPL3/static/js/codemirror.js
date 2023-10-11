@@ -22,7 +22,7 @@ CodeMirror.defineMode("custom-tresdir", function () { // custom style for code m
         }
 
         // Resaltar palabras clave
-        if (stream.match(/(ASSIGN|NEW|SUM|MULT|SUB|DIV|LTH|LEQ|GEQ|GTH|BWNOT|ISVOID|PARAM|CALL)\b/)) {
+        if (stream.match(/(ASSIGN|NEW|SUM|MULT|SUB|DIV|LTH|LEQ|GEQ|GTH|BWNOT|ISVOID|PARAM|CALL|GOTO|LABEL|IFNOT)\b/)) {
             return "keyword-green";
         }
 
