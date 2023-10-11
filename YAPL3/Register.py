@@ -2,8 +2,8 @@ from typing import AnyStr, Dict
 from Direction import Direction
 from Operation import Operation
 
-class Register:
 
+class Register:
     tag: AnyStr
     first_direction: Direction | None
     second_direction: Direction | None

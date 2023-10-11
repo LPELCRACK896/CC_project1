@@ -520,7 +520,30 @@ class AttributeNotedNode(NotedNode):
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        return "NI"
+        symbol_declaration: Symbol = self.get_previous_declaration(self.get_alias())
+
+        symbol_direction = Direction(symbol_declaration.as_direction_stringify(), self.scopes)
+        nn_value = create_noted_node(self.children[4], self.context, self.scopes, self.symbol) if len(self.children)>4 else None
+
+        if nn_value is None:
+            tag = f"L{tdc.get_next_label_count()}"
+            register: Register = Register(tag, symbol_direction)
+            operation = Operation(None)
+            register.set_first_operation(operation)
+            tdc.add_register(register)
+            return None
+
+        first_operation = Operation("assign")
+        value_direction = nn_value.get_three_direction_code(tdc, 1, False)
+
+        tag = f"L{tdc.get_next_label_count()}"
+        register: Register = Register(tag, symbol_direction)
+
+        register.set_first_operation(first_operation)
+        register.set_second_direction(value_direction)
+        tdc.add_register(register)
+
+        return None
 
     def get_previous_declaration(self, name: str):
         return self.symbol
@@ -1520,7 +1543,8 @@ class BlockNotedNode(NotedNode):
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        return "NI"
+
+        return self.__get_last_item().get_three_direction_code(tdc, num_directions_available, must_create_register)
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -2296,19 +2320,19 @@ def create_noted_node(node: Node,
     elif type_of_expr == "attribute":
         noted_node = AttributeNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "object_creation":
-        noted_node = NewObjectNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = NewObjectNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "parenthesized_expr":
-        noted_node = ParenthesisNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = ParenthesisNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "dynamic_dispatch":
         noted_node = DynamicDispatchNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "identifier":
-        noted_node = IdentifierNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = IdentifierNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "isvoid":
         noted_node = IsVoidNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "not":
         noted_node = NotOperatorNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "block":
-        noted_node = BlockNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = BlockNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "bitwise_not":
         noted_node = BitWiseNotNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "static_dispatch":
