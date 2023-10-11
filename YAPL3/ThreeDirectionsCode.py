@@ -201,14 +201,34 @@ class ThreeDirectionsCode(IThreeDirectionsCode):
             return 
         
         if scope.scope_id.endswith("if)"): # para los ifs
-            self.create_scope_register(
-                action="START",
-                scope_label=self.__get_label_scope(scope),
-                direction=Direction(
-                    f'{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}',
-                    self.scopes))
-            self.opened_if_scopes.append((scope))
-            return 
+            if not  scope.scope_id.split("-")[3].startswith("ELSE"):
+                self.create_scope_register(
+                    action="START",
+                    scope_label=self.__get_label_scope(scope),
+                    direction=Direction(
+                        f'{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}',
+                        self.scopes))
+                self.opened_if_scopes.append((scope))
+                return 
+            else:
+                last_opened_scope = self.opened_if_scopes[-1]
+                self.create_scope_register(
+                action="END",
+                scope_label=self.__get_label_scope(last_opened_scope),
+                    direction=Direction(
+                        f'{last_opened_scope.scope_id.split("-")[2].split("(")[0]}-{last_opened_scope.scope_id.split("-")[3].split("(")[0]}',
+                        self.scopes)
+                )
+                self.opened_if_scopes.pop()
+
+                self.create_scope_register(
+                    action="START",
+                    scope_label=self.__get_label_scope(scope),
+                    direction=Direction(
+                        f'{scope.scope_id.split("-")[2].split("(")[0]}-{scope.scope_id.split("-")[3].split("(")[0]}',
+                        self.scopes))
+                self.opened_if_scopes.append((scope))
+                return 
         elif len(self.opened_if_scopes) != 0: # para cerrar los ifs 
             last_opened_scope = self.opened_if_scopes[-1]
             if not scope.scope_id.endswith(last_opened_scope.scope_id.split("-")[3]):
