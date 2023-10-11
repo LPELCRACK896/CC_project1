@@ -1249,7 +1249,7 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
 
         tdc.add_register(register)
 
-        if must_create_register: # wants temp_var
+        if must_create_register:  #  wants temp_var
             return ""
         return temporary_make_call
 
@@ -1547,8 +1547,22 @@ class NotOperatorNotedNode(NotedNode):
 
         exp_to_evaluate_dir = nn_expt_to_evaluate.get_three_direction_code(tdc, 1, False)
 
+        not_operation = Operation("NOT")
+        tag = f"L{tdc.get_next_label_count()}"
+        if not must_create_register:
+            temp_variable = tdc.get_next_temp_variable()
+            register = Register(tag, temp_variable)
+            register.set_first_operation(Operation("="))
 
-        return "NI"
+            register.set_second_operation(not_operation)
+            register.set_second_direction(exp_to_evaluate_dir)
+            tdc.add_register(register)
+            return temp_variable
+
+        register = Register(tag, exp_to_evaluate_dir)
+        register.set_first_operation(not_operation)
+        tdc.add_register(register)
+        return ""
 
     def get_alias(self):
         return " ".join([leave.name for leave in self.node.leaves])
@@ -1730,7 +1744,26 @@ class BitWiseNotNotedNode(NotedNode):
 
     def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
                                  must_create_register=True):
-        return "NI"
+        nn_expt_to_evaluate = self._create_sub_noted_node(self.children[1], self.symbol)
+
+        exp_to_evaluate_dir = nn_expt_to_evaluate.get_three_direction_code(tdc, 1, False)
+
+        not_operation = Operation("BWNOT")
+        tag = f"L{tdc.get_next_label_count()}"
+        if not must_create_register:
+            temp_variable = tdc.get_next_temp_variable()
+            register = Register(tag, temp_variable)
+            register.set_first_operation(Operation("="))
+
+            register.set_second_operation(not_operation)
+            register.set_second_direction(exp_to_evaluate_dir)
+            tdc.add_register(register)
+            return temp_variable
+
+        register = Register(tag, exp_to_evaluate_dir)
+        register.set_first_operation(not_operation)
+        tdc.add_register(register)
+        return ""
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -1936,15 +1969,31 @@ class LoopNotedNode(ConditionNotedNode):
 
 
 class LetNotedNode(NoContentNoTypeNoteNode):
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
+                                 must_create_register=True):
+        return ""
+
     def run_tests(self) -> Dict[AnyStr, List[SemanticError]]:
         return self.raised_errors
 
 
 class ArithmeticLogicNotedNode(NotedNode):
     arithmetic_operators: list = ['+', '-', '*', '/']
+
     comparer_operators: list = ['<', '<=', '=', '>=', '>']
     type_of_operation: str
     operation: str
+
+    operator_equivalences_tdc = {
+        "+": "SUM",
+        "-": "SUB",
+        "*": "MULT",
+        "/": "DIV",
+        "<": "LTH",
+        "<=": "LEQ",
+        ">=": "GEQ",
+        ">": "GTH"
+    }
 
     def __init__(self, node):
         super().__init__(node)
@@ -1955,6 +2004,40 @@ class ArithmeticLogicNotedNode(NotedNode):
         self.operation = self.children[1].children[0].name
 
         self.type_of_operation = "arithmetic" if self.operation in self.arithmetic_operators else "comparer"
+
+    def get_three_direction_code(self, tdc: IThreeDirectionsCode, num_directions_available: int,
+                                 must_create_register=True):
+
+        item_1 = self.children[0]
+        item_2 = self.children[-1]
+
+        nn_item_1 = self.create_item_node(item_1)
+        nn_item_2 = self.create_item_node(item_2)
+
+        first_op_dir = nn_item_1.get_three_direction_code(tdc, 1, False)
+        second_op_dir = nn_item_2.get_three_direction_code(tdc, 1, False)
+
+        tag = f"L{tdc.get_next_label_count()}"
+        ar_com_operator = Operation(self.operator_equivalences_tdc[to_string_node(self.children[1])])
+
+        if not must_create_register:
+            temp_variable = tdc.get_next_temp_variable()
+            register = Register(tag, temp_variable)
+            register.set_first_operation(Operation("="))
+
+            register.set_second_operation(ar_com_operator)
+            register.set_second_direction(first_op_dir)
+            register.set_third_direction(second_op_dir)
+            tdc.add_register(register)
+            return temp_variable
+
+        register = Register(tag, first_op_dir)
+        register.set_first_operation(ar_com_operator)
+        register.set_second_direction(second_op_dir)
+        tdc.add_register(register)
+        return ""
+
+
 
     def get_alias(self):
         return to_string_node(self.node)
@@ -2455,11 +2538,11 @@ def create_noted_node(node: Node,
     elif type_of_expr == "isvoid":
         noted_node = IsVoidNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "not":
-        noted_node = NotOperatorNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = NotOperatorNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "block":
         noted_node = BlockNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "bitwise_not":
-        noted_node = BitWiseNotNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = BitWiseNotNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "static_dispatch":
         noted_node = StaticDispatchNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "function_call":
@@ -2469,9 +2552,9 @@ def create_noted_node(node: Node,
     elif type_of_expr == "loop":
         noted_node = LoopNotedNode(node)  # TDC -> UNIMPLEMENTED -> F
     elif type_of_expr == "let_in":
-        noted_node = LetNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = LetNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "arithmetic_or_comparison":
-        noted_node = ArithmeticLogicNotedNode(node)  # TDC -> UNIMPLEMENTED
+        noted_node = ArithmeticLogicNotedNode(node)  # TDC -> IMPLEMENTED
     elif type_of_expr == "func_return":
         noted_node = ReturnStatementNotedNode(node)  # TDC -> UNIMPLEMENTED
     elif type_of_expr == "method":
@@ -2479,7 +2562,7 @@ def create_noted_node(node: Node,
     elif type_of_expr == "formal":
         noted_node = FormalNotedNode(node)  # TDC -> DONE
     elif type_of_expr == "declaration_assignation":
-        noted_node = LetVariableNotedNode(node)
+        noted_node = LetVariableNotedNode(node)  # TDC -> UNIMPLEMENTED
     else:
         print(f"Unrecognized expression: {type_of_expr}")
 
