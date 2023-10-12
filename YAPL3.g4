@@ -9,7 +9,7 @@ attr: ID ':' type ('<-' expr)? ';';
 method: ID '(' formals ')' ':' type '{' (expr ';')* func_return '}';
 formals: formal? (',' formal)*;
 formal: ID ':' type;
-type: ID | 'SELF_TYPE' | 'Int' | 'String' | 'Bool' | 'IO' | 'Object';
+type: ID | 'SELF_TYPE' | 'Int' | 'String' | 'Bool' | 'IO' | 'Object' | CLASS_ID;
 expr:
       ID '<-' expr
     | expr '@' (type | CLASS_ID) '.' ID '(' (expr (',' expr)* )?')'

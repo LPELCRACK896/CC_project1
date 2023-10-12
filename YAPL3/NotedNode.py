@@ -257,22 +257,7 @@ class BasicNotedNode(NotedNode):
 
             tdc.add_register(register)
 
-        return self.get_value()
 
-        """if not must_create_register and num_directions_available == 3:
-            next_tag = f""
-            value_direction = Direction(self.get_value(), self.scopes)
-            temporary_var = tdc.get_next_temp_variable()
-            tempor_var_direction = Direction(temporary_var, self.scopes)
-            register = Register(next_tag, tempor_var_direction)
-
-            operation = Operation("=")
-            register.set_first_operation(operation)
-            register.set_second_direction(value_direction)
-
-            tdc.add_register(register)
-
-            return temporary_var"""
 
         return self.get_value()
 
@@ -1302,7 +1287,7 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         if child_name_type is None:
             return None
 
-        parent_name_type = self.children[2].name
+        parent_name_type = to_string_node(self.children[2])
 
         parent_ref_exist = self._exist_type(parent_name_type)
         child_ref_exist = self._exist_type(child_name_type)

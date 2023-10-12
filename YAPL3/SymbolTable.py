@@ -372,10 +372,6 @@ class SymbolTable:
 
         )
 
-        noted_node = create_noted_node(node, self.content, self.scopes, symbol)
-        noted_node.run_tests()
-        valor = noted_node.get_value()
-        tipo_del_valor = noted_node.get_value_type()
 
         return current_line
 

@@ -31,7 +31,7 @@ def check_semantic(symbol_table: SymbolTable = None, active_rules: ActiveRulesTy
         method_passed, errors = method(symbol_table)
         all_rules_passed = all_rules_passed and method_passed
         feedback.extend(errors)
-        print(rule, " >>> ", method_passed)
+        # print(rule, " >>> ", method_passed)
 
     return all_rules_passed, feedback
 
