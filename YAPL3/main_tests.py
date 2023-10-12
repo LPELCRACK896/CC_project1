@@ -8,11 +8,11 @@ import os
 
 def compile_yapl(input_data, gui_window=None):
     syntax_tree = SyntaxTree(input_data)
-    syntax_tree.print_tree()
+    # syntax_tree.print_errors()
+    # syntax_tree.print_tree()
 
     symbol_table = SymbolTable(syntax_tree.root_at)
-    symbol_table.estimate_symbol_table_memory_usage()
-    print(symbol_table)
+    # symbol_table.estimate_symbol_table_memory_usage()
     semantic_verification, semantic_errors = sp.check_semantic(symbol_table)
 
     if syntax_tree.has_errors():
@@ -25,9 +25,10 @@ def compile_yapl(input_data, gui_window=None):
             print("Error en linea " + str(error.line) + ": " + str(error.name) + " : " + str(error.details))
 
     if not (syntax_tree.has_errors() or semantic_errors):
+        print(symbol_table.to_string_sequential_symbols())
         t_dir_code: ThreeDirectionsCode = symbol_table.get_three_directions_code()
         content = str(t_dir_code)
-        print(content)
+        #  print(content)
         t_dir_code.write_file("intermediate_code.tdc")
 
 if __name__ == "__main__":

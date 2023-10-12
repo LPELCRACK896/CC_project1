@@ -1181,7 +1181,7 @@ class DynamicDispatchNotedNode(DispatchNotedNode):
         instance: NotedNode = self._get_instance(instance_expr)
         instance_temporal_variable = instance.get_three_direction_code(tdc, 1, False)
 
-        symbol_class = get_symbol_class(self.children[2].name, self.scopes)
+        symbol_class = get_symbol_class(to_string_node(self.children[2]), self.scopes)
         method_symbol: Symbol = get_symbol_method(self.children[4].name, symbol_class, self.scopes)
         direction_method_symbol = method_symbol.as_direction_stringify()
 
@@ -2510,7 +2510,8 @@ class ReturnStatementNotedNode(NotedNode):
         return self.__get_value_and_type()[0]
 
     def get_type(self) -> str | None:
-        return self.__get_value_and_type()[1]
+        ttype = self.__get_value_and_type()[1]
+        return ttype
 
     def get_value_type(self) -> str | None:
         return self.get_type()

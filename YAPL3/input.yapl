@@ -1,6 +1,6 @@
 class Main {
     rectangulo: Object <- 1;
-    circulo: Object <- new Circle;
+    circulo: Object <- (new Circle);
 	radius: Int;
     booleano: Bool;
   	num: Int <- 0;
