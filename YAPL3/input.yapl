@@ -1,16 +1,34 @@
 class Main {
     rectangulo: Object <- 1;
     circulo: Object <- new Circle;
-
-    figura3: Bool <- false;
+	radius: Int;
+    booleano: Bool;
+  	num: Int <- 0;
 
     main():Int{
-        rectangulo <- new Circle;
-        return 1;
-    }
-    main2():Int{
-        
-        return 1;
+        (new Circle)@Shape.getPerimeter(2, 1);
+      	(new Circle).getPerimeter(2, 1);
+      	(new Circle).getArea(3);
+      	
+      	radius <- (4 + 5 * 1);
+      
+      	booleano <- (6 < 7);
+      
+      	while (num<4) loop {
+            num <- (num + 1)
+        } pool;
+      
+      	(new Circle).getArea(radius);
+      
+      	if booleano then
+            radius <- 8
+        else
+            radius <- 4
+        fi;
+      
+      	copy();
+    
+        return radius;
     }
 }
 class Shape {
