@@ -68,6 +68,16 @@ class Register:
                f"{self.str_if_exist(self.second_direction)} {self.str_if_exist(self.second_operation)} " \
                f"{self.str_if_exist(self.third_direction)}"
 
+    def includes_div_or_sum(self):
+
+        operations = [self.first_operation, self.second_operation, self.third_operation]
+        for operation in operations:
+            if isinstance(operation, Operation):
+                if operation.is_div() or operation.is_sum():
+                    return True
+
+        return False
+
 
     def to_list_existing_directions(self) -> List[Direction]:
         return [direction for direction in [self.first_direction, self.second_direction, self.third_direction]
