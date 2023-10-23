@@ -2,9 +2,17 @@ class Rectangle{
     length: Int <- 5;
     width: Int <- 10;
     newbool: Bool <- 1;
+
+    operations(): Int{
+        length <- (10 + 4);
+        width <- (5/2);
+
+        return 1;
+    }
 }
 
-class Main{    
+class Main{
+
     main():Int{
         return 1;
     }

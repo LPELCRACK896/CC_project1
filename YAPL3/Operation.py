@@ -16,3 +16,9 @@ class Operation:
             return str(self.type_of_operation[:6]).upper()
 
         return f"{self.type_of_operation}"
+
+    def is_sum(self):
+        return str(self.type_of_operation) == "SUM"
+
+    def is_div(self):
+        return str(self.type_of_operation) == "DIV"
