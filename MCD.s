@@ -1,5 +1,5 @@
 .data
-prompt0: .asciiz "Cálculo de MCD (-1 para salir): \n" # prompt instrucciones
+prompt0: .asciiz "Cálculo de MCD (-1 para salir) \n" # prompt instrucciones
 prompt1: .asciiz "Ingrese el primer número: " # Segundo numero
 prompt2: .asciiz "Ingrese el segundo número: " # Primer numero
 resultado: .asciiz "MCD: " # res
@@ -62,11 +62,11 @@ main:
 # gcd: cálcula recursivamente el MCD
 gcd:
     beq $t0, $t1, iguales  # Si son iguales, ya tenemos el MCD
-    blt $t1, $t0, swap  # Si n2 < n1, intercambiar
+    blt $t1, $t0, cambiar  # Si n2 < n1, intercambiar
     sub $t1, $t1, $t0
     j gcd
 
-swap:
+cambiar:
     move $t2, $t0
     move $t0, $t1
     move $t1, $t2
