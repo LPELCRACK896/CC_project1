@@ -3,19 +3,20 @@ class Main {
     circulo: Object <- (new Circle);
 	radius: Int;
     booleano: Bool;
-  	num: Int <- 0;
+  	t1: Int <- 0;
+
 
     main():Int{
         (new Circle)@Shape.getPerimeter(2, 1);
       	(new Circle).getPerimeter(2, 1);
       	(new Circle).getArea(3);
       	
-      	radius <- (4 + 5 * 1);
+      	radius <- (4 + 5 / 1);
       
       	booleano <- (6 < 7);
       
-      	while (num<4) loop {
-            num <- (num + 1)
+      	while (t1<4) loop {
+            t1 <- (t1 + 1)
         } pool;
       
       	(new Circle).getArea(radius);

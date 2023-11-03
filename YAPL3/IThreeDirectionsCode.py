@@ -1,11 +1,8 @@
-
-from abc import ABC, abstractmethod
 from typing import Dict, AnyStr, List, Tuple
-
-from Scope import Scope
-from Symbol import Symbol
-
+from abc import ABC, abstractmethod
 from Register import Register
+from Symbol import Symbol
+from Scope import Scope
 
 
 class IThreeDirectionsCode:

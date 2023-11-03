@@ -31,15 +31,21 @@ class MIPS:
     def __from_tdc_to_MIPS(self, filename="yapl_assembler.s"):
         for register in self.tdc.code:
             str_register = str(register)
+
+            operands = str_register.split(' ')
+            dest = operands[0] if len(operands) > 0 else None
+            op1 = operands[2] if len(operands) > 1 else None
+            op2 = operands[4] if len(operands) > 4 else None
+
+            if None in [dest, op1, op2]:
+                # self.code.append(f"TDC>> {register}")
+                continue
+
+            reg1 = self.get_register()
+            reg2 = self.get_register()
+
+            # Handle different operations
             if "SUM" in str_register:
-                operands = str_register.split(' ')
-                dest = operands[0]
-                op1 = operands[2]
-                op2 = operands[4]
-
-                reg1 = self.get_register()
-                reg2 = self.get_register()
-
                 if "<DIR>" in op1:
                     self.code.append(f"lw {reg1}, {op1}")
                 else:
@@ -48,22 +54,8 @@ class MIPS:
                     self.code.append(f"lw {reg2}, {op2}")
                 else:
                     self.code.append(f"li {reg2}, {op2}")
-
-                # add operation
                 self.code.append(f"add {dest}, {reg1}, {reg2}")
-
-                self.release_register(reg1)
-                self.release_register(reg2)
-
             elif "DIV" in str_register:
-                operands = str_register.split(' ')
-                dest = operands[0]
-                op1 = operands[2]
-                op2 = operands[4]
-
-                reg1 = self.get_register()
-                reg2 = self.get_register()
-
                 if "<DIR>" in op1:
                     self.code.append(f"lw {reg1}, {op1}")
                 else:
@@ -72,13 +64,33 @@ class MIPS:
                     self.code.append(f"lw {reg2}, {op2}")
                 else:
                     self.code.append(f"li {reg2}, {op2}")
-
-                # div operation
                 self.code.append(f"div {reg1}, {reg2}")
                 self.code.append(f"mflo {dest}")
-
-                self.release_register(reg1)
-                self.release_register(reg2)
+            elif "SUB" in str_register:  # Handling subtraction
+                if "<DIR>" in op1:
+                    self.code.append(f"lw {reg1}, {op1}")
+                else:
+                    self.code.append(f"li {reg1}, {op1}")
+                if "<DIR>" in op2:
+                    self.code.append(f"lw {reg2}, {op2}")
+                else:
+                    self.code.append(f"li {reg2}, {op2}")
+                self.code.append(f"sub {dest}, {reg1}, {reg2}")
+            elif "MULT" in str_register:  # Handling multiplication
+                if "<DIR>" in op1:
+                    self.code.append(f"lw {reg1}, {op1}")
+                else:
+                    self.code.append(f"li {reg1}, {op1}")
+                if "<DIR>" in op2:
+                    self.code.append(f"lw {reg2}, {op2}")
+                else:
+                    self.code.append(f"li {reg2}, {op2}")
+                self.code.append(f"mul {dest}, {reg1}, {reg2}")
+            else:
+                # self.code.append(f"TDC>> {register}")
+                pass
+            self.release_register(reg1)
+            self.release_register(reg2)
 
     def write_file(self, filename: AnyStr = "yapl_assembler.s"):
         directory = os.path.dirname(os.path.realpath(__file__))
