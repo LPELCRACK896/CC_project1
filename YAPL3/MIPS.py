@@ -29,6 +29,11 @@ class MIPS:
         self.available_regs.append(reg)
 
     def __from_tdc_to_MIPS(self, filename="yapl_assembler.s"):
+        self.code.append(".data\n\n")
+        # logica del data
+
+        self.code.append(".text")
+        # resto del codigo
         for register in self.tdc.code:
             str_register = str(register)
 
