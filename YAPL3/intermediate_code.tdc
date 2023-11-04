@@ -1,211 +1,27 @@
-CL1 START Main 
-	<DIR>.Main.attr.rectangulo ASSIGN 1  
-	t1 = Circle NEW 
-	<DIR>.Main.attr.circulo ASSIGN t1  
-	 <DIR>.Main.attr.radius 
-	 <DIR>.Main.attr.booleano 
-	<DIR>.Main.attr.num ASSIGN 0  
-	MT1 START main 
-	t2 = <DIR>.Shape.method.getPerimeter ON <DIR>.Main.attr.circulo
-	t3 = 2  
-	t4 = 3  
-	PARAM t3 
-	PARAM t4 
-	t5 = CALL t2 WITH 2 
-	t6 = Circle NEW 
-	t7 = <DIR>.Shape.method.getPerimeter ON t6
-	t8 = 2  
-	t9 = 1  
-	PARAM t8 
-	PARAM t9 
-	t10 = CALL t7 WITH 2 
-	t11 = Circle NEW 
-	t12 = <DIR>.Shape.method.getPerimeter ON t11
-	t13 = 2  
-	t14 = 1  
-	PARAM t13 
-	PARAM t14 
-	t15 = CALL t12 WITH 2 
-	t16 = Circle NEW 
-	t17 = <DIR>.Circle.method.getArea ON t16
-	t18 = 3  
-	PARAM t18 
-	t19 = CALL t17 WITH 1 
-	t20 = 4 SUM 5
-	t21 = t20 MULT 1
-	<DIR>.Main.attr.radius ASSIGN t21  
-	t22 = 6 LTH 7
-	<DIR>.Main.attr.booleano ASSIGN t22  
-	t23 = <DIR>.Main.attr.num LTH 4
-	L1 IFNOT t23 GOTO L2
-	t24 = <DIR>.Main.attr.num SUM 1
-	<DIR>.Main.attr.num ASSIGN t24  
-	GOTO L1 
-	L2     
-	t25 = Circle NEW 
-	t26 = <DIR>.Circle.method.getArea ON t25
-	t27 = <DIR>.Main.attr.radius  
-	PARAM t27 
-	t28 = CALL t26 WITH 1 
-	IFNOT <DIR>.Main.attr.booleano GOTO L4
-	S3 START main-IF 
-	<DIR>.Main.attr.radius ASSIGN 8  
-	GOTO L7 
-	L4     
-	S5 END main-IF 
-	S6 START main-ELSE 
-	<DIR>.Main.attr.radius ASSIGN 4  
-	L7     
-	S8 END main-ELSE 
-	t29 = <DIR>.Object.method.copy ON SELF
-	t30 = CALL t29 WITH 0 
-	RETURN <DIR>.Main.attr.radius 
-	MT2 END main 
-CL2 END Main 
-	      
-CL3 START Shape 
-	 <DIR>.Shape.attr.radius 
-	 <DIR>.Shape.attr.color 
-	 <DIR>.Shape.attr.ancho 
-	<DIR>.Shape.attr.hasCorners ASSIGN true  
-	MT3 START isCool 
-	 <DIR>.Shape.isCool.formal.radius 
-	S9 START isCool-let 
-	 <DIR>.Shape.isCool.declaration_assignation.a 
-	S10 START isCool-let 
-	<DIR>.Shape.isCool.declaration_assignation.b ASSIGN 2  
-	S11 START isCool-let 
-	<DIR>.Shape.isCool.declaration_assignation.a SUM <DIR>.Shape.isCool.declaration_assignation.b  
-	S12 END isCool-let 
-	S13 END isCool-let 
-	RETURN 1 
-	MT4 END isCool 
-	MT5 START getArea 
-	S14 END isCool-let 
-	 <DIR>.Shape.getArea.formal.diameter 
-	RETURN 1 
-	MT6 END getArea 
-	MT7 START getPerimeter 
-	 <DIR>.Shape.getPerimeter.formal.height 
-	 <DIR>.Shape.getPerimeter.formal.width 
-	t31 = 2 MULT <DIR>.Shape.getPerimeter.formal.height
-	t32 = 2 MULT <DIR>.Shape.getPerimeter.formal.width
-	t33 = t31 SUM t32
-	RETURN t33 
-	MT8 END getPerimeter 
-CL4 END Shape 
-	      
-CL5 START Circle 
-	<DIR>.Circle.attr.radius ASSIGN 10  
-	<DIR>.Circle.attr.color ASSIGN 'Red'  
-	<DIR>.Circle.attr.castbol ASSIGN false  
-	<DIR>.Circle.attr.castinnt ASSIGN 1  
-	<DIR>.Circle.attr.sumbol ASSIGN 1  
-	t34 = 4 SUM <DIR>.Circle.attr.sumbol
-	<DIR>.Circle.attr.rescasted ASSIGN t34  
-	<DIR>.Circle.attr.num ASSIGN 5  
-	 <DIR>.Circle.attr.isHigher 
-	t35 = <DIR>.Circle.attr.radius SUM <DIR>.Circle.attr.radius
-	<DIR>.Circle.attr.diameter ASSIGN t35  
-	MT9 START getArea 
-	 <DIR>.Circle.getArea.formal.diameter 
-	t36 = <DIR>.Circle.attr.sumbol ISVOID 
-	<DIR>.Circle.attr.castbol ASSIGN t36  
-	t37 = <DIR>.Circle.attr.castinnt ASSIGN 2
-	<DIR>.Circle.attr.sumbol ASSIGN t37  
-	t38 = Circle NEW 
-	t39 = <DIR>.Shape.method.getPerimeter ON t38
-	t40 = 2  
-	t41 = <DIR>.Shape.attr.ancho  
-	PARAM t40 
-	PARAM t41 
-	t42 = CALL t39 WITH 2 
-	 <DIR>.Circle.attr.rescasted 
-	t43 = Int NEW 
-	t44 = <DIR>.Object.method.copy ON t43
-	t45 = CALL t44 WITH 0 
-	NOT <DIR>.Shape.attr.hasCorners 
-	t46 = <DIR>.Circle.attr.sumbol BWNOT 
-	t47 = t46 BWNOT 
-	BWNOT t47 
-	<DIR>.Circle.attr.castinnt ASSIGN 2  
-	S15 START getArea-let 
-	<DIR>.Circle.getArea.declaration_assignation.id ASSIGN 1  
-	S16 START getArea-let 
-	<DIR>.Circle.getArea.declaration_assignation.other ASSIGN '1'  
-	S17 START getArea-let 
-	<DIR>.Circle.getArea.declaration_assignation.next ASSIGN false  
-	S18 START getArea-let 
-	<DIR>.Circle.getArea.declaration_assignation.id SUM 3  
-	S19 END getArea-let 
-	S20 END getArea-let 
-	NEW Main 
-	S21 END getArea-let 
-	NOT true 
-	S22 END getArea-let 
-	t48 = 1 ISVOID 
-	NOT t48 
-	BWNOT 1 
-	IFNOT true GOTO L24
-	S23 START getArea-IF 
-	<DIR>.Circle.attr.radius ASSIGN 8  
-	GOTO L27 
-	L24     
-	S25 END getArea-IF 
-	S26 START getArea-ELSE 
-	<DIR>.Circle.attr.radius ASSIGN 4  
-	L27     
-	S28 END getArea-ELSE 
-	t49 = Circle NEW 
-	t50 = <DIR>.Shape.method.getPerimeter ON t49
-	t51 = 2  
-	t52 = 1  
-	PARAM t51 
-	PARAM t52 
-	t53 = CALL t50 WITH 2 
-	ISVOID <DIR>.Circle.attr.radius 
-	1 SUM 1  
-	 'hola' 
-	L29 IFNOT true GOTO L30
-	 1 
-	GOTO L29 
-	L30     
-	t54 = <DIR>.Circle.attr.num LTH 4
-	<DIR>.Circle.attr.isHigher ASSIGN t54  
-	t55 = <DIR>.Circle.attr.num LTH 4
-	L31 IFNOT t55 GOTO L32
-	t56 = <DIR>.Circle.attr.num SUM 1
-	<DIR>.Circle.attr.num ASSIGN t56  
-	GOTO L31 
-	L32     
-	t57 = 3 MULT <DIR>.Circle.attr.radius
-	t58 = t57 MULT <DIR>.Circle.attr.radius
-	RETURN t58 
-	MT10 END getArea 
-	MT11 START getColor 
-	t59 = <DIR>.Object.method.copy ON SELF
-	t60 = CALL t59 WITH 0 
-	t61 = <DIR>.Circle.method.getColor ON SELF
-	t62 = CALL t61 WITH 0 
-	RETURN <DIR>.Circle.attr.color 
-	MT12 END getColor 
-CL6 END Circle 
-	      
-CL7 START Rectangle 
+CL1 START Rectangle 
 	<DIR>.Rectangle.attr.length ASSIGN 5  
 	<DIR>.Rectangle.attr.width ASSIGN 10  
-	MT13 START getArea 
-	 <DIR>.Rectangle.getArea.formal.diameter 
-	L33 IFNOT <DIR>.Shape.attr.hasCorners GOTO L34
-	t63 = <DIR>.Rectangle.attr.length SUM 1
-	<DIR>.Rectangle.attr.length ASSIGN t63  
-	GOTO L33 
-	L34     
-	t64 = <DIR>.Rectangle.attr.length MULT <DIR>.Rectangle.attr.width
-	RETURN t64 
-	MT14 END getArea 
-CL8 END Rectangle 
+	<DIR>.Rectangle.attr.newbool ASSIGN 1  
+	MT1 START operations 
+	t1 = 4 MULT 3
+	t2 = 10 SUM t1
+	<DIR>.Rectangle.attr.length ASSIGN t2  
+	t3 = 5 DIV 2
+	<DIR>.Rectangle.attr.width ASSIGN t3  
+	t4 = 10 SUB 10
+	<DIR>.Rectangle.attr.length ASSIGN t4  
+	t5 = 10 MULT 7
+	<DIR>.Rectangle.attr.length ASSIGN t5  
+	RETURN 1 
+	MT2 END operations 
+CL2 END Rectangle 
 	      
-	t65 = Main NEW 
-	t66 = <DIR>.Main.method.main ON t65
-	t67 = CALL t66 WITH 0 
+CL3 START Main 
+	MT3 START main 
+	RETURN 1 
+	MT4 END main 
+CL4 END Main 
+	      
+	t6 = Main NEW 
+	t7 = <DIR>.Main.method.main ON t6
+	t8 = CALL t7 WITH 0 

@@ -4,7 +4,7 @@ class Rectangle{
     newbool: Bool <- 1;
 
     operations(): Int{
-        length <- (10 + 4);
+        length <- (10 + 4 * 3);
         width <- (5/2);
         length <- (10 - 10);
         length <- (10 * 7);
