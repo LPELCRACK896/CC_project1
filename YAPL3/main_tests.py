@@ -25,7 +25,7 @@ def compile_yapl(input_data, gui_window=None):
             print("Error en linea " + str(error.line) + ": " + str(error.name) + " : " + str(error.details))
 
     if not (syntax_tree.has_errors() or semantic_errors):
-        print(symbol_table.to_string_sequential_symbols())
+        # print(symbol_table.to_string_sequential_symbols())
         t_dir_code: ThreeDirectionsCode = symbol_table.get_three_directions_code()
         content = str(t_dir_code)
         #  print(content)
