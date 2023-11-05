@@ -50,7 +50,7 @@ class MIPS:
             reg2 = self.get_register()
 
             if "CL" in str_register and "START" in str_register: # para inicios de clases
-                self.code.append(f"{op1}:")
+                self.code.append(f"{op1.lower()}:")
             if "CL" in str_register and "END" in str_register: # para inicios de clases
                 self.code.append(f"\n")
 
