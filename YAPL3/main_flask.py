@@ -10,6 +10,7 @@ from anytree import Node, RenderTree
 from anytree.exporter import UniqueDotExporter, DotExporter
 from SyntaxTree import SyntaxTree
 from ThreeDirectionsCode import ThreeDirectionsCode
+from MIPS import MIPS
 
 app = Flask(__name__)
 
@@ -103,7 +104,6 @@ def index():
                 if not (syntax_tree.has_errors() or semantic_errors):
                     t_dir_code: ThreeDirectionsCode = symbol_table.get_three_directions_code()
                     content = str(t_dir_code)
-                    print(content)
                     t_dir_code.write_file("intermediate_code.tdc")
                 else:
                     with open("./YAPL3/intermediate_code.tdc", "w") as archivo:
@@ -112,8 +112,21 @@ def index():
                 with open("./YAPL3/intermediate_code.tdc", "r") as archivo:
                     tres_dir = archivo.read()
 
+                # Dividir el texto en líneas y eliminar los caracteres de tabulación
+                lineas = tres_dir.splitlines()
+                lineas = [linea.replace('\t', '') for linea in lineas]
+
+                # Dividir cada línea en palabras utilizando espacios como separador
+                tripletas = [linea.split() for linea in lineas]
+
+                # Eliminar líneas vacías
+                tripletas = [palabras for palabras in tripletas if palabras]
+
+                mips: MIPS = MIPS(t_dir_code)
+                mips.write_file()
+
                 # Renderiza una plantilla con los resultados
-                return render_template('/index.html', input_data=edited_code, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir)
+                return render_template('/index.html', input_data=edited_code, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir, tripletas=tripletas, mips=mips)
             else:
                 return redirect(url_for('index'))
     return render_template('/index.html')

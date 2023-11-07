@@ -19,21 +19,23 @@
         <div class="col-lg-6">
             <form action="/" method="POST" enctype="multipart/form-data">
                 <input type="file" name="file" accept=".yapl">
-                <input class="button" type="submit" value="Compilar">
+                <input class="button" type="submit" value="Subir archivo inicial">
             </form>
+            <h4>Yapl</h4>
         
             <!-- Agregar CodeMirror al primer textarea -->
             <form action="/" method="POST" enctype="multipart/form-data">
                 <div class="code-editor">
                     <textarea id="edited_code" name="edited_code" rows="10" cols="50">{{ input_data }}</textarea>
                 </div>
-                <input type="submit" value="Recompilar" class="button">
+                <input type="submit" value="Compilar" class="button">
             </form>
         
         </div>
 
         <div class="col-lg-6">
             <div style="height: 44px;"></div>
+            <h4>Código de Tres Direcciones</h4>
             <form action="/" method="POST" enctype="multipart/form-data">
                 <div class="code-editor">
                     <!-- Agregar CodeMirror al segundo textarea -->    
@@ -43,6 +45,7 @@
         </div>
 
         <div class="col-lg-12">
+            <div style="height: 10px;"></div>
             <div class="errores">
                 {% if syntax_errors %}
                 <h2>Errores Sintácticos:</h2>
@@ -62,6 +65,32 @@
                 {% endif %}
 
             </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div style="height: 44px;"></div>
+            <h4>Tripletas en cuadruplos</h4>
+            <form action="/" method="POST" enctype="multipart/form-data">
+                <div class="code-editor">
+                    <!-- Agregar CodeMirror al tercer textarea -->    
+                    {% if tripletas %}
+                    <textarea id="tresdir_trips" name="tresdir_trips" rows="10" cols="50">{% for tripleta in tripletas %}
+{{ tripleta }}
+                    {% endfor %}</textarea>                   
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-6">
+            <div style="height: 44px;"></div>
+            <h4>MIPS</h4>
+            <form action="/" method="POST" enctype="multipart/form-data">
+                <div class="code-editor">
+                    <!-- Agregar CodeMirror al segundo textarea -->    
+                    <textarea id="mips" name="mips" rows="10" cols="50">{% if mips %}{{mips}}{% endif %}</textarea>                   
+                </div>
+            </form>
         </div>
     </div>
     
