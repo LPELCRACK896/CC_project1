@@ -1,5 +1,5 @@
 class Main {
-	radius: Int <- 3;
+	radius: Int;
     booleano: Bool <- false;
   	t1: Int <- 0;
   	io: IO <- (new IO);

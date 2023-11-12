@@ -1,17 +1,53 @@
 from ThreeDirectionsCode import ThreeDirectionsCode
-from typing import AnyStr
+from CodeStack import CodeStack
+from typing import AnyStr, Tuple, List
+from Prototype import Prototype
+from Attribute import Attribute
+from Method import Method
+from RAM import RAM
+import MIPS_CONSTANTS as MC
 import os
+
+#  buffer: .space 1024  # Reserva 1024 bytes para el buffer de entrada
+
+INTERMEDIATE_CODE_FILENAME = "intermediate_code.tdc"
 
 
 class MIPS:
 
     tdc: ThreeDirectionsCode
     code: list
+    filename: str
+    prototypes: List[Prototype]
+    ram: RAM
 
-    def __init__(self, tdc: ThreeDirectionsCode):
+    temporary_regs: List
+    saved_regs: List
+    argument_regs: List
+    result_regs: List
+    special_regs: List
+    mul_div_regs: List
+    late_lines_assignation: List
+
+    def __init__(self, tdc: ThreeDirectionsCode, filename=INTERMEDIATE_CODE_FILENAME):
+        self.filename = filename
         self.code = []
         self.tdc = tdc
         self.available_regs = ["$t" + str(i) for i in range(9, -1, -1)]  # $t9 to $t0
+
+        self.prototypes = []
+
+        self.temporary_regs = ["$t" + str(i) for i in range(10)]
+        self.saved_regs = ["$s" + str(i) for i in range(8)]
+        self.argument_regs = ["$a" + str(i) for i in range(4)]
+        self.result_regs = ["$v" + str(i) for i in range(2)]
+        self.special_regs = ["$sp", "$gp", "$fp", "$ra"]
+        self.mul_div_regs = ["hi", "lo"]
+
+        self.ram = RAM()
+        self.build_and_get_IO_prototype()
+        self.translator()
+
 
         self.__from_tdc_to_MIPS()
 
@@ -21,6 +57,229 @@ class MIPS:
             string_code += f"{register}\n"
 
         return string_code
+
+    def get_register(self, register_group):
+        """Obtiene y elimina un registro del grupo especificado."""
+        if not getattr(self, register_group):
+            raise Exception(f"No hay registros disponibles en {register_group}")
+        return getattr(self, register_group).pop()
+
+    def get_specific_register(self, register_group, register_name):
+        """Obtiene un registro específico si está disponible."""
+        if register_name in getattr(self, register_group):
+            getattr(self, register_group).remove(register_name)
+            return register_name
+        else:
+            raise Exception(f"El registro {register_name} no está disponible")
+
+    def check_register_availability(self, register_group):
+        """Verifica si hay registros disponibles en el grupo especificado."""
+        return bool(getattr(self, register_group))
+
+    def release_register(self, register_group, register_name):
+        """Libera un registro, devolviéndolo al grupo especificado."""
+        getattr(self, register_group).append(register_name)
+
+    @staticmethod
+    def build_and_get_IO_prototype() -> Prototype:
+
+        """
+        out_string(x: String): SELF_TYPE
+        out_int(x: Int): SELF_TYPE
+        in_string(): String
+        in_int(): Int
+        """
+        class_prototype = Prototype("IO")
+
+        #  outString(s: String)
+        prototype_out_string = Method("outString")
+        prototype_out_string.set_content([
+            "li $v0, 4       # syscall para imprimir cadena",
+            "lw $a0, 0($sp)  # Carga la dirección de la cadena desde la pila",
+            "syscall",
+            "jr $ra          # Retorna"
+        ])
+        class_prototype.add_method(prototype_out_string)
+
+        #  out_int(x: Int): SELF_TYPE
+        prototype_out_int = Method("outInt")
+        prototype_out_int.set_content([
+           "li $v0, 1  # syscall para imprimir entero",
+            "lw $a0, 0($sp)  # Carga el entero desde la pila",
+            "syscall",
+            "jr $ra  # Retorna"
+        ])
+        class_prototype.add_method(prototype_out_int)
+
+        # in_string()
+        prototype_in_string = Method("inString")
+        prototype_in_string.set_content([
+            "li $v0, 8  # syscall para leer cadena",
+            "la $a0, buffer  # Dirección del buffer",
+            "li $a1, 1024  # Tamaño del buffer",
+            "syscall",
+            "jr $ra"
+        ])
+        class_prototype.add_method(prototype_in_string)
+
+        # in_int()
+        prototype_in_int = Method("inInt")
+        prototype_in_int.set_content([
+            "li $v0, 5  # syscall para leer entero",
+            "syscall",
+            "jr $ra  # Retorna"
+        ])
+        class_prototype.add_method(prototype_in_int)
+        class_prototype.write_example()
+        return class_prototype
+
+    def write_on_main(self):
+        pass
+
+    def build_and_get_Object_prototype(self) -> Prototype:
+        pass
+
+    def how_deep_does_temporary_goes(self, temporary_var, code_left: List):
+        last_line_found = 0
+        deep = 0
+        for line in code_left:
+            if temporary_var in self.safe_split(line):
+                last_line_found = deep
+            deep += 1
+
+        return last_line_found
+
+    def add_basic_prototypes(self):
+        # Builds 'IO' and 'Object' classes
+        io_prototype = self.build_and_get_IO_prototype()
+        # object_prototype = self.build_and_get_Object_prototype()
+
+        self.prototypes.extend([io_prototype])
+
+    @staticmethod
+    def translator_get_next_state(state: AnyStr, line: AnyStr, remaining_lines: CodeStack,
+                                  personalized_prototypes: List[Prototype], instructions_for_attr: List) \
+            -> Tuple[bool, AnyStr, bool]:
+
+        split_line = MIPS.safe_split(line)
+        state_and_next_state_combinations = [
+            ("waiting_class", "waiting_class" ),
+            ("waiting_class", "waiting_attribute"),
+            ("waiting_class", "end"),
+
+            ("waiting_attribute", "waiting_attribute")
+        ]
+
+        if state == "waiting_class":
+            if split_line[0].startswith("CL"):
+                if split_line[1] == "START":
+                    class_prototype = Prototype(split_line[2])
+                    personalized_prototypes.append(class_prototype)
+                    return True, "waiting_attribute", False
+                return False, "waiting_class", True
+            return False, "end", False
+        elif state == "waiting_attribute":
+            if not personalized_prototypes:
+                return False, "waiting_attribute", True # No hay prototipo para asignar atributo
+            last_prototype = personalized_prototypes[-1]
+
+            if split_line[0].startswith(f"<DIR>.{last_prototype.name}.attr"):
+                attribute = Attribute()
+            pass
+
+
+
+            """
+            Viable events: 
+            - Found attribute
+            - Found start method
+            - Found end of class
+            """
+            pass
+        elif state == "waiting_return_statement":
+            """
+            Viable events: 
+            - Found end method
+            - Found any other type of line (method content) 
+            """
+            pass
+        elif state == "waiting_method":
+            """
+            Viable events: 
+            - Found method
+            - Found end of class
+            """
+        elif state == "end":
+            pass
+
+    @staticmethod
+    def safe_split(line_to_split):
+
+            if "'" not in line_to_split:
+                return line_to_split.split(sep=" ")
+
+            split = []
+            pre_string, string, post_string = line_to_split.split(sep="'", maxsplit=2)
+
+            split.extend(pre_string.split(sep=" "))
+            split.append(f"'{string}'")
+            split.extend(post_string.split(sep=" "))
+
+            return split
+
+    def translator(self):
+        state_and_next_state_combinations = [
+            ("waiting_class", "waiting_class" ),
+            ("waiting_class", "waiting_attribute"),
+        ]
+        states = [
+            "waiting_class",
+            "waiting_attribute",
+            "waiting_return_statement",
+            "waiting_method",
+            "end"
+        ]
+        instructions_for_attr = []
+
+        self.ram.reset()
+        self.add_basic_prototypes()
+
+        def remove_special_chars_at_start(string):
+            if string and string[0] in special_chars:
+                return remove_special_chars_at_start(string[1:])
+            return string
+
+        def remove_special_chars_at_end(string):
+            if string and string[-1] in special_chars:
+                return remove_special_chars_at_end(string[:-1])
+            return string
+
+        def remove_special_chars_at_start_and_end(string):
+            return remove_special_chars_at_start(remove_special_chars_at_end(string))
+
+        with open(f"./{self.filename}", "r") as file:
+            code_stack = CodeStack()
+
+            special_chars = ["\n", "\t", " "]
+
+            code_stack.initialize_content([remove_special_chars_at_start_and_end(line) for line in file])
+            code_stack.content.reverse()
+            new_prototypes = []
+            state = "waiting_class"
+            current_class = None
+            current_method = None
+            found_end = False
+            encounter_error = False
+            while not (code_stack.is_empty() and found_end and encounter_error):
+
+                next_line = code_stack.pop()
+                got_expected, next_state, encounter_error \
+                    = self.translator_get_next_state(state, next_line, code_stack, new_prototypes, instructions_for_attr)
+
+                state = next_state
+                if next_state == "end":
+                    found_end = True
+
 
     def get_register(self):
         return self.available_regs.pop() if self.available_regs else None
@@ -108,3 +367,10 @@ class MIPS:
 
         with open(input_file, 'w') as file:
             file.write(str(self))
+
+
+def example():
+    mips = MIPS(None)  # Asumiendo que tienes una implementación adecuada para ThreeDirectionsCode
+    reg = mips.get_register("temporary_regs")
+    print(f"Registro obtenido: {reg}")
+    mips.release_register("temporary_regs", reg)

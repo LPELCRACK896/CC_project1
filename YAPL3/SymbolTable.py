@@ -15,19 +15,21 @@ from NotedNode import create_noted_node
 
 
 class SymbolTable:
-
     sequential_symbols: List[Symbol]
+
     def __init__(self, root):
         """Método constructor
 
         Args:
             root (anytree.Node): Nodo raiz del árbol de análisis sintáctico generado por anytree para la gramática. 
         """
-        self.content = defaultdict(dict)   # {<scope_id>: {symbol_name: Symbol}} >>  Diccionario con clave el id_scope y valor un diccionario con simbolos (diccionario interno, identificador de simbolo como clave; Objeto Simbolo como valor)
+        self.content = defaultdict(
+            dict)  # {<scope_id>: {symbol_name: Symbol}} >>  Diccionario con clave el id_scope y valor un diccionario con simbolos (diccionario interno, identificador de simbolo como clave; Objeto Simbolo como valor)
         self.construction_errors: Dict[str: List[SemanticError]] = {}
         self.global_scope = Scope(parent=None,
                                   scope_id="global")  # La tabla de simbolos de inicializa con un scope global en el que se almacenan simbolos que no esten debajo de otros scopes creados.
-        self.scopes = {"global": self.global_scope}  # {<scope_id>: Scope} >> Scopes de la tabla almacenados en dicionarios que tiene por clave su identificador y su objeto por valor.
+        self.scopes = {
+            "global": self.global_scope}  # {<scope_id>: Scope} >> Scopes de la tabla almacenados en dicionarios que tiene por clave su identificador y su objeto por valor.
         self.sequential_symbols = []
 
         self.build_symbol_table(node=root, current_scope=self.global_scope,
@@ -68,6 +70,7 @@ class SymbolTable:
     START
     BUILDERS
     """
+
     def build_symbol_table(self, node, current_scope=None, current_line=0) -> int:
         """Construye la tabla de simbolos. Al encontrar metodos o clases inicializa Scopes y llama recursivamente sobre los hijos de ese nodo.
 
@@ -266,7 +269,6 @@ class SymbolTable:
             parameters=[],
             parameter_passing_method=None)
 
-
         return current_line
 
     def build_symbol_expr_if(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -286,7 +288,6 @@ class SymbolTable:
             is_function=True,
             type_of_expression="if"
         )
-
 
         if_line = current_line
         if_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}-IF({if_line}if)")
@@ -340,7 +341,8 @@ class SymbolTable:
         )
 
         while_line = current_line
-        while_scope = self.start_scope(parent_scope=current_scope, scope_id=f"{current_scope.scope_id}-WHILE({while_line}while)")
+        while_scope = self.start_scope(parent_scope=current_scope,
+                                       scope_id=f"{current_scope.scope_id}-WHILE({while_line}while)")
         while_content = node.children[3]
         current_line = self.build_symbol_table(while_content, while_scope, current_line=current_line + 1)
 
@@ -371,7 +373,6 @@ class SymbolTable:
             type_of_expression="assignation"
 
         )
-
 
         return current_line
 
@@ -415,7 +416,6 @@ class SymbolTable:
             type_of_expression="local_call_method"
         )
 
-
         return current_line
 
     def build_symbol_expr_obj_method_call(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -454,7 +454,8 @@ class SymbolTable:
             return current_line
 
         for let_variable in variables:
-            self.build_symbol_let_variable(node=let_variable.value, current_scope=let_scope, current_line=current_line, node_id=let_variable.var_id, tipo=let_variable.var_type)
+            self.build_symbol_let_variable(node=let_variable.value, current_scope=let_scope, current_line=current_line,
+                                           node_id=let_variable.var_id, tipo=let_variable.var_type)
 
         self.build_symbol_table(node=expr_to_evaluate, current_scope=let_scope, current_line=current_line)
 
@@ -477,8 +478,9 @@ class SymbolTable:
         )
         return current_line
 
-    def build_symbol_let_variable(self, node: Node, current_scope: Scope, current_line: int, node_id: str,tipo: Node) -> int:
-        value = ns.to_string_node(node.children[2]) if len(node.children)>2 else None
+    def build_symbol_let_variable(self, node: Node, current_scope: Scope, current_line: int, node_id: str,
+                                  tipo: Node) -> int:
+        value = ns.to_string_node(node.children[2]) if len(node.children) > 2 else None
 
         self.insert(
             name=node_id,
@@ -635,7 +637,6 @@ class SymbolTable:
                     type_of_expression=None
                 )
 
-
         return current_line
 
     def build_symbol_not_int(self, node: Node, current_scope: Scope, current_line: int) -> int:
@@ -681,9 +682,11 @@ class SymbolTable:
         )
 
         return current_line
+
     """
     INTERNAL PROCESS
     """
+
     def __build_basic_classes(self) -> int:
         current_index = 1
         # Object
@@ -701,7 +704,7 @@ class SymbolTable:
 
         # type_name()
 
-        self.insert(name="type_name", data_type="String", semantic_type="method", can_inherate=None, scope=object_scope,
+        self.insert(name="typeName", data_type="String", semantic_type="method", can_inherate=None, scope=object_scope,
                     value=None, default_value=None, parameters=[], parameter_passing_method="value",
                     start_index=current_index, end_index=current_index)
         current_index += 1
@@ -722,31 +725,31 @@ class SymbolTable:
         current_index += 1
         IO_scope = self.start_scope(self.global_scope, scope_id=f"{self.global_scope.scope_id}-IO(class)")
         # out_string(x: String) : SELF_TYPE
-        self.insert(name="out_string", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope,
+        self.insert(name="outString", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope,
                     value=None, default_value=None, parameters=[("x", "String")], parameter_passing_method="value",
                     start_index=current_index, end_index=current_index)
         current_index += 1
-        io_out_string_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_string(method)")
+        io_out_string_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-outString(method)")
         self.insert(name="x", data_type="String", semantic_type="formal", can_inherate=None, scope=io_out_string_scope,
                     value=None, default_value="", parameters=None, start_index=current_index, end_index=current_index)
         current_index += 1
         # out_int(x: Int): SELF_TYPE
-        self.insert(name="out_int", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope,
+        self.insert(name="outInt", data_type="SELF_TYPE", semantic_type="method", can_inherate=None, scope=IO_scope,
                     value=None, default_value=None, parameters=[("x", "Int")], parameter_passing_method="value",
                     start_index=current_index, end_index=current_index)
         current_index += 1
-        io_out_int_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-out_int(method)")
+        io_out_int_scope = self.start_scope(IO_scope, f"{IO_scope.scope_id}-outInt(method)")
         self.insert(name="x", data_type="Int", semantic_type="formal", can_inherate=None, scope=io_out_int_scope,
                     value=None, default_value=0, parameters=None, parameter_passing_method=None,
                     start_index=current_index, end_index=current_index)
         current_index += 1
         # in_string() : String
-        self.insert(name="in_string", data_type="String", semantic_type="method", can_inherate=None, scope=IO_scope,
+        self.insert(name="inString", data_type="String", semantic_type="method", can_inherate=None, scope=IO_scope,
                     value=None, default_value="", parameters=[], parameter_passing_method="value",
                     start_index=current_index, end_index=current_index)
         current_index += 1
         # in_int(): Int
-        self.insert(name="in_int", data_type="Int", semantic_type="method", can_inherate=None, scope=IO_scope,
+        self.insert(name="inInt", data_type="Int", semantic_type="method", can_inherate=None, scope=IO_scope,
                     value=None, default_value=0, parameters=[], parameter_passing_method="value",
                     start_index=current_index, end_index=current_index)
         current_index += 1
@@ -803,6 +806,7 @@ class SymbolTable:
     START 
     OPERATIONS
     """
+
     def add_error(self, error_type: str, error: SemanticError):
         if error_type in self.construction_errors:
             if error not in self.construction_errors[error_type]:
@@ -1027,8 +1031,9 @@ class SymbolTable:
     """
     MEMORY USAGE
     """
+
     @staticmethod
-    def est__symbol_has_scope(symbol: Symbol):
+    def is_scoped_symbol(symbol: Symbol):
         return (
                 symbol.semantic_type == "class" or
                 symbol.semantic_type == "method"
@@ -1060,7 +1065,7 @@ class SymbolTable:
             symbol.set_bytes_memory_size(None)  # So it has no memory estimated in symbol table.
             return None
         else:
-            if self.est__symbol_has_scope(symbol):
+            if self.is_scoped_symbol(symbol):
                 mem_size = self.scoped_calculate_memory_size(symbol)
                 symbol.set_bytes_memory_size(mem_size)
                 return mem_size
@@ -1088,6 +1093,7 @@ class SymbolTable:
     """
     SEMANTIC TESTS
     """
+
     def check_inheritance_chain(self, class_name) -> tuple:
         classes = self.global_scope.get_all_classes()
         if class_name not in classes:
@@ -1137,7 +1143,6 @@ class SymbolTable:
 
         return self.construction_errors
 
-
     def get_main_method_symbol(self):
         pass
 
@@ -1146,3 +1151,59 @@ class SymbolTable:
         # tdc.build()
         tdc.new_build()
         return tdc
+
+    """
+    LAST DEVELOPMENT
+    - Amplify content on inheritance
+    """
+
+    def get_only_parent_attributes(self, parent_attributes: Dict[AnyStr, Symbol],
+                                   target_attributes: Dict[AnyStr, Symbol]):
+        for attribute_name, attribute_symbol in parent_attributes:
+            pass
+        pass
+
+    def get_only_parent_methods(self, parent_methods: Dict[AnyStr, Symbol], target_methods: Dict[AnyStr, Symbol]):
+        pass
+
+    def class_get_content(self, class_symbol) -> Dict:
+        class_scope = class_symbol.construct_scope_name()
+        if class_scope not in self.content.keys():
+            return {}
+        return self.content.get(class_scope)
+
+    def class_get_attributes(self, class_symbol: Symbol):
+        class_content = self.class_get_content(class_symbol)
+        return {symbol_name: symbol for symbol_name, symbol in class_content.items() if
+                symbol.semantic_type == "attr"}
+
+    def class_get_methods(self, class_symbol: Symbol):
+        class_content = self.class_get_content(class_symbol)
+        return {symbol_name: symbol for symbol_name, symbol in class_content.items() if
+                symbol.semantic_type == "method"}
+
+    def get_classes(self):
+        return {symbol_name: symbol for symbol_name, symbol in self.content.get("global").items()
+                if symbol.semantic_type == "class"}
+
+    def amplify_class_content(self, target: Symbol, classes: Dict[AnyStr, Symbol]):
+        parent_class: AnyStr = target.data_type
+        if parent_class is None:
+            target.set_amplified(True)
+            return
+
+        parent_symbol = classes.get(parent_class)
+        if not parent_symbol.is_amplified():
+            self.amplify_class_content(parent_symbol, classes)
+
+        own_target_attributes = self.class_get_attributes(target)
+        own_target_methods = self.class_get_methods(target)
+
+        parent_target_attributes = self.class_get_attributes(parent_symbol)
+        parent_target_methods = self.class_get_methods(parent_symbol)
+
+    def amplify_classes_content(self):
+
+        classes: Dict[AnyStr, Symbol] = self.get_classes()
+        for class_name, class_symbol in classes.items():
+            self.amplify_class_content(class_symbol, classes)

@@ -27,6 +27,9 @@ class Symbol:
     type_of_expression: str = None
     bytes_memory_size: int = None
 
+    amplified: bool = False
+    origin: str = "self"
+
     def get_value(self):
         if self.value is None:
             if not self.data_type:
@@ -49,6 +52,15 @@ class Symbol:
         elif self.semantic_type == "attr":
             self.bytes_memory_size = self.get_attr_size()
         return self.bytes_memory_size
+
+    def set_amplified(self, is_amplified):
+        self.amplified = is_amplified
+
+    def set_origin(self, origin):
+        self.origin = origin
+
+    def is_amplified(self):
+        return self.amplified
 
     def as_direction_stringify(self) -> str:
 
@@ -140,8 +152,8 @@ class Symbol:
 
         if self.data_type in br.basic_types_data_required:
             return br.basic_types_data_required.get(self.data_type)
-        print("Expected data with basic node_type")
-        return None
+
+        return br.POINTER_BYTES
 
     def simple_calculate_memory_size(self):
 
