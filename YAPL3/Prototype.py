@@ -14,11 +14,17 @@ class Prototype:
     tdc_methods: Dict[AnyStr, List[AnyStr]]
     name: AnyStr
 
-
     def __init__(self, name):
         self.name = name
         self.methods = []
         self.attributes = []
+        self.special_attributes = []
+
+    def add_special_attribute(self, attribute):
+        self.special_attributes.append(attribute)
+
+    def get_last_method_added(self):
+        return self.methods[-1]
 
     def set_attributes(self, attributes):
         self.attributes = attributes

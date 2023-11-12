@@ -14,7 +14,10 @@ class Attribute:
 
     def get_value(self):
         if self.value is None:
-            return MC.defaults_values.get(self.attr_type)
+            if self.attr_type in MC.defaults_values:
+                return MC.defaults_values.get(self.attr_type)
+            else:
+                return None
         return self.value
 
     def get_instance(self, memory_unit: MemoryUnit):
@@ -22,3 +25,9 @@ class Attribute:
 
     def get_example(self):
         return f"{self.name}: {MC.type_of_data_on_mips.get(self.attr_type)} {self.get_value()}"
+
+    def set_additional_code(self, additional_code):
+        self.additional_code = additional_code
+
+    def set_value(self, value):
+        self.value = value

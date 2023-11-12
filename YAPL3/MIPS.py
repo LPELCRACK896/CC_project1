@@ -5,6 +5,7 @@ from Prototype import Prototype
 from Attribute import Attribute
 from Method import Method
 from RAM import RAM
+from SymbolTable import SymbolTable
 import MIPS_CONSTANTS as MC
 import os
 
@@ -28,14 +29,18 @@ class MIPS:
     special_regs: List
     mul_div_regs: List
     late_lines_assignation: List
+    if_func_count: int
 
-    def __init__(self, tdc: ThreeDirectionsCode, filename=INTERMEDIATE_CODE_FILENAME):
+    symbol_table: SymbolTable
+
+    def __init__(self, tdc: ThreeDirectionsCode, symbol_table: SymbolTable, filename=INTERMEDIATE_CODE_FILENAME):
         self.filename = filename
         self.code = []
         self.tdc = tdc
         self.available_regs = ["$t" + str(i) for i in range(9, -1, -1)]  # $t9 to $t0
 
         self.prototypes = []
+        self.symbol_table = symbol_table
 
         self.temporary_regs = ["$t" + str(i) for i in range(10)]
         self.saved_regs = ["$s" + str(i) for i in range(8)]
@@ -43,11 +48,11 @@ class MIPS:
         self.result_regs = ["$v" + str(i) for i in range(2)]
         self.special_regs = ["$sp", "$gp", "$fp", "$ra"]
         self.mul_div_regs = ["hi", "lo"]
+        self.if_func_count = 0
 
         self.ram = RAM()
         self.build_and_get_IO_prototype()
         self.translator()
-
 
         self.__from_tdc_to_MIPS()
 
@@ -156,38 +161,22 @@ class MIPS:
 
         self.prototypes.extend([io_prototype])
 
-    @staticmethod
-    def translator_get_next_state(state: AnyStr, line: AnyStr, remaining_lines: CodeStack,
+
+    def translator_get_next_state(self, state: AnyStr, line: AnyStr, remaining_lines: CodeStack,
                                   personalized_prototypes: List[Prototype], instructions_for_attr: List) \
-            -> Tuple[bool, AnyStr, bool]:
+            -> Tuple[bool, AnyStr, bool, List]:
 
         split_line = MIPS.safe_split(line)
-        state_and_next_state_combinations = [
-            ("waiting_class", "waiting_class" ),
-            ("waiting_class", "waiting_attribute"),
-            ("waiting_class", "end"),
-
-            ("waiting_attribute", "waiting_attribute")
-        ]
 
         if state == "waiting_class":
             if split_line[0].startswith("CL"):
                 if split_line[1] == "START":
                     class_prototype = Prototype(split_line[2])
                     personalized_prototypes.append(class_prototype)
-                    return True, "waiting_attribute", False
-                return False, "waiting_class", True
-            return False, "end", False
+                    return True, "waiting_attribute", False, instructions_for_attr
+                return False, "waiting_class", True, instructions_for_attr
+            return False, "end", False, instructions_for_attr
         elif state == "waiting_attribute":
-            if not personalized_prototypes:
-                return False, "waiting_attribute", True # No hay prototipo para asignar atributo
-            last_prototype = personalized_prototypes[-1]
-
-            if split_line[0].startswith(f"<DIR>.{last_prototype.name}.attr"):
-                attribute = Attribute()
-            pass
-
-
 
             """
             Viable events: 
@@ -195,37 +184,99 @@ class MIPS:
             - Found start method
             - Found end of class
             """
-            pass
+            if not personalized_prototypes:
+                return False, "waiting_attribute", True, instructions_for_attr # No hay prototipo para asignar atributo
+            last_prototype = personalized_prototypes[-1]
+
+            if split_line[0].startswith(f"<DIR>.{last_prototype.name}.attr"):
+                attr_name = split_line[0].split(".")[-1]
+                attribute = Attribute(attr_name)
+                attribute.set_additional_code(instructions_for_attr)
+                symbol_class = self.symbol_table.get_classes().get(last_prototype.name)
+                attributes_symbol = self.symbol_table.class_get_attributes(symbol_class)
+                attribute_symbol = [attr_symbol for attr_name, attr_symbol in attributes_symbol.items()
+                                    if attr_name == attr_name][0]
+                attr_type = attribute_symbol.data_type
+
+                if len(split_line) == 1:  # has no value
+                    if attr_type in MC.defaults_values:  # Regular attribute
+                        default_value = MC.defaults_values.get(attr_type)
+                        attribute.set_value(default_value)
+                        last_prototype.add_attribute(attribute)
+                        return True, "waiting_attribute", False, []
+                    else:  # Probably an object
+                        last_prototype.add_special_attribute(attribute)
+                        return True, "waiting_attribute", False, []
+                else:  # has value || might be a temporal tho
+                    value = split_line[2]
+                    attribute.set_value(value)
+                    last_prototype.add_attribute(attribute)
+                    return True, "waiting_attribute", False, []
+            elif split_line[0].startswith("MT"):
+                if instructions_for_attr: # at this point this buffer should be empty
+                    return False, "waiting_attribute", True, instructions_for_attr
+                method = Method(split_line[-1])
+                last_prototype.add_method(method)
+                return False, "waiting_return_statement", False, instructions_for_attr
+            elif split_line[0].startswith("CL"):  # End of class
+                print("")
+                return True, "waiting_class", False, instructions_for_attr
+            else:  # additional instructions
+                instructions_for_attr.append(line)
+                return False, "waiting_attribute", False, instructions_for_attr
         elif state == "waiting_return_statement":
             """
             Viable events: 
             - Found end method
             - Found any other type of line (method content) 
             """
-            pass
+            if not personalized_prototypes:
+                return False, "waiting_return_statement", True, instructions_for_attr
+            last_prototype = personalized_prototypes[-1]
+            if not last_prototype.methods:
+                return False, "waiting_return_statement", True, instructions_for_attr
+            last_method = last_prototype.get_last_method_added()
+            last_method.add_tdc_line(line)
+            if split_line[0] == "RETURN":
+                remaining_lines.pop()
+                return True, "waiting_method", False, instructions_for_attr
+            else:
+                return False, "waiting_return_statement", False, instructions_for_attr
         elif state == "waiting_method":
             """
             Viable events: 
             - Found method
             - Found end of class
             """
+            if not personalized_prototypes:
+                return False, "waiting_method", True, instructions_for_attr
+            last_prototype = personalized_prototypes[-1]
+            if split_line[0].startswith("MT"):  # Start other method
+                if instructions_for_attr: # at this point this buffer should be empty
+                    return False, "waiting_attribute", True, instructions_for_attr
+                method = Method(split_line[-1])
+                last_prototype.add_method(method)
+                return True, "waiting_return_statement", False, instructions_for_attr
+            else:  # End of class
+                return True, "waiting_class", False, instructions_for_attr
         elif state == "end":
-            pass
+            return True, "end", False, instructions_for_attr
 
     @staticmethod
     def safe_split(line_to_split):
 
-            if "'" not in line_to_split:
-                return line_to_split.split(sep=" ")
+        if "'" not in line_to_split:
+            return line_to_split.split(sep=" ")
 
-            split = []
-            pre_string, string, post_string = line_to_split.split(sep="'", maxsplit=2)
+        split = []
+        pre_string, string, post_string = line_to_split.split(sep="'", maxsplit=2)
 
-            split.extend(pre_string.split(sep=" "))
-            split.append(f"'{string}'")
-            split.extend(post_string.split(sep=" "))
+        split.extend(pre_string.split(sep=" "))
+        split.append(f"'{string}'")
+        split.extend(post_string.split(sep=" "))
 
-            return split
+        split = [item for item in split if item != ""]
+        return split
 
     def translator(self):
         state_and_next_state_combinations = [
@@ -262,7 +313,8 @@ class MIPS:
 
             special_chars = ["\n", "\t", " "]
 
-            code_stack.initialize_content([remove_special_chars_at_start_and_end(line) for line in file])
+            code_stack.initialize_content([remove_special_chars_at_start_and_end(line) for line in file
+                                           if line.strip() != ""])
             code_stack.content.reverse()
             new_prototypes = []
             state = "waiting_class"
@@ -273,13 +325,14 @@ class MIPS:
             while not (code_stack.is_empty() and found_end and encounter_error):
 
                 next_line = code_stack.pop()
-                got_expected, next_state, encounter_error \
+                got_expected, next_state, encounter_error, instructions_for_attr \
                     = self.translator_get_next_state(state, next_line, code_stack, new_prototypes, instructions_for_attr)
 
                 state = next_state
                 if next_state == "end":
                     found_end = True
 
+            print(1)
 
     def get_register(self):
         return self.available_regs.pop() if self.available_regs else None
