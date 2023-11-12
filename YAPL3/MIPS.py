@@ -322,7 +322,7 @@ class MIPS:
             current_method = None
             found_end = False
             encounter_error = False
-            while not (code_stack.is_empty() and found_end and encounter_error):
+            while not code_stack.is_empty() and not encounter_error and not found_end:
 
                 next_line = code_stack.pop()
                 got_expected, next_state, encounter_error, instructions_for_attr \
@@ -331,7 +331,7 @@ class MIPS:
                 state = next_state
                 if next_state == "end":
                     found_end = True
-
+            self.prototypes.extend(new_prototypes)
             print(1)
 
     def get_register(self):

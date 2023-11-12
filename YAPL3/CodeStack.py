@@ -30,7 +30,7 @@ class CodeStack:
         return len(self.content)
 
     def is_empty(self):
-        return len(self.content)>0
+        return len(self.content)==0
 
     def multiple_pop(self, how_many):
         buffer = []
