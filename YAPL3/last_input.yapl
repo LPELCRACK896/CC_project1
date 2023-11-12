@@ -1,0 +1,56 @@
+class Main {
+	radius: Int <- 3;
+    booleano: Bool <- false;
+  	t1: Int <- 0;
+  	io: IO <- (new IO);
+  	name: String <- "Juan";
+
+
+    main():Int{
+        (io).outString("hola");
+
+        (new Shape).getPerimeter(2, 1);
+      	(new Shape).getPerimeter(2, 1);
+      	(new Shape).getArea(3);
+
+      	radius <- (4 + 5 / 1);
+
+      	booleano <- (6 < 7);
+
+      	while (t1<4) loop {
+            t1 <- (t1 + 1)
+        } pool;
+
+      	if booleano then
+            radius <- 8
+        else
+            radius <- 4
+        fi;
+
+        return radius;
+    }
+}
+class Shape {
+    radius: Int;
+    color: String;
+    ancho: Int;
+
+    hasCorners: Bool <- true;
+
+    isCool (radius:Int): Bool {
+        let a: Int, b: Int <- 2 in [ a + b ];
+        return 1;
+    }
+    getArea (diameter:Int): Int {
+        return 1;
+    }
+
+    getPerimeter (height: Int, width: Int): Int {
+
+        return (2 * height) +  (2 * width);
+
+    }
+
+}
+
+(new Main).main();
