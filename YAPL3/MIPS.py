@@ -114,29 +114,29 @@ class MIPS:
         #  outString(s: String)
         prototype_out_string = Method("outString")
         prototype_out_string.set_content([
-            "li $v0, 4       # syscall para imprimir cadena",
-            "lw $a0, 0($sp)  # Carga la dirección de la cadena desde la pila",
+            "li $v0, 4",
+            "lw $a0, 0($sp)",
             "syscall",
-            "jr $ra          # Retorna"
+            "jr $ra"
         ])
         class_prototype.add_method(prototype_out_string)
 
         #  out_int(x: Int): SELF_TYPE
         prototype_out_int = Method("outInt")
         prototype_out_int.set_content([
-            "li $v0, 1  # syscall para imprimir entero",
-            "lw $a0, 0($sp)  # Carga el entero desde la pila",
+            "li $v0, 1",
+            "lw $a0, 0($sp)",
             "syscall",
-            "jr $ra  # Retorna"
+            "jr $ra"
         ])
         class_prototype.add_method(prototype_out_int)
 
         # in_string()
         prototype_in_string = Method("inString")
         prototype_in_string.set_content([
-            "li $v0, 8  # syscall para leer cadena",
-            "la $a0, buffer  # Dirección del buffer",
-            "li $a1, 1024  # Tamaño del buffer",
+            "li $v0, 8",
+            "la $a0, buffer",
+            "li $a1, 1024",
             "syscall",
             "jr $ra"
         ])
@@ -145,9 +145,9 @@ class MIPS:
         # in_int()
         prototype_in_int = Method("inInt")
         prototype_in_int.set_content([
-            "li $v0, 5  # syscall para leer entero",
+            "li $v0, 5 ",
             "syscall",
-            "jr $ra  # Retorna"
+            "jr $ra"
         ])
         class_prototype.add_method(prototype_in_int)
         class_prototype.write_example()
@@ -355,6 +355,16 @@ class MIPS:
                 return True
         return False
 
+    @staticmethod
+    def search_reference(alias: str, storage: Dict[str, List[Reference]], owner) -> Reference | None:
+        if owner not in storage:
+            return None
+        variables = storage.get(owner)
+        for var in variables:
+            if var.alias == alias:
+                return var
+        return None
+
     def build_from_main_method(self):
         main_prototype = self.get_main_prototype()
         main_method = self.get_main_method()
@@ -375,21 +385,22 @@ class MIPS:
             existing_classes_in_mips=existing_classes_in_mips
         )
         self.build_static_instance_method(
-            prototype_name="main",
+            prototype_name="Main",
             class_symbol=class_symbol,
             method=main_method,
             variables_as_object_reference=variables_as_object_reference,
-            existing_classes_in_mips=existing_classes_in_mips
+            existing_classes_in_mips=existing_classes_in_mips,
+            is_main_func=True
         )
+        other_methods = [method for method in main_prototype.methods if method != main_method]
         self.build_static_instance_methods(
             prototype_name="Main",
             class_symbol=class_symbol,
-            methods=main_prototype.methods,
+            methods=other_methods,
             variables_as_object_reference=variables_as_object_reference,
             existing_classes_in_mips=existing_classes_in_mips
         )
 
-        self.resort_code()
         self.asm_to_file()
 
     def build_static_instance_attributes(self, prototype_name: AnyStr, class_symbol: Symbol,
@@ -428,12 +439,43 @@ class MIPS:
             new_reference = Reference(alias=attribute.name, class_owner=prototype_name, type_of_reference="attribute")
             variables_as_object_reference = self.update_class_variables_references(variables_as_object_reference,
                                                                                    new_reference)
-    def build_static_instance(self, prototype: Prototype, variables_as_object_reference: Dict):
-        pass
+            if not (attribute_type in existing_classes_in_mips):
+                personalized_proto = [proto for proto in self.prototypes if proto.name == attribute_type][0]
+                variables_as_object_reference, existing_classes_in_mips= self.build_static_instance(personalized_proto, variables_as_object_reference, existing_classes_in_mips)
 
-    def addup_extra_attribute_code(self, prototype_name: AnyStr, class_symbol: Symbol, attribute: Attribute,
-                                   variables_as_object_reference: Dict[AnyStr, list], existing_classes_in_mips: List):
-        pass
+    def build_IO_static_instance(self, prototype: Prototype, variables_as_object_reference: Dict,
+                                 existing_classes_in_mips: List):
+        existing_classes_in_mips.append("IO")
+        for method in prototype.methods:
+            method_name = f"IO_{method.name}"
+            self.assembler_code.get(".text").append(f"\t{method_name}:")
+            for cnt in method.content:
+                self.assembler_code.get(".text").append(f"\t\t{cnt}")
+        return variables_as_object_reference,existing_classes_in_mips
+
+    def build_static_instance(self, prototype: Prototype, variables_as_object_reference: Dict,
+                              existing_classes_in_mips: List):
+        if prototype.name == "IO":
+            return self.build_IO_static_instance(prototype, variables_as_object_reference, existing_classes_in_mips)
+
+        class_symbol = [the_class for class_name, the_class in self.symbol_table.get_classes().items()
+                        if class_name == prototype.name][0]
+        existing_classes_in_mips.append(prototype.name)
+        self.build_static_instance_attributes(
+            prototype_name=prototype.name,
+            class_symbol=class_symbol,
+            attributes=prototype.attributes,
+            variables_as_object_reference=variables_as_object_reference,
+            existing_classes_in_mips=existing_classes_in_mips
+        )
+        self.build_static_instance_methods(
+            prototype_name=prototype.name,
+            class_symbol=class_symbol,
+            methods=prototype.methods,
+            variables_as_object_reference=variables_as_object_reference,
+            existing_classes_in_mips=existing_classes_in_mips
+        )
+        return variables_as_object_reference, existing_classes_in_mips
 
     def build_static_instance_let_vars(self, prototype_name: AnyStr, let_variable, class_symbol: Symbol
                                        , additional_code: List, variables_as_object_reference: Dict,
@@ -442,14 +484,28 @@ class MIPS:
 
     def build_static_instance_methods(self, prototype_name: AnyStr, class_symbol: Symbol, methods: List[Method],
                                       variables_as_object_reference: Dict, existing_classes_in_mips: List):
-        pass
+        for method in methods:
+            self.build_static_instance_method(prototype_name, class_symbol, method, variables_as_object_reference,
+                                              existing_classes_in_mips, False)
 
     def build_static_instance_method(self, prototype_name: AnyStr, class_symbol: Symbol, method: Method,
-                                     variables_as_object_reference: Dict, existing_classes_in_mips: List):
+                                     variables_as_object_reference: Dict, existing_classes_in_mips: List,
+                                     is_main_func: bool):
+        methods_symbols = self.symbol_table.class_get_methods(class_symbol)
+        method_symbol: Symbol = [mth for mth_name, mth in methods_symbols.items() if mth_name == method.name][0]
+        function_name = f"{prototype_name}_{method.name}"
+
+        parameters: List[Tuple[AnyStr, AnyStr]] = method_symbol.parameters
+        #  reference_io = self.search_reference("io", variables_as_object_reference, prototype_name)
+        self.assembler_code.get(".text").append(f"\t{function_name}:")
+
+        if is_main_func:
+            self.assembler_code.get(".text").append("\t\tli $v0, 10")
+            self.assembler_code.get(".text").append("\t\tsyscall")
+        else:
+            self.assembler_code.get(".text").append("\t\tjr $ra")
         pass
 
-    def resort_code(self):
-        pass
 
     def try_to_release_registers_and_temp_vars(self, line):
 
@@ -482,7 +538,7 @@ class MIPS:
                                                          number_of_tabs=number_of_tabs,
                                                          )
             else:
-                pass
+                print(1)
         elif tdcr.is_an_assignation(line):
 
             self.process_assignation(line=line,
@@ -619,6 +675,7 @@ class MIPS:
             pass
         elif "NEW" in right_side_of_assignation:
             # Es referencia a una clase
+            print(1)
             pass
         elif "CALL" in right_side_of_assignation:
             pass
@@ -801,6 +858,8 @@ class MIPS:
         for line in addition_assembler_code:
             file_string += f"{line}\n".replace("'", "\"")
 
+        file_string += "\n"
+        file_string += "\tj Main_main\n"
         file_string += "\n"
 
         for line in text_section:

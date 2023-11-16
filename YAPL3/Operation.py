@@ -7,7 +7,6 @@ class Operation:
     def __init__(self, type_of_operation: AnyStr | None):
         self.type_of_operation = type_of_operation
 
-
     def __str__(self):
         if self.type_of_operation is None:
             return ""

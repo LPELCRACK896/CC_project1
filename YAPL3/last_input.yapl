@@ -4,6 +4,7 @@ class Main {
   	t1: Int <- 90+10-6/5;
   	io: IO <- (new IO);
   	name: String <- "Juan";
+  	shape: Shape <- new Shape;
 
 
     main():Int{
@@ -11,13 +12,11 @@ class Main {
         saludo();
         (io).outString("hola");
 
-        (new Shape).getPerimeter(2, 1);
-      	(new Shape).getPerimeter(2, 1);
-      	(new Shape).getArea(3);
-
       	radius <- (4 + 5 / 1);
 
       	booleano <- (6 < 7);
+
+      	radius <- suma(1,4);
 
       	while (t1<4) loop {
             t1 <- (t1 + 1)
@@ -31,6 +30,10 @@ class Main {
 
         return radius;
     }
+    suma(a:Int, b:Int):Int{
+        return a+b;
+    }
+
 
     saludo():String{
         return "hola";

@@ -9,42 +9,32 @@ CL1 START Main
 	t5 = IO NEW 
 	<DIR>.Main.attr.io ASSIGN t5  
 	<DIR>.Main.attr.name ASSIGN 'Juan'  
+	t6 = Shape NEW 
+	<DIR>.Main.attr.shape ASSIGN t6  
 	MT1 START main 
 	<DIR>.Main.attr.name ASSIGN 'Mario'  
-	t6 = <DIR>.Main.method.saludo ON SELF
-	t7 = CALL t6 WITH 0 
-	t8 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t9 = 'hola'  
-	PARAM t9 
-	t10 = CALL t8 WITH 1 
-	t11 = Shape NEW 
-	t12 = <DIR>.Shape.method.getPerimeter ON t11
-	t13 = 2  
-	t14 = 1  
-	PARAM t13 
-	PARAM t14 
-	t15 = CALL t12 WITH 2 
-	t16 = Shape NEW 
-	t17 = <DIR>.Shape.method.getPerimeter ON t16
-	t18 = 2  
-	t19 = 1  
-	PARAM t18 
-	PARAM t19 
-	t20 = CALL t17 WITH 2 
-	t21 = Shape NEW 
-	t22 = <DIR>.Shape.method.getArea ON t21
-	t23 = 3  
-	PARAM t23 
-	t24 = CALL t22 WITH 1 
-	t25 = 4 SUM 5
-	t26 = t25 DIV 1
-	<DIR>.Main.attr.radius ASSIGN t26  
-	t27 = 6 LTH 7
-	<DIR>.Main.attr.booleano ASSIGN t27  
-	t28 = <DIR>.Main.attr.t1 LTH 4
-	L1 IFNOT t28 GOTO L2
-	t29 = <DIR>.Main.attr.t1 SUM 1
-	<DIR>.Main.attr.t1 ASSIGN t29  
+	t7 = <DIR>.Main.method.saludo ON SELF
+	t8 = CALL t7 WITH 0 
+	t9 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t10 = 'hola'  
+	PARAM t10 
+	t11 = CALL t9 WITH 1 
+	t12 = 4 SUM 5
+	t13 = t12 DIV 1
+	<DIR>.Main.attr.radius ASSIGN t13  
+	t14 = 6 LTH 7
+	<DIR>.Main.attr.booleano ASSIGN t14  
+	t15 = <DIR>.Main.method.suma ON SELF
+	t16 = 1  
+	t17 = 4  
+	PARAM t16 
+	PARAM t17 
+	t18 = CALL t15 WITH 2 
+	<DIR>.Main.attr.radius ASSIGN t18  
+	t19 = <DIR>.Main.attr.t1 LTH 4
+	L1 IFNOT t19 GOTO L2
+	t20 = <DIR>.Main.attr.t1 SUM 1
+	<DIR>.Main.attr.t1 ASSIGN t20  
 	GOTO L1 
 	L2     
 	IFNOT <DIR>.Main.attr.booleano GOTO L4
@@ -59,9 +49,15 @@ CL1 START Main
 	S8 END main-ELSE 
 	RETURN <DIR>.Main.attr.radius 
 	MT2 END main 
-	MT3 START saludo 
+	MT3 START suma 
+	 <DIR>.Main.suma.formal.a 
+	 <DIR>.Main.suma.formal.b 
+	t21 = <DIR>.Main.suma.formal.a SUM <DIR>.Main.suma.formal.b
+	RETURN t21 
+	MT4 END suma 
+	MT5 START saludo 
 	RETURN 'hola' 
-	MT4 END saludo 
+	MT6 END saludo 
 CL2 END Main 
 	      
 CL3 START Shape 
@@ -69,24 +65,24 @@ CL3 START Shape
 	 <DIR>.Shape.attr.color 
 	 <DIR>.Shape.attr.ancho 
 	<DIR>.Shape.attr.hasCorners ASSIGN true  
-	MT5 START isCool 
+	MT7 START isCool 
 	 <DIR>.Shape.isCool.formal.radius 
 	RETURN 1 
-	MT6 END isCool 
-	MT7 START getArea 
+	MT8 END isCool 
+	MT9 START getArea 
 	 <DIR>.Shape.getArea.formal.diameter 
 	RETURN 1 
-	MT8 END getArea 
-	MT9 START getPerimeter 
+	MT10 END getArea 
+	MT11 START getPerimeter 
 	 <DIR>.Shape.getPerimeter.formal.height 
 	 <DIR>.Shape.getPerimeter.formal.width 
-	t30 = 2 MULT <DIR>.Shape.getPerimeter.formal.height
-	t31 = 2 MULT <DIR>.Shape.getPerimeter.formal.width
-	t32 = t30 SUM t31
-	RETURN t32 
-	MT10 END getPerimeter 
+	t22 = 2 MULT <DIR>.Shape.getPerimeter.formal.height
+	t23 = 2 MULT <DIR>.Shape.getPerimeter.formal.width
+	t24 = t22 SUM t23
+	RETURN t24 
+	MT12 END getPerimeter 
 CL4 END Shape 
 	      
-	t33 = Main NEW 
-	t34 = <DIR>.Main.method.main ON t33
-	t35 = CALL t34 WITH 0 
+	t25 = Main NEW 
+	t26 = <DIR>.Main.method.main ON t25
+	t27 = CALL t26 WITH 0 
