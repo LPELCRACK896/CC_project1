@@ -1,5 +1,11 @@
 
 
+primitives = [
+    "Int",
+    "String",
+    "Bool"
+]
+
 defaults_values = {
     "Int": 0,
     "String": "\'\'",

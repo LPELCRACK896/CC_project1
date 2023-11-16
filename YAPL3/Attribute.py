@@ -1,5 +1,4 @@
 from typing import AnyStr, List
-from MemoryUnit import MemoryUnit
 import MIPS_CONSTANTS as MC
 
 
@@ -19,9 +18,6 @@ class Attribute:
             else:
                 return None
         return self.value
-
-    def get_instance(self, memory_unit: MemoryUnit):
-        return f"{memory_unit}_{self.name}: {MC.type_of_data_on_mips.get(self.attr_type)} {self.get_value()}"
 
     def get_example(self):
         return f"{self.name}: {MC.type_of_data_on_mips.get(self.attr_type)} {self.get_value()}"

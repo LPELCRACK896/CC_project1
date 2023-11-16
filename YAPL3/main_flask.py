@@ -68,10 +68,10 @@ def index():
                     print(content)
                     t_dir_code.write_file("intermediate_code.tdc")
                 else:
-                    with open("./YAPL3/intermediate_code.tdc", "w") as archivo:
+                    with open("./intermediate_code.tdc", "w") as archivo:
                         archivo.write("")
 
-                with open("./YAPL3/intermediate_code.tdc", "r") as archivo:
+                with open("./intermediate_code.tdc", "r") as archivo:
                     tres_dir = archivo.read()
 
                 # Renderiza una plantilla con los resultados
@@ -106,10 +106,10 @@ def index():
                     content = str(t_dir_code)
                     t_dir_code.write_file("intermediate_code.tdc")
                 else:
-                    with open("./YAPL3/intermediate_code.tdc", "w") as archivo:
+                    with open("./intermediate_code.tdc", "w") as archivo:
                         archivo.write("")
 
-                with open("./YAPL3/intermediate_code.tdc", "r") as archivo:
+                with open("./intermediate_code.tdc", "r") as archivo:
                     tres_dir = archivo.read()
 
                 # Dividir el texto en líneas y eliminar los caracteres de tabulación

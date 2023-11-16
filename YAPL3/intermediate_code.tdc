@@ -1,27 +1,92 @@
-CL1 START Rectangle 
-	<DIR>.Rectangle.attr.length ASSIGN 5  
-	<DIR>.Rectangle.attr.width ASSIGN 10  
-	<DIR>.Rectangle.attr.newbool ASSIGN 1  
-	MT1 START operations 
-	t1 = 4 MULT 3
-	t2 = 10 SUM t1
-	<DIR>.Rectangle.attr.length ASSIGN t2  
-	t3 = 5 DIV 2
-	<DIR>.Rectangle.attr.width ASSIGN t3  
-	t4 = 10 SUB 10
-	<DIR>.Rectangle.attr.length ASSIGN t4  
-	t5 = 10 MULT 7
-	<DIR>.Rectangle.attr.length ASSIGN t5  
-	RETURN 1 
-	MT2 END operations 
-CL2 END Rectangle 
+CL1 START Main 
+	t1 = 7 MULT 2
+	<DIR>.Main.attr.radius ASSIGN t1  
+	<DIR>.Main.attr.booleano ASSIGN true  
+	t2 = 90 SUM 10
+	t3 = t2 SUB 6
+	t4 = t3 DIV 5
+	<DIR>.Main.attr.t1 ASSIGN t4  
+	t5 = IO NEW 
+	<DIR>.Main.attr.io ASSIGN t5  
+	<DIR>.Main.attr.name ASSIGN 'Juan'  
+	MT1 START main 
+	<DIR>.Main.attr.name ASSIGN 'Mario'  
+	t6 = <DIR>.Main.method.saludo ON SELF
+	t7 = CALL t6 WITH 0 
+	t8 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t9 = 'hola'  
+	PARAM t9 
+	t10 = CALL t8 WITH 1 
+	t11 = Shape NEW 
+	t12 = <DIR>.Shape.method.getPerimeter ON t11
+	t13 = 2  
+	t14 = 1  
+	PARAM t13 
+	PARAM t14 
+	t15 = CALL t12 WITH 2 
+	t16 = Shape NEW 
+	t17 = <DIR>.Shape.method.getPerimeter ON t16
+	t18 = 2  
+	t19 = 1  
+	PARAM t18 
+	PARAM t19 
+	t20 = CALL t17 WITH 2 
+	t21 = Shape NEW 
+	t22 = <DIR>.Shape.method.getArea ON t21
+	t23 = 3  
+	PARAM t23 
+	t24 = CALL t22 WITH 1 
+	t25 = 4 SUM 5
+	t26 = t25 DIV 1
+	<DIR>.Main.attr.radius ASSIGN t26  
+	t27 = 6 LTH 7
+	<DIR>.Main.attr.booleano ASSIGN t27  
+	t28 = <DIR>.Main.attr.t1 LTH 4
+	L1 IFNOT t28 GOTO L2
+	t29 = <DIR>.Main.attr.t1 SUM 1
+	<DIR>.Main.attr.t1 ASSIGN t29  
+	GOTO L1 
+	L2     
+	IFNOT <DIR>.Main.attr.booleano GOTO L4
+	S3 START main-IF 
+	<DIR>.Main.attr.radius ASSIGN 8  
+	GOTO L7 
+	L4     
+	S5 END main-IF 
+	S6 START main-ELSE 
+	<DIR>.Main.attr.radius ASSIGN 4  
+	L7     
+	S8 END main-ELSE 
+	RETURN <DIR>.Main.attr.radius 
+	MT2 END main 
+	MT3 START saludo 
+	RETURN 'hola' 
+	MT4 END saludo 
+CL2 END Main 
 	      
-CL3 START Main 
-	MT3 START main 
+CL3 START Shape 
+	 <DIR>.Shape.attr.radius 
+	 <DIR>.Shape.attr.color 
+	 <DIR>.Shape.attr.ancho 
+	<DIR>.Shape.attr.hasCorners ASSIGN true  
+	MT5 START isCool 
+	 <DIR>.Shape.isCool.formal.radius 
 	RETURN 1 
-	MT4 END main 
-CL4 END Main 
+	MT6 END isCool 
+	MT7 START getArea 
+	 <DIR>.Shape.getArea.formal.diameter 
+	RETURN 1 
+	MT8 END getArea 
+	MT9 START getPerimeter 
+	 <DIR>.Shape.getPerimeter.formal.height 
+	 <DIR>.Shape.getPerimeter.formal.width 
+	t30 = 2 MULT <DIR>.Shape.getPerimeter.formal.height
+	t31 = 2 MULT <DIR>.Shape.getPerimeter.formal.width
+	t32 = t30 SUM t31
+	RETURN t32 
+	MT10 END getPerimeter 
+CL4 END Shape 
 	      
-	t6 = Main NEW 
-	t7 = <DIR>.Main.method.main ON t6
-	t8 = CALL t7 WITH 0 
+	t33 = Main NEW 
+	t34 = <DIR>.Main.method.main ON t33
+	t35 = CALL t34 WITH 0 

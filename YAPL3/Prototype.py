@@ -1,9 +1,6 @@
-from MemoryDirection import MemoryDirection
 from typing import AnyStr, List, Dict
 from Attribute import  Attribute
 from Method import Method
-from Symbol import Symbol
-from MemoryUnit import MemoryUnit
 import os
 
 
@@ -38,20 +35,6 @@ class Prototype:
     def add_attribute(self, attribute):
         self.attributes.append(attribute)
 
-    def get_instance_methods(self, memory_unit: MemoryUnit):
-        """
-        Meant to be written as procedures in MIPS
-        :param memory_unit:
-        :return:
-        """
-        return "\n".join([str(attr) for attr in self.attributes])
-
-    def get_instance_attributes(self, memory_unit: MemoryUnit):
-        """
-        Meant to be written in .data as variables
-        :param memory_unit:
-        :return:
-        """
 
     def write_example(self):
         file_content = f"# Clase {self.name}"

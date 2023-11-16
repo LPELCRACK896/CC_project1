@@ -1,12 +1,14 @@
 class Main {
-	radius: Int;
-    booleano: Bool <- false;
-  	t1: Int <- 15;
+	radius: Int <- 7*2;
+    booleano: Bool <- true;
+  	t1: Int <- 90+10-6/5;
   	io: IO <- (new IO);
   	name: String <- "Juan";
 
 
     main():Int{
+        name <- "Mario";
+        saludo();
         (io).outString("hola");
 
         (new Shape).getPerimeter(2, 1);
@@ -29,6 +31,10 @@ class Main {
 
         return radius;
     }
+
+    saludo():String{
+        return "hola";
+    }
 }
 class Shape {
     radius: Int;
@@ -38,7 +44,6 @@ class Shape {
     hasCorners: Bool <- true;
 
     isCool (radius:Int): Bool {
-        let a: Int, b: Int <- 2 in [ a + b ];
         return 1;
     }
     getArea (diameter:Int): Int {
