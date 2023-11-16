@@ -47,10 +47,10 @@ def index():
                 input_data = uploaded_file.read().decode('utf-8')
 
                 syntax_tree = SyntaxTree(input_data)
-                syntax_tree.print_tree()
+                # syntax_tree.print_tree()
 
                 symbol_table = SymbolTable(syntax_tree.root_at)
-                print(symbol_table)
+                # print(symbol_table)
                 semantic_verification, semantic_errors = sp.check_semantic(symbol_table)
 
                 if syntax_tree.has_errors():
@@ -65,7 +65,7 @@ def index():
                 if not (syntax_tree.has_errors() or semantic_errors):
                     t_dir_code: ThreeDirectionsCode = symbol_table.get_three_directions_code()
                     content = str(t_dir_code)
-                    print(content)
+                    # print(content)
                     t_dir_code.write_file("intermediate_code.tdc")
                 else:
                     with open("./intermediate_code.tdc", "w") as archivo:
@@ -74,8 +74,28 @@ def index():
                 with open("./intermediate_code.tdc", "r") as archivo:
                     tres_dir = archivo.read()
 
+                # Dividir el texto en líneas y eliminar los caracteres de tabulación
+                lineas = tres_dir.splitlines()
+                lineas = [linea.replace('\t', '') for linea in lineas]
+
+                # Dividir cada línea en palabras utilizando espacios como separador
+                tripletas = [linea.split() for linea in lineas]
+
+                # Eliminar líneas vacías
+                tripletas = [palabras for palabras in tripletas if palabras]
+
+                try:
+                    mips: MIPS = MIPS(t_dir_code, symbol_table)
+                    mips.build_from_main_method()
+                    mips.asm_to_file()
+
+                    with open("./output.asm", "r") as archivo:
+                        mips = archivo.read()
+                except:
+                    mips = None
+
                 # Renderiza una plantilla con los resultados
-                return render_template('/index.html', input_data=input_data, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir)
+                return render_template('/index.html', input_data=input_data, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir, tripletas=tripletas, mips=mips)
             else:
                 return redirect(url_for('index'))
         else:
@@ -86,10 +106,10 @@ def index():
                 input_data = edited_code
 
                 syntax_tree = SyntaxTree(input_data)
-                syntax_tree.print_tree()
+                # syntax_tree.print_tree()
 
                 symbol_table = SymbolTable(syntax_tree.root_at)
-                print(symbol_table)
+                # print(symbol_table)
                 semantic_verification, semantic_errors = sp.check_semantic(symbol_table)
 
                 if syntax_tree.has_errors():
@@ -122,9 +142,16 @@ def index():
                 # Eliminar líneas vacías
                 tripletas = [palabras for palabras in tripletas if palabras]
 
-                mips: MIPS = MIPS(t_dir_code)
-                mips.write_file()
+                try:
+                    mips: MIPS = MIPS(t_dir_code, symbol_table)
+                    mips.build_from_main_method()
+                    mips.asm_to_file()
 
+                    with open("./output.asm", "r") as archivo:
+                        mips = archivo.read()
+                except:
+                    mips = None
+                    
                 # Renderiza una plantilla con los resultados
                 return render_template('/index.html', input_data=edited_code, syntax_errors=syntax_errors, semantic_errors=semantic_errors, tres_dir=tres_dir, tripletas=tripletas, mips=mips)
             else:
