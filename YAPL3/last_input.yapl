@@ -3,11 +3,13 @@ class Main {
     booleano: Bool <- true;
   	t1: Int <- 90+10-6/5;
   	io: IO <- (new IO);
+  	oi: IO <- (new IO);
   	name: String <- "Juan";
   	shape: Shape <- new Shape;
 
 
     main():Int{
+        shape.allType(1, false, "palabraaa");
         name <- "Mario";
         saludo();
         (io).outString("hola");
@@ -50,6 +52,12 @@ class Shape {
         return 1;
     }
     getArea (diameter:Int): Int {
+        return 1;
+    }
+
+    allType(entero:Int, bol: Bool, cara: String ):Int{
+
+
         return 1;
     }
 

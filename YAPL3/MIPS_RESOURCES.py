@@ -5,6 +5,24 @@ def is_primitive(data_type):
     return data_type in MC.primitives
 
 
+def identify_type_by_value(value: str):
+    """
+    Assumes a primitive value is being passed
+    Use in simple assignaton:
+    Example:
+        t10 = 'hola'
+
+    :param value:
+    :return:
+    """
+
+    if value.startswith("\'") or value.startswith("\"") :
+        return "String"
+    if value.isnumeric():
+        return "Int"
+    return "Bool"
+
+
 def transform_value(value: str, data_type: str):
     value = str(value)
     if data_type == "Int":

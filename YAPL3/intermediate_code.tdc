@@ -8,33 +8,43 @@ CL1 START Main
 	<DIR>.Main.attr.t1 ASSIGN t4  
 	t5 = IO NEW 
 	<DIR>.Main.attr.io ASSIGN t5  
+	t6 = IO NEW 
+	<DIR>.Main.attr.oi ASSIGN t6  
 	<DIR>.Main.attr.name ASSIGN 'Juan'  
-	t6 = Shape NEW 
-	<DIR>.Main.attr.shape ASSIGN t6  
+	t7 = Shape NEW 
+	<DIR>.Main.attr.shape ASSIGN t7  
 	MT1 START main 
-	<DIR>.Main.attr.name ASSIGN 'Mario'  
-	t7 = <DIR>.Main.method.saludo ON SELF
-	t8 = CALL t7 WITH 0 
-	t9 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t10 = 'hola'  
+	t8 = <DIR>.Shape.method.allType ON <DIR>.Main.attr.shape
+	t9 = 1  
+	t10 = false  
+	t11 = 'palabraaa'  
+	PARAM t9 
 	PARAM t10 
-	t11 = CALL t9 WITH 1 
-	t12 = 4 SUM 5
-	t13 = t12 DIV 1
-	<DIR>.Main.attr.radius ASSIGN t13  
-	t14 = 6 LTH 7
-	<DIR>.Main.attr.booleano ASSIGN t14  
-	t15 = <DIR>.Main.method.suma ON SELF
-	t16 = 1  
-	t17 = 4  
+	PARAM t11 
+	t12 = CALL t8 WITH 3 
+	<DIR>.Main.attr.name ASSIGN 'Mario'  
+	t13 = <DIR>.Main.method.saludo ON SELF
+	t14 = CALL t13 WITH 0 
+	t15 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t16 = 'hola'  
 	PARAM t16 
-	PARAM t17 
-	t18 = CALL t15 WITH 2 
-	<DIR>.Main.attr.radius ASSIGN t18  
-	t19 = <DIR>.Main.attr.t1 LTH 4
-	L1 IFNOT t19 GOTO L2
-	t20 = <DIR>.Main.attr.t1 SUM 1
-	<DIR>.Main.attr.t1 ASSIGN t20  
+	t17 = CALL t15 WITH 1 
+	t18 = 4 SUM 5
+	t19 = t18 DIV 1
+	<DIR>.Main.attr.radius ASSIGN t19  
+	t20 = 6 LTH 7
+	<DIR>.Main.attr.booleano ASSIGN t20  
+	t21 = <DIR>.Main.method.suma ON SELF
+	t22 = 1  
+	t23 = 4  
+	PARAM t22 
+	PARAM t23 
+	t24 = CALL t21 WITH 2 
+	<DIR>.Main.attr.radius ASSIGN t24  
+	t25 = <DIR>.Main.attr.t1 LTH 4
+	L1 IFNOT t25 GOTO L2
+	t26 = <DIR>.Main.attr.t1 SUM 1
+	<DIR>.Main.attr.t1 ASSIGN t26  
 	GOTO L1 
 	L2     
 	IFNOT <DIR>.Main.attr.booleano GOTO L4
@@ -52,8 +62,8 @@ CL1 START Main
 	MT3 START suma 
 	 <DIR>.Main.suma.formal.a 
 	 <DIR>.Main.suma.formal.b 
-	t21 = <DIR>.Main.suma.formal.a SUM <DIR>.Main.suma.formal.b
-	RETURN t21 
+	t27 = <DIR>.Main.suma.formal.a SUM <DIR>.Main.suma.formal.b
+	RETURN t27 
 	MT4 END suma 
 	MT5 START saludo 
 	RETURN 'hola' 
@@ -73,16 +83,22 @@ CL3 START Shape
 	 <DIR>.Shape.getArea.formal.diameter 
 	RETURN 1 
 	MT10 END getArea 
-	MT11 START getPerimeter 
+	MT11 START allType 
+	 <DIR>.Shape.allType.formal.entero 
+	 <DIR>.Shape.allType.formal.bol 
+	 <DIR>.Shape.allType.formal.cara 
+	RETURN 1 
+	MT12 END allType 
+	MT13 START getPerimeter 
 	 <DIR>.Shape.getPerimeter.formal.height 
 	 <DIR>.Shape.getPerimeter.formal.width 
-	t22 = 2 MULT <DIR>.Shape.getPerimeter.formal.height
-	t23 = 2 MULT <DIR>.Shape.getPerimeter.formal.width
-	t24 = t22 SUM t23
-	RETURN t24 
-	MT12 END getPerimeter 
+	t28 = 2 MULT <DIR>.Shape.getPerimeter.formal.height
+	t29 = 2 MULT <DIR>.Shape.getPerimeter.formal.width
+	t30 = t28 SUM t29
+	RETURN t30 
+	MT14 END getPerimeter 
 CL4 END Shape 
 	      
-	t25 = Main NEW 
-	t26 = <DIR>.Main.method.main ON t25
-	t27 = CALL t26 WITH 0 
+	t31 = Main NEW 
+	t32 = <DIR>.Main.method.main ON t31
+	t33 = CALL t32 WITH 0 

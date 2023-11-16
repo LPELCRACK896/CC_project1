@@ -17,7 +17,7 @@ from collections import namedtuple
 INTERMEDIATE_CODE_FILENAME = "intermediate_code.tdc"
 Reference = namedtuple('Reference', ['alias', 'class_owner', 'type_of_reference'])
 TemporaryContext = namedtuple('TemporaryContext',
-                              ["is_primitive", "data_type", "register", "expiring_line", "is_instance"])
+                              ["is_primitive", "data_type", "register", "expiring_line", "is_instance", "is_address"])
 
 
 class MIPS:
@@ -62,6 +62,7 @@ class MIPS:
         self.special_regs = ["$sp", "$gp", "$fp", "$ra"]
         self.mul_div_regs = ["hi", "lo"]
         self.if_func_count = 0
+        self.dynamic_string_count = 1
         self.assembler_code = \
             {
                 ".data": [
@@ -498,13 +499,16 @@ class MIPS:
         #  reference_io = self.search_reference("io", variables_as_object_reference, prototype_name)
         self.assembler_code.get(".text").append(f"\t{function_name}:")
 
+        for line in method.tdc_code:
+            self.process_line_tdc_code(line, method.tdc_code, ".text", 2)
+            self.try_to_release_registers_and_temp_vars(line)
+
         if is_main_func:
             self.assembler_code.get(".text").append("\t\tli $v0, 10")
             self.assembler_code.get(".text").append("\t\tsyscall")
         else:
             self.assembler_code.get(".text").append("\t\tjr $ra")
         pass
-
 
     def try_to_release_registers_and_temp_vars(self, line):
 
@@ -537,19 +541,17 @@ class MIPS:
                                                          number_of_tabs=number_of_tabs,
                                                          )
             else:
-                print(1)
+                print("ERROR")
         elif tdcr.is_an_assignation(line):
-
             self.process_assignation(line=line,
                                      block_context=block_context,
                                      code_section=code_section,
                                      number_of_tabs=number_of_tabs,)
 
-        pass
 
     def save_temporary_var_on_register_reference(self, current_line: str, temporary_var: str, register: str,
                                                  block_context: list, data_type: str, is_primitive: bool,
-                                                 is_instance:bool):
+                                                 is_instance:bool, is_address: bool):
         expiring_line = self.find_last_usage_temporary(current_line, temporary_var, block_context)
         if not expiring_line:
             return False
@@ -558,7 +560,9 @@ class MIPS:
             data_type=data_type,
             register=register,
             expiring_line=expiring_line,
-            is_instance=is_instance
+            is_instance=is_instance,
+            is_address=is_address
+
         )
         self.temporary_vars[temporary_var] = temp_context
 
@@ -599,7 +603,7 @@ class MIPS:
                     self.release_register("temporary_regs", register_saved)
 
             register_saved = self.load_value_into_register("0", number_of_tabs, code_section)
-            self.assembler_code[code_section].append(f"{ln}sb {register_saved}, {len(value)}({target_register})")
+            self.assembler_code[code_section].append(f"{ln}sb {register_saved}, {len(value)-1}({target_register})")
             self.release_register("temporary_regs", register_saved)
 
         elif type_of_variable == ".word":  # int
@@ -633,40 +637,52 @@ class MIPS:
         self.assembler_code[code_section].append(new_line)
         return register
 
-        pass
-
     def process_temporary_variable_creation(self, line, block_context, code_section, number_of_tabs):
         split_line = line.split(" ")
         temporary_name = split_line[0]
         right_side_of_assignation = split_line[2:]
 
         if len(right_side_of_assignation) == 1:
+            value = right_side_of_assignation[0]
+            data_type = mr.identify_type_by_value(value)
+            if data_type == "String":
+                result_register = self.load_immediate_string_address(value, number_of_tabs, code_section)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "String", True, False, True)
+            elif data_type == "Int":
+                result_register = self.load_immediate_int(value, number_of_tabs, code_section)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Int", True, False, False)
+            else:  # Bool
+                result_register = self.load_immediate_bool(value, number_of_tabs, code_section)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Bool", True, False, False)
             # Simple assignation
-            pass
+            print()
 
         if tdcr.is_arithmetic_operation(right_side_of_assignation):
             operation = right_side_of_assignation[1]
-            temporary_to_save = split_line[0]
             if operation == "SUM":
                 result_register = self.write_addition_assembler(right_side_of_assignation, code_section, number_of_tabs)
-                self.save_temporary_var_on_register_reference(line, temporary_to_save, result_register, block_context,
-                                                              "Int", True, False)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Int", True, False, False)
                 return result_register
             elif operation == "MULT":
                 result_register = self.write_multiplication_assembler(right_side_of_assignation, code_section,
                                                                       number_of_tabs)
-                self.save_temporary_var_on_register_reference(line, temporary_to_save, result_register, block_context,
-                                                              "Int", True, False)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Int", True, False, False)
                 return result_register
             elif operation == "DIV":
                 result_register = self.write_division_assembler(right_side_of_assignation, code_section, number_of_tabs)
-                self.save_temporary_var_on_register_reference(line, temporary_to_save, result_register, block_context,
-                                                              "Int", True, False)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Int", True, False, False)
                 return result_register
             elif operation == "SUB":
-                result_register = self.write_subtraction_assembler(right_side_of_assignation, code_section, number_of_tabs)
-                self.save_temporary_var_on_register_reference(line, temporary_to_save, result_register, block_context,
-                                                              "Int", True, False)
+                result_register = self.write_subtraction_assembler(right_side_of_assignation, code_section,
+                                                                   number_of_tabs)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Int", True, False, False)
                 return result_register
 
         if "ON" in right_side_of_assignation:
@@ -726,10 +742,6 @@ class MIPS:
         self.assembler_code[code_section].append(new_line)
         return register
 
-    def save_result_in_variable(self, register, variable, code_section):
-
-        pass
-
     def get_register_from_component(self, component):
         value = self.get_value_from_operation_component(component)
         if isinstance(value, TemporaryContext):
@@ -740,7 +752,52 @@ class MIPS:
         value = self.get_value_from_operation_component(component)
         return self.load_value_into_register(value, number_of_tabs, code_section)
 
+    def load_immediate_string_address(self, value, number_of_tabs, code_section):
+        """
+        Must release manually register
+        :param value:
+        :param number_of_tabs:
+        :param code_section:
+        :return:
+        """
+
+        tab = self.get_empty_string_with_tabulations(1)
+        variable_name = f"temporal_var_{self.dynamic_string_count}"
+        assembler_line = f"{tab}{variable_name}: .asciiz {value}"
+
+        self.assembler_code.get(".data").append(assembler_line)
+        self.dynamic_string_count += 1
+
+        return self.load_address(variable_name, number_of_tabs, code_section)
+
+    def load_immediate_bool(self, value, number_of_tabs, code_section):
+        mips_bool_val = 0 if value == "false" else 1
+        register = self.get_register("temporary_regs")
+        new_line = self.get_empty_string_with_tabulations(number_of_tabs)
+        new_line += f"li {register}, {mips_bool_val}"
+        self.assembler_code[code_section].append(new_line)
+
+        return register
+
+    def load_immediate_int(self, value, number_of_tabs, code_section):
+        register = self.get_register("temporary_regs")
+        new_line = self.get_empty_string_with_tabulations(number_of_tabs)
+        new_line += f"li {register}, {value}"
+        self.assembler_code[code_section].append(new_line)
+
+        return register
+
+    def load_to_register_from_data(self, direction: str):
+        if not direction.startswith("<DIR>"):
+            return None
+        split_direction = direction.split(".")
+        print(1)
+
     def get_register_or_load_new_value_from_comp(self, component, number_of_tabs, code_section):
+        if str(component).startswith("<DIR>"):
+            return self.load_to_register_from_data(str(component))
+            pass
+
         value = self.get_value_from_operation_component(component)
         if not isinstance(value, TemporaryContext):
             return self.load_value_into_register(value, number_of_tabs, code_section)

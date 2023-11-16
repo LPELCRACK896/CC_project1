@@ -56,9 +56,13 @@ def is_an_attribute(item: str):
 
     return True
 
+
 def is_an_assignation(line: str):
     parts = line.split(" ")
+    if len(parts) < 2:
+        return False
     return parts[1] == "ASSIGN"
+
 
 def is_a_let_variable_declaration(item: str):
     split_item = item.split(".")
