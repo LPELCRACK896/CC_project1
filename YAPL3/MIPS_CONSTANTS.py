@@ -8,7 +8,7 @@ primitives = [
 
 defaults_values = {
     "Int": 0,
-    "String": "\'\'",
+    "String": "\"\"",
     "Bool": 0
 }
 

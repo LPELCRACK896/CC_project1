@@ -193,8 +193,8 @@ class MIPS:
                 attribute.set_additional_code(instructions_for_attr)
                 symbol_class = self.symbol_table.get_classes().get(last_prototype.name)
                 attributes_symbol = self.symbol_table.class_get_attributes(symbol_class)
-                attribute_symbol = [attr_symbol for attr_name, attr_symbol in attributes_symbol.items()
-                                    if attr_name == attr_name][0]
+                attribute_symbol = [attr_symbol for attri_name, attr_symbol in attributes_symbol.items()
+                                    if attri_name == attr_name][0]
                 attr_type = attribute_symbol.data_type
 
                 if len(split_line) == 1:  # has no value
@@ -428,7 +428,6 @@ class MIPS:
         if mr.is_primitive(attribute_type):
             default_value = MC.defaults_values.get(attribute_type)
             mips_type = MC.type_of_data_on_mips.get(attribute_type)
-
             real_value = attribute.get_value()
             value = default_value if real_value is None else mr.transform_value(real_value, attribute_type)
             assembler_line = f"\t{prototype_name}_attr_{attribute.name}: {mips_type} {value}"

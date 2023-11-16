@@ -8,7 +8,7 @@
 	Main_attr_t1: .word 0
 	Main_attr_name: .asciiz "Juan"
 	Shape_attr_radius: .word 0
-	Shape_attr_color: .asciiz 0
+	Shape_attr_color: .asciiz ""
 	Shape_attr_ancho: .word 0
 	Shape_attr_hasCorners: .byte 1
 .text
