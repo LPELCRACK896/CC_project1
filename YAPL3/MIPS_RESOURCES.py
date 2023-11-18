@@ -16,7 +16,7 @@ def identify_type_by_value(value: str):
     :return:
     """
 
-    if value.startswith("\'") or value.startswith("\"") :
+    if value.startswith("\'") or value.startswith("\""):
         return "String"
     if value.isnumeric():
         return "Int"

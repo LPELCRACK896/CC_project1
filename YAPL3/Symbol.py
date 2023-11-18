@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import anytree
-from typing import List, Dict, AnyStr
+from typing import List, Dict, AnyStr, Tuple
 import bytes_required as br
 
 @dataclass
@@ -21,7 +21,7 @@ class Symbol:
     memory_position: int = None
     scope: str = None
     is_function: bool = False
-    parameters: List[str] = field(default_factory=list)
+    parameters: List[Tuple[str, str]] = field(default_factory=list)
     parameter_passing_method: str = None
     can_inherate: bool = False
     type_of_expression: str = None

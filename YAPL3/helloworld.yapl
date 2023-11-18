@@ -1,0 +1,15 @@
+class Main {
+	radius: Int <- 7*2;
+    booleano: Bool <- true;
+  	io: IO <- (new IO);
+  	name: String <- "Hello world";
+
+    main():Int{
+        (io).outString(name);
+        return 1;
+    }
+
+
+}
+(new Main).main();
+

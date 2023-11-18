@@ -36,12 +36,11 @@ def compile_yapl(input_data, gui_window=None):
         mips: MIPS = MIPS(t_dir_code, symbol_table)
         mips.build_from_main_method()
         mips.asm_to_file()
-        1
 
 
 if __name__ == "__main__":
     directory = os.path.dirname(os.path.realpath(__file__))  # Get the script's directory
-    filename = "/last_input.yapl"
+    filename = "/helloworld.yapl"
     input_file = directory + filename
 
     with open(input_file, 'r') as file:
