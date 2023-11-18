@@ -89,7 +89,7 @@ CodeMirror.defineMode("custom-mips", function () { // custom style for code mirr
         if (stream.eatSpace()) return null;
 
         // Resaltar palabras clave
-        if (stream.match(/(.data|.text|li|add|mul|div|sub|mflo)\b/)) {
+        if (stream.match(/(.data|.text|li|add|mul|div|sub|mflo|la|sw|j|lw|syscall|jr|sb)\b/)) {
             return "keyword-red";
         }
         
