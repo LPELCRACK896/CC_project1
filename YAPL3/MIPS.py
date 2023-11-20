@@ -39,6 +39,9 @@ class MIPS:
     assembler_code: Dict[AnyStr, List[AnyStr]]
     params: list
 
+    temporary_vars_on: Dict[AnyStr, AnyStr]
+    if_counts: int
+
     def __init__(self, tdc: ThreeDirectionsCode, symbol_table: SymbolTable, filename=INTERMEDIATE_CODE_FILENAME):
         self.filename = filename
         self.tdc = tdc
@@ -71,8 +74,10 @@ class MIPS:
 
                 ]
             }
+        self.temporary_vars_on = {}
         self.params = []
         build_and_get_IO_prototype()
+        self.if_counts = 0
         self.extract_prototypes_from_tdc()
 
         self.last_on_line = ""
@@ -302,7 +307,7 @@ class MIPS:
             for i, char in enumerate(value):
                 if char != "'":
                     register_saved = self.load_value_into_register(f"\"{char}\"", number_of_tabs, code_section)
-                    self.assembler_code[code_section].append(f"{ln}sb {register_saved}, {i}({target_register})")
+                    self.assembler_code[code_section].append(f"{ln}sb {register_saved}, {i-1}({target_register})")
                     self.release_register("temporary_regs", register_saved)
 
             register_saved = self.load_value_into_register("0", number_of_tabs, code_section)
@@ -489,9 +494,11 @@ class MIPS:
                                                          )
             else:
                 print("ERROR")
+            return
         elif tdcr.is_an_assignation(line):
             self.write_assignation(line=line, block_context=block_context, code_section=code_section,
                                    number_of_tabs=number_of_tabs)
+            return
         elif line.startswith("PARAM"):
             param = parts[1]
             temporary_var: TemporaryContext = self.temporary_vars.get(param)
@@ -499,8 +506,63 @@ class MIPS:
             self.assembler_code[".text"].append(f"{tabs}addi $sp, $sp -4")
             self.assembler_code[".text"].append(f"{tabs}sw {temporary_var.register}, 0($sp)")
             self.params.append(param)
-        elif line.startswith("<DIR>"):
+            return
+
+        elif parts[0].startswith("<DIR>"):
             print(1)
+
+        elif parts[0] == "RETURN":
+            result = parts[1]
+            result_is_temp = result.startswith("t")
+            register_result = self.get_temp_var_register(result) \
+                if result_is_temp else self.load_item(result, 2, ".text")
+            result_reg = self.get_register("result_regs")
+            tabs = get_empty_string_with_tabulations(2)
+            self.assembler_code[".text"].append(f"{tabs}move {result_reg}, {register_result}")
+            self.release_register("result_regs", result_reg)
+            return
+
+        elif len(parts) == 1 and parts[0].startswith("L"):  # Tag
+            tabs = get_empty_string_with_tabulations(2)
+            self.assembler_code[".text"].append(f"\n")
+            self.assembler_code[".text"].append(f"{tabs}{parts[0]}:")
+            return
+        elif parts[0].startswith("L") and parts[1] == "IFNOT":  # While
+            tabs = get_empty_string_with_tabulations(2)
+            self.assembler_code[".text"].append(f"\n")
+            self.assembler_code[".text"].append(f"{tabs}{parts[0]}:")
+            operand = parts[2]
+            operand_is_temp = operand.startswith("t")
+            register_operand = self.get_temp_var_register(operand) if operand_is_temp \
+                else self.load_item(operand, number_of_tabs, code_section)
+
+            self.assembler_code[".text"].append(f"{tabs}beq {register_operand}, $zero, {parts[-1]}")
+
+            if not operand_is_temp:
+                self.release_register("temporary_regs", register_operand)
+
+            expiring_line = block_context[self.get_line_index(f"{parts[-1]}", block_context)]
+
+            return
+        elif parts[0] == "IFNOT":
+            tabs = get_empty_string_with_tabulations(number_of_tabs)
+            operand = parts[1]
+            operand_is_temp = operand.startswith("t")
+            register_operand = self.get_temp_var_register(operand) if operand_is_temp \
+                else self.load_item(operand, number_of_tabs, code_section)
+
+            self.assembler_code[".text"].append(f"{tabs}beq {register_operand}, $zero, {parts[-1]}")
+
+            if not operand_is_temp:
+                self.release_register("temporary_regs", register_operand)
+
+            return
+        elif parts[0] == "GOTO":
+            tabs = get_empty_string_with_tabulations(2)
+            self.assembler_code[".text"].append(f"{tabs}j {parts[1]}")
+            print(1)
+            return
+        print(12)
 
     def write_assignation(self, line, block_context, code_section, number_of_tabs):
         parts = self.safe_split(line)
@@ -520,6 +582,8 @@ class MIPS:
     def identify_data_type(self, item):
         if item.startswith("<DIR>"):
             return get_direction_data_type(item, self.symbol_table)
+        elif item.startswith("t"):
+            return "temporal_variable"
         else:
             return mr.identify_type_by_value(item)
 
@@ -536,19 +600,26 @@ class MIPS:
                 result_register = self.load_data(value, number_of_tabs, code_section) if value.startswith("<DIR>") \
                         else self.load_temporal_string_address(value, number_of_tabs, code_section)
                 self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
-                                                                  "String", True, False, True)
+                                                              "String", True, False, True)
             elif data_type == "Int":
                 result_register = self.load_data(value, number_of_tabs, code_section) if value.startswith("<DIR>") \
                     else self.load_int(value, number_of_tabs, code_section)
                 self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
                                                               "Int", True, False, False)
+            elif data_type == "temporal_variable":
+                other_temp_context: TemporaryContext = self.temporary_vars[value]
+
+                self.save_temporary_var_on_register_reference(line, temporary_name, other_temp_context.register,
+                                                              block_context, other_temp_context.data_type,
+                                                              other_temp_context.is_primitive,
+                                                              other_temp_context.is_instance,
+                                                              other_temp_context.is_address)
             else:  # Bool
                 result_register = self.load_data(value, number_of_tabs, code_section) if value.startswith("<DIR>") \
                         else self.load_bool(value, number_of_tabs, code_section)
                 self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
                                                               "Bool", True, False, False)
-            # Simple assignation
-            print()
+            return
 
         if tdcr.is_arithmetic_operation(right_side_of_assignation):
             operation = right_side_of_assignation[1]
@@ -573,9 +644,9 @@ class MIPS:
                                                               "Int", True, False, False)
                 return result_register
 
-        if "ON" in right_side_of_assignation:
-            self.last_on_line = line
-
+        elif "ON" in right_side_of_assignation:
+            self.temporary_vars_on[temporary_name] = line
+            return
         elif "NEW" in right_side_of_assignation:
             class_referenced = split_line[2]
             temp = TemporaryContext(
@@ -587,10 +658,9 @@ class MIPS:
                 is_instance=True
             )
             self.temporary_vars[temporary_name] = temp
-            pass
+            return
         elif "CALL" in right_side_of_assignation:
-            calling_on = self.last_on_line
-            self.last_on_line = ""
+            calling_on = self.temporary_vars_on[split_line[3]]
             num_params_used = len(self.params)
             self.params = []
             direction_called = calling_on.split(" ")[2]
@@ -600,8 +670,63 @@ class MIPS:
             self.assembler_code[".text"].append(f"{tabs}jal {procedure_name}")
             self.assembler_code[".text"].append(f"{tabs}addi $sp, $sp, {4*num_params_used}")
 
+            class_symbol = [class_symbol for class_name, class_symbol in self.symbol_table.get_classes().items()
+                            if class_name == direction_called_split[1]][0]
+            method_symbol = [mthd_symbol for mthd_name, mthd_symbol
+                             in self.symbol_table.class_get_methods(class_symbol).items()
+                             if mthd_name == direction_called_split[-1]][0]
+            data_type = method_symbol.data_type
 
+            if procedure_name == "IO_outString" or procedure_name == "IO_outInt":
+                return
 
+            return_register = self.get_register("temporary_regs")
+            is_primitive = False
+            is_instance = True
+            is_address = False
+
+            if data_type == "String":
+                self.assembler_code[".text"].append(f"{tabs}move {return_register}, $v0")
+                is_primitive = True
+                is_address = True
+                is_instance = False
+            elif data_type == "Int":
+                self.assembler_code[".text"].append(f"{tabs}move {return_register}, $v0")
+                is_primitive = True
+                is_instance = False
+            elif data_type == "Bool":
+                self.assembler_code[".text"].append(f"{tabs}move {return_register}, $v0")
+                is_primitive = True
+                is_instance = False
+            else:
+                print(12)
+
+            self.save_temporary_var_on_register_reference(line, temporary_name, return_register, block_context,
+                                                          data_type, is_primitive, is_instance, is_address)
+            return
+        elif is_comparing_operation(right_side_of_assignation):
+            operation = right_side_of_assignation[1]
+            if operation == "LTH":
+                result_register = self.write_lth(right_side_of_assignation, code_section, number_of_tabs)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Bool", True, False, False)
+                return
+            elif operation == "GTH":
+                result_register = self.write_gth(right_side_of_assignation, code_section, number_of_tabs)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Bool", True, False, False)
+                return
+            elif operation == "GEQ":
+                result_register = self.write_geq(right_side_of_assignation, code_section, number_of_tabs)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Bool", True, False, False)
+                return
+            elif operation == "LEQ":
+                result_register = self.write_leq(right_side_of_assignation, code_section, number_of_tabs)
+                self.save_temporary_var_on_register_reference(line, temporary_name, result_register, block_context,
+                                                              "Bool", True, False, False)
+                return
+            print(12)
 
     def get_value_from_operation_component(self, component) -> int | None | str | TemporaryContext:
 
@@ -918,6 +1043,108 @@ class MIPS:
         division_line_2 = get_empty_string_with_tabulations(number_of_tabs)
         division_line_2 += f"mflo {register_result}"
         return register_result
+
+    def write_lth(self, tdc_line_operating, code_section, number_of_tabs):
+        operand_1, _, operand_2 = tdc_line_operating
+        operand_1_is_temp = str(operand_1).startswith("t")
+        operand_2_is_temp = str(operand_2).startswith("t")
+
+        register_operand_1 = self.get_temp_var_register(operand_1) if operand_1_is_temp \
+            else self.load_item(operand_1, number_of_tabs, code_section)
+
+        register_operand_2 = self.get_temp_var_register(operand_2) if operand_2_is_temp \
+            else self.load_item(operand_2, number_of_tabs, code_section)
+
+        register_result = self.get_register("temporary_regs")
+        tabs = get_empty_string_with_tabulations(number_of_tabs)
+        lth_line = f"{tabs}slt {register_result}, {register_operand_1}, {register_operand_2}"
+        self.assembler_code[code_section].append(lth_line)
+
+        if not operand_1_is_temp:  # It was just loaded
+            self.release_register("temporary_regs", register_operand_1)
+        if not operand_2_is_temp:
+            self.release_register("temporary_regs", register_operand_2)
+
+        return register_result
+
+    def write_leq(self, tdc_line_operating, code_section, number_of_tabs):
+        operand_1, _, operand_2 = tdc_line_operating
+        operand_1_is_temp = str(operand_1).startswith("t")
+        operand_2_is_temp = str(operand_2).startswith("t")
+
+        register_operand_1 = self.get_temp_var_register(operand_1) if operand_1_is_temp \
+            else self.load_item(operand_1, number_of_tabs, code_section)
+
+        register_operand_2 = self.get_temp_var_register(operand_2) if operand_2_is_temp \
+            else self.load_item(operand_2, number_of_tabs, code_section)
+
+        register_result = self.get_register("temporary_regs")
+        tabs = get_empty_string_with_tabulations(number_of_tabs)
+        lth_line = f"{tabs}slt {register_result}, {register_operand_2}, {register_operand_1}"
+        self.assembler_code[code_section].append(lth_line)
+        xor_line = f"{tabs}xori {register_result}, {register_result}, 1"
+        self.assembler_code[code_section].append(xor_line)
+        if not operand_1_is_temp:  # It was just loaded
+            self.release_register("temporary_regs", register_operand_1)
+        if not operand_2_is_temp:
+            self.release_register("temporary_regs", register_operand_2)
+
+        return register_result
+
+    def write_gth(self, tdc_line_operating, code_section, number_of_tabs):
+        operand_1, _, operand_2 = tdc_line_operating
+        operand_1_is_temp = str(operand_1).startswith("t")
+        operand_2_is_temp = str(operand_2).startswith("t")
+
+        register_operand_1 = self.get_temp_var_register(operand_1) if operand_1_is_temp \
+            else self.load_item(operand_1, number_of_tabs, code_section)
+
+        register_operand_2 = self.get_temp_var_register(operand_2) if operand_2_is_temp \
+            else self.load_item(operand_2, number_of_tabs, code_section)
+
+        register_result = self.get_register("temporary_regs")
+        tabs = get_empty_string_with_tabulations(number_of_tabs)
+        gth_line = f"{tabs}slt {register_result}, {register_operand_2}, {register_operand_1}"
+        self.assembler_code[code_section].append(gth_line)
+
+        if not operand_1_is_temp:  # It was just loaded
+            self.release_register("temporary_regs", register_operand_1)
+        if not operand_2_is_temp:
+            self.release_register("temporary_regs", register_operand_2)
+
+        return register_result
+
+    def write_geq(self, tdc_line_operating, code_section, number_of_tabs):
+        operand_1, _, operand_2 = tdc_line_operating
+        operand_1_is_temp = str(operand_1).startswith("t")
+        operand_2_is_temp = str(operand_2).startswith("t")
+
+        register_operand_1 = self.get_temp_var_register(operand_1) if operand_1_is_temp \
+            else self.load_item(operand_1, number_of_tabs, code_section)
+
+        register_operand_2 = self.get_temp_var_register(operand_2) if operand_2_is_temp \
+            else self.load_item(operand_2, number_of_tabs, code_section)
+
+        register_result = self.get_register("temporary_regs")
+        tabs = get_empty_string_with_tabulations(number_of_tabs)
+        geq_line = f"{tabs}slt {register_result}, {register_operand_1}, {register_operand_2}"
+        self.assembler_code[code_section].append(geq_line)
+        xor_line = f"{tabs}xori {register_result}, {register_result}, 1"
+        self.assembler_code[code_section].append(xor_line)
+
+        if not operand_1_is_temp:  # It was just loaded
+            self.release_register("temporary_regs", register_operand_1)
+        if not operand_2_is_temp:
+            self.release_register("temporary_regs", register_operand_2)
+
+        return register_result
+
+    def get_line_index(self, line, block_code):
+        for i, i_line in enumerate(block_code):
+            if i_line == line:
+                return i
+
+        return len(block_code)+1
 
     """
     END

@@ -6,6 +6,15 @@ from SymbolTable import SymbolTable
 from Symbol import Symbol
 
 
+def is_comparing_operation(right_side_of_line: list):
+
+    return (
+        right_side_of_line[1] == "LTH" or
+        right_side_of_line[1] == "GTH" or
+        right_side_of_line[1] == "GEQ" or
+        right_side_of_line[1] == "LEQ"
+    )
+
 def get_default_mips_value(mips_type):
     if mips_type == ".word" or mips_type == ".byte":
         return 0
@@ -115,12 +124,16 @@ def get_empty_string_with_tabulations(number_of_tabulations) -> str:
 def find_last_usage_temporary(current_line, temporary_var, block_context):
     line = None
     start_search = False
-    for ln in block_context:
+    index_line = len(block_context)+1  # Initially invalid
+    for index, ln in enumerate(block_context):
         if not start_search:
             start_search = ln == current_line
+            if start_search:
+                index_line = index
         else:
             if temporary_var in ln:
                 line = ln
+    line = block_context[index_line+1] if line is None else line
     return line
 
 
@@ -172,6 +185,8 @@ def build_and_get_IO_prototype() -> Prototype:
         "la $a0, buffer",
         "li $a1, 1024",
         "syscall",
+        "la $t0, buffer",
+        "move $v0, $t0",
         "jr $ra"
     ])
     class_prototype.add_method(prototype_in_string)

@@ -40,7 +40,7 @@ def compile_yapl(input_data, gui_window=None):
 
 if __name__ == "__main__":
     directory = os.path.dirname(os.path.realpath(__file__))  # Get the script's directory
-    filename = "/helloworld.yapl"
+    filename = "/last_input.yapl"
     input_file = directory + filename
 
     with open(input_file, 'r') as file:

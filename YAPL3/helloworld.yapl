@@ -4,22 +4,19 @@ class Main {
   	io: IO <- (new IO);
   	circle: Circle <- (new Circle);
   	name: String <- "Hello world\n";
-
     main():Int{
+        (io).outInt(circle.getArea(1));
+        (io).outString("\n");
         (io).outString("Hola aaamigos");
+        (io).outString("\n");
         (io).outInt(1);
         return 1;
     }
 }
 class Circle {
     radio: Int <- 8;
-
     getArea(size:Int):Int{
-        return 3*radio*radio;
+        return (3*radio*radio*size);
     }
-
-
 }
-
 (new Main).main();
-

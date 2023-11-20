@@ -5,66 +5,48 @@ class Main {
   	io: IO <- (new IO);
   	oi: IO <- (new IO);
   	name: String <- "Juan";
-  	shape: Shape <- new Shape;
-
+  	cadena: String <- "Pa";
+    ari: Arithmetic <- new Arithmetic;
 
     main():Int{
-        shape.allType(1, false, "palabraaa");
-        name <- "Mario";
-        saludo();
-        (io).outString("hola");
 
-      	radius <- (4 + 5 / 1);
+        name <- "Carlitos";
 
-      	booleano <- (6 < 7);
-
+        io.outString(name);
       	radius <- suma(1,4);
 
-      	while (t1<4) loop {
-            t1 <- (t1 + 1)
-        } pool;
+      	booleano <- (6 > 7);
 
       	if booleano then
             radius <- 8
         else
             radius <- 4
         fi;
-
-        return radius;
+        io.outString("\n");
+        io.outInt(radius);
+        io.outString("\n");
+        return 0;
     }
     suma(a:Int, b:Int):Int{
         return a+b;
     }
 
+    setName(newName:String):String{
+        name <- newName;
+        return name;
+    }
+
 
     saludo():String{
+        io.outString("Hola Carlos\n");
         return "hola";
     }
 }
-class Shape {
-    radius: Int;
-    color: String;
-    ancho: Int;
 
-    hasCorners: Bool <- true;
+class Arithmetic{
 
-    isCool (radius:Int): Bool {
-        return 1;
-    }
-    getArea (diameter:Int): Int {
-        return 1;
-    }
-
-    allType(entero:Int, bol: Bool, cara: String ):Int{
-
-
-        return 1;
-    }
-
-    getPerimeter (height: Int, width: Int): Int {
-
-        return (2 * height) +  (2 * width);
-
+    sumaTres(a:Int, b:Int, c:Int): Int{
+        return (a+b+c);
     }
 
 }
