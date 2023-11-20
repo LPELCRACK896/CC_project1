@@ -10,7 +10,7 @@ file_path = sys.argv[1]
 subprocess.Popen(['java', '-jar', 'Mars4_5.jar'])
 
 # Wait for Mars to fully launch
-time.sleep(5)
+time.sleep(7)
 
 # Find the Mars window and bring it to the foreground
 mars_window = gw.getWindowsWithTitle("MARS")[0]
@@ -28,4 +28,10 @@ time.sleep(1)
 
 # Press 'enter' to open the file
 pyautogui.press('enter')
+time.sleep(1)
 
+# Use pyautogui to simulate GUI interactions with hotkeys
+pyautogui.hotkey('alt', 'r')  # Press Alt+R to open the Run menu
+time.sleep(1)
+
+pyautogui.press('f3')  # f3 to compile
