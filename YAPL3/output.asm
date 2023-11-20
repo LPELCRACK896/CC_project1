@@ -5,7 +5,10 @@
 	buffer: .space 1024
 	Main_attr_radius: .word 0
 	Main_attr_booleano: .byte 1
-	Main_attr_name: .asciiz "Hello world"
+	Circle_attr_radio: .word 8
+	Circle_getArea_formal_size: .word 0
+	Main_attr_name: .asciiz "Hello world\n"
+	temporal_var_1: .asciiz "Hola aaamigos"
 .text
 	li $t0, 7
 	li $t1, 2
@@ -35,11 +38,25 @@
 		li $v0, 5 
 		syscall
 		jr $ra
+	Circle_getArea:
+		lw $a0, 0($sp)
+		sw $a0, Circle_getArea_formal_size
+		li $t2, 3
+		lw $t1, Circle_attr_radio
+		mul $t0, $t2, $t1
+		lw $t1, Circle_attr_radio
+		mul $t2, $t0, $t1
+		jr $ra
 	Main_main:
-		la $t2, Main_attr_name
+		la $t2, temporal_var_1
 		addi $sp, $sp -4
 		sw $t2, 0($sp)
 		jal IO_outString
+		addi $sp, $sp, 4
+		li $t2, 1
+		addi $sp, $sp -4
+		sw $t2, 0($sp)
+		jal IO_outInt
 		addi $sp, $sp, 4
 		li $v0, 10
 		syscall

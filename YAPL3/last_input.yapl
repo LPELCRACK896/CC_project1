@@ -1,7 +1,7 @@
 class Main {
 	radius: Int <- 7*2;
     booleano: Bool <- true;
-  	t1: Int <- 90+10-6/5;
+  	t1: Int <- 90+10;
   	io: IO <- (new IO);
   	oi: IO <- (new IO);
   	name: String <- "Juan";

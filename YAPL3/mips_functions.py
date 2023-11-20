@@ -11,6 +11,7 @@ def get_default_mips_value(mips_type):
         return 0
     return "\"\""
 
+
 def to_mips_type(source_data_type):
     if source_data_type == "Int":
         return ".word"
@@ -186,3 +187,6 @@ def build_and_get_IO_prototype() -> Prototype:
     class_prototype.write_example()
     return class_prototype
 
+
+def char_to_ascii(char):
+    return ord(char)

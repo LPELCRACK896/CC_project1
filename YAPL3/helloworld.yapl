@@ -2,14 +2,24 @@ class Main {
 	radius: Int <- 7*2;
     booleano: Bool <- true;
   	io: IO <- (new IO);
-  	name: String <- "Hello world";
+  	circle: Circle <- (new Circle);
+  	name: String <- "Hello world\n";
 
     main():Int{
-        (io).outString(name);
+        (io).outString("Hola aaamigos");
+        (io).outInt(1);
         return 1;
+    }
+}
+class Circle {
+    radio: Int <- 8;
+
+    getArea(size:Int):Int{
+        return 3*radio*radio;
     }
 
 
 }
+
 (new Main).main();
 

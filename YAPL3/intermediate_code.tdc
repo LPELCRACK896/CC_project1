@@ -4,16 +4,32 @@ CL1 START Main
 	<DIR>.Main.attr.booleano ASSIGN true  
 	t2 = IO NEW 
 	<DIR>.Main.attr.io ASSIGN t2  
-	<DIR>.Main.attr.name ASSIGN 'Hello world'  
+	t3 = Circle NEW 
+	<DIR>.Main.attr.circle ASSIGN t3  
+	<DIR>.Main.attr.name ASSIGN 'Hello world\n'  
 	MT1 START main 
-	t3 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t4 = <DIR>.Main.attr.name  
-	PARAM t4 
-	t5 = CALL t3 WITH 1 
+	t4 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t5 = 'Hola aaamigos'  
+	PARAM t5 
+	t6 = CALL t4 WITH 1 
+	t7 = <DIR>.IO.method.outInt ON <DIR>.Main.attr.io
+	t8 = 1  
+	PARAM t8 
+	t9 = CALL t7 WITH 1 
 	RETURN 1 
 	MT2 END main 
 CL2 END Main 
 	      
-	t6 = Main NEW 
-	t7 = <DIR>.Main.method.main ON t6
-	t8 = CALL t7 WITH 0 
+CL3 START Circle 
+	<DIR>.Circle.attr.radio ASSIGN 8  
+	MT3 START getArea 
+	 <DIR>.Circle.getArea.formal.size 
+	t10 = 3 MULT <DIR>.Circle.attr.radio
+	t11 = t10 MULT <DIR>.Circle.attr.radio
+	RETURN t11 
+	MT4 END getArea 
+CL4 END Circle 
+	      
+	t12 = Main NEW 
+	t13 = <DIR>.Main.method.main ON t12
+	t14 = CALL t13 WITH 0 

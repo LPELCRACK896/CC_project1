@@ -478,7 +478,7 @@ class MIPS:
             self.try_to_release_registers_and_temp_vars(line)
 
     def process_tdc_line(self, line: AnyStr, block_context: List[AnyStr], code_section, number_of_tabs):
-        parts = line.split(" ")
+        parts = self.safe_split(line)
         size = len(parts)
         if tdcr.is_temporal_variable(parts[0]):
             if parts[1] == "=":  # Assigns into temporary variable
@@ -503,7 +503,7 @@ class MIPS:
             print(1)
 
     def write_assignation(self, line, block_context, code_section, number_of_tabs):
-        parts = line.split(" ")
+        parts = self.safe_split(line)
         if not parts[0].startswith("<DIR>"):
             print()
 
@@ -525,7 +525,7 @@ class MIPS:
 
 
     def process_temporary_variable_creation(self, line, block_context, code_section, number_of_tabs):
-        split_line = line.split(" ")
+        split_line = self.safe_split(line)
         temporary_name = split_line[0]
         right_side_of_assignation = split_line[2:]
 
@@ -631,7 +631,8 @@ class MIPS:
     def load_value_into_register(self, value: str, num_tabs: int, code_section) -> AnyStr:
         register = self.get_register("temporary_regs")
         new_line = get_empty_string_with_tabulations(num_tabs)
-
+        if isinstance(value, str):
+            value = char_to_ascii(value[1]) if value.startswith("\"") else value
         new_line += f"li {register}, {value}"
         self.assembler_code[code_section].append(new_line)
         return register
