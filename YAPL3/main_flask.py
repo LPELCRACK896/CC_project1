@@ -11,6 +11,7 @@ from anytree.exporter import UniqueDotExporter, DotExporter
 from SyntaxTree import SyntaxTree
 from ThreeDirectionsCode import ThreeDirectionsCode
 from MIPS import MIPS
+import subprocess
 
 app = Flask(__name__)
 
@@ -31,6 +32,20 @@ def build_anytree(node, antlr_node, parser):
         for child in antlr_node.getChildren():
             build_anytree(child_node, child, parser)
 
+@app.route('/run_mars', methods=['POST'])
+def run_mars():
+    file_path = 'output.asm'
+
+    # Use subprocess to run the Mars MIPS simulator with the specified file
+    # subprocess.run(['java', '-jar', 'Mars4_5.jar', file_path])
+
+    # Specify the file path you want to open in Mars
+    file_path = 'output.asm'
+
+    # Use subprocess to run the script that opens Mars with the specified file
+    subprocess.Popen(['open_mars.bat', file_path])
+
+    return 'Mars MIPS simulator is running with the specified file.'
 
 @app.route('/', methods=['GET', 'POST'])
 def index():

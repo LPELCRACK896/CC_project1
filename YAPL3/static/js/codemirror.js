@@ -89,7 +89,7 @@ CodeMirror.defineMode("custom-mips", function () { // custom style for code mirr
         if (stream.eatSpace()) return null;
 
         // Resaltar palabras clave
-        if (stream.match(/(.data|.text|li|add|mul|div|sub|mflo|la|sw|j|lw|syscall|jr|sb|addi|jal)\b/)) {
+        if (stream.match(/(.data|.text|li|add|addi|addu|addiu|mul|div|sub|mflo|mfhi|lui|sb|sh|lb|la|lh|sw|j|lw|syscall|jr|sb|addi|jal|bne|beq|sll|srl|sra|and|andi|or|ori|xor|nor|slt|slti|bgt|blt|bge|ble|beq|beqz|bgtu|bgtz)\b/)) {
             return "keyword-red";
         }
         

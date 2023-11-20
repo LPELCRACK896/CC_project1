@@ -91,8 +91,22 @@
                     <textarea id="mips" name="mips" rows="10" cols="50">{% if mips %}{{mips}}{% endif %}</textarea>                   
                 </div>
             </form>
+            <button class="button" type="button" onclick="runMars()">Compilar con Mars (MIPS SIMULATOR)</button>
         </div>
+
     </div>
+
+    <script>
+        function runMars() {
+            // Send an AJAX request to the Flask endpoint
+            fetch('/run_mars', {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(message => console.log(message))
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
     
     <!-- Inicializar CodeMirror en los textareas -->
     <script src="{{ url_for('static', filename='js/codemirror.js') }}"></script>
