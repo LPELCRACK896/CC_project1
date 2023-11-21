@@ -1,87 +1,43 @@
 CL1 START Main 
-	t1 = 7 MULT 2
-	<DIR>.Main.attr.radius ASSIGN t1  
 	<DIR>.Main.attr.booleano ASSIGN true  
-	t2 = 90 SUM 10
-	<DIR>.Main.attr.t1 ASSIGN t2  
-	t3 = IO NEW 
-	<DIR>.Main.attr.io ASSIGN t3  
-	t4 = IO NEW 
-	<DIR>.Main.attr.oi ASSIGN t4  
-	<DIR>.Main.attr.name ASSIGN 'Juan'  
-	<DIR>.Main.attr.cadena ASSIGN 'Pa'  
-	t5 = Arithmetic NEW 
-	<DIR>.Main.attr.ari ASSIGN t5  
+	t1 = IO NEW 
+	<DIR>.Main.attr.io ASSIGN t1  
+	<DIR>.Main.attr.age ASSIGN 0  
+	<DIR>.Main.attr.name ASSIGN ' '  
 	MT1 START main 
-	<DIR>.Main.attr.name ASSIGN 'Carlitos'  
-	t6 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t7 = <DIR>.Main.attr.name  
-	PARAM t7 
-	t8 = CALL t6 WITH 1 
-	t9 = <DIR>.Main.method.suma ON SELF
-	t10 = 1  
-	t11 = 4  
-	PARAM t10 
-	PARAM t11 
-	t12 = CALL t9 WITH 2 
-	<DIR>.Main.attr.radius ASSIGN t12  
-	t13 = 6 GTH 7
-	<DIR>.Main.attr.booleano ASSIGN t13  
-	IFNOT <DIR>.Main.attr.booleano GOTO L2
+	<DIR>.Main.attr.name ASSIGN 'Luis'  
+	t2 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t3 = <DIR>.Main.attr.name  
+	PARAM t3 
+	t4 = CALL t2 WITH 1 
+	t5 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t6 = ' ingrese su edad: '  
+	PARAM t6 
+	t7 = CALL t5 WITH 1 
+	t8 = <DIR>.IO.method.inInt ON <DIR>.Main.attr.io
+	t9 = CALL t8 WITH 0 
+	<DIR>.Main.attr.age ASSIGN t9  
+	t10 = <DIR>.Main.attr.age GTH 17
+	IFNOT t10 GOTO L2
 	S1 START main-IF 
-	<DIR>.Main.attr.radius ASSIGN 8  
+	t11 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t12 = '\nEs mayor de edad'  
+	PARAM t12 
+	t13 = CALL t11 WITH 1 
 	GOTO L5 
 	L2     
 	S3 END main-IF 
 	S4 START main-ELSE 
-	<DIR>.Main.attr.radius ASSIGN 4  
-	L5     
-	S6 END main-ELSE 
 	t14 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t15 = '\n'  
+	t15 = '\nEs menor de edad'  
 	PARAM t15 
 	t16 = CALL t14 WITH 1 
-	t17 = <DIR>.IO.method.outInt ON <DIR>.Main.attr.io
-	t18 = <DIR>.Main.attr.radius  
-	PARAM t18 
-	t19 = CALL t17 WITH 1 
-	t20 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t21 = '\n'  
-	PARAM t21 
-	t22 = CALL t20 WITH 1 
-	RETURN 0 
+	L5     
+	S6 END main-ELSE 
+	RETURN 1 
 	MT2 END main 
-	MT3 START suma 
-	 <DIR>.Main.suma.formal.a 
-	 <DIR>.Main.suma.formal.b 
-	t23 = <DIR>.Main.suma.formal.a SUM <DIR>.Main.suma.formal.b
-	RETURN t23 
-	MT4 END suma 
-	MT5 START setName 
-	 <DIR>.Main.setName.formal.newName 
-	<DIR>.Main.attr.name ASSIGN <DIR>.Main.setName.formal.newName  
-	RETURN <DIR>.Main.attr.name 
-	MT6 END setName 
-	MT7 START saludo 
-	t24 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t25 = 'Hola Carlos\n'  
-	PARAM t25 
-	t26 = CALL t24 WITH 1 
-	RETURN 'hola' 
-	MT8 END saludo 
 CL2 END Main 
 	      
-CL3 START Arithmetic 
-	MT9 START sumaTres 
-	 <DIR>.Arithmetic.sumaTres.formal.a 
-	 <DIR>.Arithmetic.sumaTres.formal.b 
-	 <DIR>.Arithmetic.sumaTres.formal.c 
-	t27 = <DIR>.Arithmetic.sumaTres.formal.a SUM <DIR>.Arithmetic.sumaTres.formal.b
-	t28 = t27 SUM <DIR>.Arithmetic.sumaTres.formal.c
-	RETURN t28 
-	MT10 END sumaTres 
-CL4 END Arithmetic 
-	      
-	t29 = Main NEW 
-	t30 = <DIR>.Main.method.main ON t29
-	t31 = CALL t30 WITH 0 
+	t17 = Main NEW 
+	t18 = <DIR>.Main.method.main ON t17
+	t19 = CALL t18 WITH 0 

@@ -1,52 +1,21 @@
 class Main {
-	radius: Int <- 7*2;
     booleano: Bool <- true;
-  	t1: Int <- 90+10;
   	io: IO <- (new IO);
-  	oi: IO <- (new IO);
-  	name: String <- "Juan";
-  	cadena: String <- "Pa";
-    ari: Arithmetic <- new Arithmetic;
+    age: Int <- 0;
+    name: String <- " ";
 
     main():Int{
-
-        name <- "Carlitos";
-
+        name <- "Luis";
         io.outString(name);
-      	radius <- suma(1,4);
+        io.outString(" ingrese su edad: ");
+        age <- (io.inInt());
 
-      	booleano <- (6 > 7);
-
-      	if booleano then
-            radius <- 8
+        if age>17 then
+            (io.outString("\nEs mayor de edad"))
         else
-            radius <- 4
+            (io.outString("\nEs menor de edad"))
         fi;
-        io.outString("\n");
-        io.outInt(radius);
-        io.outString("\n");
-        return 0;
-    }
-    suma(a:Int, b:Int):Int{
-        return a+b;
-    }
-
-    setName(newName:String):String{
-        name <- newName;
-        return name;
-    }
-
-
-    saludo():String{
-        io.outString("Hola Carlos\n");
-        return "hola";
-    }
-}
-
-class Arithmetic{
-
-    sumaTres(a:Int, b:Int, c:Int): Int{
-        return (a+b+c);
+        return 1;
     }
 
 }

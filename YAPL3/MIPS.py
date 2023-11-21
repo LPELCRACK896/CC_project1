@@ -560,9 +560,7 @@ class MIPS:
         elif parts[0] == "GOTO":
             tabs = get_empty_string_with_tabulations(2)
             self.assembler_code[".text"].append(f"{tabs}j {parts[1]}")
-            print(1)
             return
-        print(12)
 
     def write_assignation(self, line, block_context, code_section, number_of_tabs):
         parts = self.safe_split(line)
