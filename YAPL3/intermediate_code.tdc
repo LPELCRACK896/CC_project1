@@ -3,41 +3,43 @@ CL1 START Main
 	t1 = IO NEW 
 	<DIR>.Main.attr.io ASSIGN t1  
 	<DIR>.Main.attr.age ASSIGN 0  
-	<DIR>.Main.attr.name ASSIGN ' '  
 	MT1 START main 
-	<DIR>.Main.attr.name ASSIGN 'Luis'  
 	t2 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t3 = <DIR>.Main.attr.name  
+	t3 = 'Hola Carlos ingrese su edad: '  
 	PARAM t3 
 	t4 = CALL t2 WITH 1 
-	t5 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t6 = ' ingrese su edad: '  
-	PARAM t6 
-	t7 = CALL t5 WITH 1 
-	t8 = <DIR>.IO.method.inInt ON <DIR>.Main.attr.io
-	t9 = CALL t8 WITH 0 
-	<DIR>.Main.attr.age ASSIGN t9  
-	t10 = <DIR>.Main.attr.age GTH 17
-	IFNOT t10 GOTO L2
+	t5 = <DIR>.IO.method.inInt ON <DIR>.Main.attr.io
+	t6 = CALL t5 WITH 0 
+	<DIR>.Main.attr.age ASSIGN t6  
+	t7 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t8 = '\n'  
+	PARAM t8 
+	t9 = CALL t7 WITH 1 
+	t10 = <DIR>.IO.method.outInt ON <DIR>.Main.attr.io
+	t11 = <DIR>.Main.attr.age  
+	PARAM t11 
+	t12 = CALL t10 WITH 1 
+	t13 = <DIR>.Main.attr.age GTH 17
+	IFNOT t13 GOTO L2
 	S1 START main-IF 
-	t11 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t12 = '\nEs mayor de edad'  
-	PARAM t12 
-	t13 = CALL t11 WITH 1 
+	t14 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t15 = '\nEs mayor de edad'  
+	PARAM t15 
+	t16 = CALL t14 WITH 1 
 	GOTO L5 
 	L2     
 	S3 END main-IF 
 	S4 START main-ELSE 
-	t14 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
-	t15 = '\nEs menor de edad'  
-	PARAM t15 
-	t16 = CALL t14 WITH 1 
+	t17 = <DIR>.IO.method.outString ON <DIR>.Main.attr.io
+	t18 = '\nEs menor de edad'  
+	PARAM t18 
+	t19 = CALL t17 WITH 1 
 	L5     
 	S6 END main-ELSE 
 	RETURN 1 
 	MT2 END main 
 CL2 END Main 
 	      
-	t17 = Main NEW 
-	t18 = <DIR>.Main.method.main ON t17
-	t19 = CALL t18 WITH 0 
+	t20 = Main NEW 
+	t21 = <DIR>.Main.method.main ON t20
+	t22 = CALL t21 WITH 0 

@@ -2,13 +2,12 @@ class Main {
     booleano: Bool <- true;
   	io: IO <- (new IO);
     age: Int <- 0;
-    name: String <- " ";
 
     main():Int{
-        name <- "Luis";
-        io.outString(name);
-        io.outString(" ingrese su edad: ");
+        io.outString("Hola Carlos ingrese su edad: ");
         age <- (io.inInt());
+        io.outString("\n");
+        (io.outInt(age));
 
         if age>17 then
             (io.outString("\nEs mayor de edad"))
